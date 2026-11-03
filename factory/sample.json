@@ -1,0 +1,8 @@
+{"scenes":[
+ {"type":"hook","dur":3.0,"lines":[{"text":"Gold diese Woche:","color":"white"},{"text":"3 Termine, die zählen.","color":"gold"}]},
+ {"type":"list","dur":6.5,"title":"Wochenausblick Gold","items":[{"left":"Mi 20:00","right":"Fed-Zinsentscheid","hot":true},{"left":"Do 14:30","right":"US-Arbeitslosenanträge"},{"left":"Fr 14:30","right":"US-Arbeitsmarktbericht","hot":true}]},
+ {"type":"chart","dur":7.0,"title":"Gold gestern (1h-Kerzen)","candles":[[4040,4046,4036,4044],[4044,4050,4041,4048],[4048,4049,4030,4033],[4033,4038,4026,4036],[4036,4045,4034,4043],[4043,4058,4042,4056],[4056,4061,4050,4052],[4052,4055,4046,4049]],"labels":["08","09","10","11","12","13","14","15"],"levels":[{"price":4028,"text":"24h-Tief","color":"red"}],"notes":[{"i":3,"price":4024,"text":"kein Schluss darunter","color":"red"}],"footer":"Darstellung vereinfacht"},
+ {"type":"rule","dur":5.5,"kicker":"Meine Regel","title":"In der ersten Minute nach News: kein Trade.","body":"Der Spread ist weit, Gold springt in beide Richtungen."},
+ {"type":"stat","dur":5.0,"kicker":"Bot seit Montag","value":"+1,4 R","color":"green","sub":"4 Trades · 2 Gewinner · 1 BE · 1 Verlust","note":"Auch Verluste werden gezeigt."},
+ {"type":"cta","dur":4.0,"title":"Plan vor der News. Nicht währenddessen."}
+]}
