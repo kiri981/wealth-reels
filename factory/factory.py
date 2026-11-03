@@ -16,8 +16,9 @@ spec.json:
   ]
 }
 Farben: gold, white, muted, red, green.  Gesamtlänge ideal 18–30 s.
+Optional "music": "auto" (Standard) | "drive" | "chill" | "lofi" | "none" | Dateiname aus music/ (eigene lizenzfreie Tracks).
 """
-import json, sys
+import json, sys, os
 from lib import *
 
 C = {"gold": GOLD, "white": WHITE, "muted": MUTED, "red": RED, "green": GREEN}
@@ -139,5 +140,23 @@ if __name__ == "__main__":
     spec = json.load(open(sys.argv[1], encoding="utf-8")); out = sys.argv[2]
     scenes = [(float(s.get("dur", 5)), BUILD[s["type"]](s)) for s in spec["scenes"]]
     if not spec["scenes"] or spec["scenes"][-1]["type"] != "cta": scenes.append((4.0, scene_cta({})))
-    render(scenes, out, sum(d for d, _ in scenes))
+    total = sum(d for d, _ in scenes)
+    # Musik: "music" in der Spec = drive | chill | lofi | none | Dateiname aus ../music/ ; Standard: automatisch
+    import glob, random, subprocess as sp
+    here = os.path.dirname(os.path.abspath(__file__))
+    choice = spec.get("music", "auto"); seed = abs(hash(out)) % 10000; rnd = random.Random(seed)
+    own = sorted(glob.glob(os.path.join(here, "..", "music", "*.mp3")) + glob.glob(os.path.join(here, "..", "music", "*.wav")) + glob.glob(os.path.join(here, "..", "music", "*.m4a")))
+    track = None
+    if choice not in ("none", ""):
+        if choice == "auto": choice = rnd.choice(own) if own and rnd.random() < 0.5 else rnd.choice(["drive", "chill", "lofi"])
+        if choice in ("drive", "chill", "lofi"):
+            track = os.path.splitext(out)[0] + "_music.wav"
+            sp.run([sys.executable, os.path.join(here, "music.py"), choice, str(total + 1), track, str(seed)], check=True, capture_output=True)
+        else:
+            cand = choice if os.path.isabs(choice) else os.path.join(here, "..", "music", os.path.basename(choice))
+            track = cand if os.path.exists(cand) else None
+    if track: os.environ["REEL_MUSIC"] = track
+    render(scenes, out, total)
+    if track and track.endswith("_music.wav") and os.path.exists(track): os.remove(track)
+    print("musik:", os.path.basename(str(choice)) if track else "keine")
     print("ok", out)

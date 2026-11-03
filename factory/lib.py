@@ -110,7 +110,13 @@ def render(scenes, out, total):
     joined = base + "_v.mp4"
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", joined], check=True)
     tmp = base + ".tmp.mp4"
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", joined, "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
-                    "-c:v", "copy", "-c:a", "aac", "-shortest", "-movflags", "+faststart", tmp], check=True)
+    music = os.environ.get("REEL_MUSIC")
+    if music and os.path.exists(music):   # Hintergrundmusik: auf Videolänge schneiden, ein-/ausblenden
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", joined, "-stream_loop", "-1", "-i", music,
+                        "-filter_complex", f"[1:a]atrim=0:{total},asetpts=N/SR/TB,afade=t=in:d=0.4,afade=t=out:st={max(0, total - 1.5)}:d=1.5,volume=0.8[a]",
+                        "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart", tmp], check=True)
+    else:
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", joined, "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
+                        "-c:v", "copy", "-c:a", "aac", "-shortest", "-movflags", "+faststart", tmp], check=True)
     os.replace(tmp, out)
     for x in parts + [lst, joined]: os.remove(x)
