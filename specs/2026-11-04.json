@@ -1,0 +1,69 @@
+{
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.6
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "Heute 17 Uhr:",
+   "accent": "Der Termin für Gold.",
+   "icon": "clock",
+   "say": "Heute um siebzehn Uhr: der wichtigste Termin für Gold."
+  },
+  {
+   "type": "cards",
+   "dur": 5.0,
+   "title": "Heute wichtig (Bukarest-Zeit)",
+   "items": [
+    {
+     "left": "Mi 15:15",
+     "right": "US-ADP Jobs"
+    },
+    {
+     "left": "Mi 17:00",
+     "right": "ISM Dienstleistung",
+     "hot": true
+    },
+    {
+     "left": "Do 14:00",
+     "right": "BoE-Zinsentscheid"
+    }
+   ],
+   "say": "Viertel nach drei ADP, um siebzehn Uhr der ISM-Index."
+  },
+  {
+   "type": "counter",
+   "dur": 4.2,
+   "label": "ISM-Prognose",
+   "from": 0,
+   "to": 54.9,
+   "decimals": 1,
+   "color": "gold",
+   "sub": "Gold aktuell rund 3.940 $",
+   "say": "Prognose: knapp fünfundfünfzig. Gold bei rund dreitausendneunhundertvierzig Dollar."
+  },
+  {
+   "type": "words",
+   "dur": 4.6,
+   "kicker": "Szenario A",
+   "text": "Starke Daten → höhere Renditen → Druck auf Gold.",
+   "say": "Starke Daten: Renditen hoch, Gold unter Druck."
+  },
+  {
+   "type": "words",
+   "dur": 4.6,
+   "kicker": "Szenario B",
+   "text": "Schwache Daten → weniger Zinsangst → Rückenwind möglich.",
+   "say": "Schwache Daten: weniger Zinsangst, möglicher Rückenwind."
+  },
+  {
+   "type": "cta",
+   "dur": 3.0,
+   "title": "Erst die Zahl. Dann der Plan.",
+   "say": "Erst die Zahl, dann der Plan."
+  }
+ ]
+}
