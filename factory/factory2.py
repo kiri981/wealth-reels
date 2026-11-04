@@ -262,9 +262,9 @@ if __name__ == "__main__":
             clips = []
             for sc in spec["scenes"]:
                 if sc.get("say"):
-                    w, sr = P.synth(sc["say"], length_scale=float(spec.get("voice_speed", 0.92)), pause=0.12)
+                    w, sr = P.synth(sc["say"], length_scale=float(spec.get("voice_speed", 1.08)), pause=0.3)
                     w = resample_poly(w, 44100, sr); clips.append(w)
-                    sc["dur"] = round(max(float(sc.get("dur", 3)), len(w) / 44100 + 0.45), 2)
+                    sc["dur"] = round(max(float(sc.get("dur", 3)), len(w) / 44100 + 1.0), 2)
                 else: clips.append(None)
             tot = sum(float(sc.get("dur", 3)) for sc in spec["scenes"]) + (0 if spec["scenes"][-1]["type"] == "cta" else 2.6)
             buf = np.zeros(int((tot + 1) * 44100)); t0 = 0.0
