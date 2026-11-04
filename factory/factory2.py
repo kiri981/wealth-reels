@@ -219,7 +219,7 @@ def s_cta(sc):
         q = back(clamp((tl - 0.6) / 0.35)); s = q * (1 + 0.04 * math.sin(tl * 7) * (tl > 1))
         if q > 0:
             bw, bh = 640 * s, 130 * s; rrect(im, (W / 2 - bw / 2, 1110 - bh / 2, W / 2 + bw / 2, 1110 + bh / 2), GOLD, 1, r=int(65 * s))
-            scaled_text(im, W / 2, 1110, "Link in Bio 👆".replace(" 👆", ""), H1(60), BG, s)
+            scaled_text(im, W / 2, 1110, sc.get("button", "Link in Bio"), H1(fit(sc.get("button", "Link in Bio"), 560, 60, 40, 1)), BG, s)
         text(im, (W / 2, 1290), "Keine Anlageberatung. Trading birgt Verlustrisiken.", font("Inter-Medium.otf", 30), MUTED, clamp((tl - 0.9) / 0.3))
     return draw
 
