@@ -235,7 +235,14 @@ def render(scenes, out, total):
         t0 += dur
     p.stdin.close(); assert p.wait() == 0
     music = os.environ.get("REEL_MUSIC"); fin = base + ".tmp.mp4"
-    if music and os.path.exists(music):
+    voice = os.environ.get("REEL_VOICE")
+    if voice and os.path.exists(voice):
+        mus = ["-stream_loop", "-1", "-i", music] if music and os.path.exists(music) else ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo"]
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", tmp, "-i", voice] + mus + ["-filter_complex",
+                        f"[2:a]atrim=0:{total},asetpts=N/SR/TB,afade=t=out:st={max(0, total - 1.2)}:d=1.2,volume=0.2[m];[1:a]atrim=0:{total},volume=1.0[v];[m][v]amix=inputs=2:duration=longest:normalize=0,alimiter=limit=0.95[a]",
+                        "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-t", str(total), "-movflags", "+faststart", fin], check=True)
+        os.remove(voice)
+    elif music and os.path.exists(music):
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", tmp, "-stream_loop", "-1", "-i", music, "-filter_complex",
                         f"[1:a]atrim=0:{total},asetpts=N/SR/TB,afade=t=in:d=0.3,afade=t=out:st={max(0, total - 1.2)}:d=1.2,volume=0.8[a]",
                         "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart", fin], check=True)
@@ -245,6 +252,31 @@ def render(scenes, out, total):
 
 if __name__ == "__main__":
     spec = json.load(open(sys.argv[1], encoding="utf-8")); out = sys.argv[2]
+    # Erzählerstimme: Szenen mit "say" bekommen Sprache (Piper/Thorsten), Szenendauer passt sich an
+    voice = None
+    if any(s.get("say") for s in spec["scenes"]) and not os.environ.get("PREVIEW") and spec.get("voice", True):
+        try:
+            import numpy as np
+            from scipy.signal import resample_poly
+            sys.path.insert(0, os.environ.get("TTS_DIR", "/tmp/tts")); import piper_tts as P
+            clips = []
+            for sc in spec["scenes"]:
+                if sc.get("say"):
+                    w, sr = P.synth(sc["say"], length_scale=float(spec.get("voice_speed", 0.92)), pause=0.12)
+                    w = resample_poly(w, 44100, sr); clips.append(w)
+                    sc["dur"] = round(max(float(sc.get("dur", 3)), len(w) / 44100 + 0.45), 2)
+                else: clips.append(None)
+            tot = sum(float(sc.get("dur", 3)) for sc in spec["scenes"]) + (0 if spec["scenes"][-1]["type"] == "cta" else 2.6)
+            buf = np.zeros(int((tot + 1) * 44100)); t0 = 0.0
+            for sc, c in zip(spec["scenes"], clips):
+                if c is not None: i = int((t0 + 0.15) * 44100); buf[i:i + len(c)] += c[: len(buf) - i]
+                t0 += float(sc.get("dur", 3))
+            buf = buf / (np.max(np.abs(buf)) + 1e-9) * 0.95
+            from scipy.io import wavfile
+            voice = os.path.splitext(out)[0] + "_voice.wav"; wavfile.write(voice, 44100, (buf * 32767).astype(np.int16))
+        except Exception as e:
+            print("Stimme nicht verfügbar:", e); voice = None
+    if voice: os.environ["REEL_VOICE"] = voice
     scenes = [(float(s.get("dur", 3)), BUILD[s["type"]](s)) for s in spec["scenes"]]
     if spec["scenes"][-1]["type"] != "cta": scenes.append((2.6, s_cta({})))
     total = sum(d for d, _ in scenes)

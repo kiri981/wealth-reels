@@ -1,0 +1,91 @@
+{
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "hook",
+   "dur": 2.4,
+   "text": "Gold fällt 30 $ in Minuten.",
+   "accent": "Und ich kaufe nicht.",
+   "icon": "bolt",
+   "say": "Gold fällt dreißig Dollar in Minuten. Und ich kaufe nicht."
+  },
+  {
+   "type": "line",
+   "dur": 3.6,
+   "title": "Gold am Fed-Abend (Beispiel)",
+   "values": [
+    4041,
+    4040,
+    4036,
+    4028,
+    4034,
+    4033,
+    4041,
+    4058,
+    4055
+   ],
+   "labels": [
+    "19:30",
+    "",
+    "20:00",
+    "",
+    "20:15",
+    "",
+    "20:30",
+    "",
+    "20:40"
+   ],
+   "end_label": "+30 $",
+   "footer": "Darstellung vereinfacht",
+   "say": "So sah der Fed-Abend aus."
+  },
+  {
+   "type": "words",
+   "dur": 3.4,
+   "kicker": "Meine Regel",
+   "text": "Erst der Kerzenschluss zählt – nie der Docht.",
+   "say": "Meine Regel: Erst der Kerzenschluss zählt. Nie der Docht."
+  },
+  {
+   "type": "counter",
+   "dur": 2.8,
+   "label": "Danach in 10 Minuten",
+   "from": 0,
+   "to": 30,
+   "decimals": 0,
+   "prefix": "+",
+   "suffix": " $",
+   "color": "green",
+   "sub": "Wer früh geshortet hat: ausgestoppt",
+   "say": "Zehn Minuten später: plus dreißig Dollar."
+  },
+  {
+   "type": "cards",
+   "dur": 3.4,
+   "title": "Diese Woche wichtig",
+   "items": [
+    {
+     "left": "Mi 21:00",
+     "right": "Fed-Zinsentscheid",
+     "hot": true
+    },
+    {
+     "left": "Do 15:30",
+     "right": "Arbeitslosenanträge"
+    },
+    {
+     "left": "Fr 15:30",
+     "right": "US-Arbeitsmarkt",
+     "hot": true
+    }
+   ],
+   "say": "Diese Woche wichtig: Fed-Zinsentscheid, Arbeitslosenanträge und der Arbeitsmarktbericht."
+  },
+  {
+   "type": "cta",
+   "dur": 2.6,
+   "title": "Plan vor der News.",
+   "say": "Gold-Ideen live auf Telegram. Link in Bio."
+  }
+ ]
+}
