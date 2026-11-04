@@ -1,0 +1,22 @@
+{
+ "music": "chill",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 2.6, "text": "Du willst in meine Gold-Gruppe?", "accent": "So kommst du rein:", "icon": "check",
+   "say": "Du willst in meine kostenlose Gold-Gruppe? So geht's."},
+  {"type": "words", "dur": 2.6, "kicker": "SCHRITT 1", "text": "Tipp oben auf mein Profil.",
+   "say": "Schritt eins: Tipp oben auf mein Profil."},
+  {"type": "words", "dur": 2.6, "kicker": "SCHRITT 2", "text": "Tipp auf das Instagram-Symbol.",
+   "say": "Schritt zwei: Tipp auf das Instagram-Symbol."},
+  {"type": "words", "dur": 2.8, "kicker": "SCHRITT 3", "text": "In der Bio wartet der Link zur Gruppe.",
+   "say": "Schritt drei: In der Bio wartet der Link zur Gruppe."},
+  {"type": "cards", "dur": 4.0, "title": "Das bekommst du – gratis", "items": [
+    {"left": "Morgens", "right": "Gold-Briefing", "hot": true},
+    {"left": "Mittags", "right": "Lern-Reel"},
+    {"left": "Abends", "right": "Markt-Reel"},
+    {"left": "Live", "right": "Trade-Ideen"}],
+   "say": "Jeden Tag: Gold-Briefing, Lern-Reels und Trade-Ideen. Komplett kostenlos."},
+  {"type": "cta", "dur": 2.8, "title": "Gold. Mit Plan.", "button": "Instagram im Profil",
+   "say": "Profil, Instagram, Link. Wir sehen uns in der Gruppe."}
+ ]
+}
