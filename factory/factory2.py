@@ -442,13 +442,14 @@ def render(scenes, out, total):
 
 if __name__ == "__main__":
     spec = json.load(open(sys.argv[1], encoding="utf-8")); out = sys.argv[2]
+    here = os.path.dirname(os.path.abspath(__file__))
     # Erzählerstimme: Szenen mit "say" bekommen Sprache (Piper/Thorsten), Szenendauer passt sich an
     voice = None
     if any(s.get("say") for s in spec["scenes"]) and not os.environ.get("PREVIEW") and spec.get("voice", True):
         try:
             import numpy as np
             from scipy.signal import resample_poly
-            sys.path.insert(0, os.environ.get("TTS_DIR", "/tmp/tts")); import piper_tts as P
+            os.environ.setdefault("TTS_DIR", os.path.join(here, "..", "tts")); sys.path.insert(0, os.environ["TTS_DIR"]); import piper_tts as P
             clips = []
             for sc in spec["scenes"]:
                 if sc.get("say"):

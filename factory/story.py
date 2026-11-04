@@ -46,11 +46,17 @@ def make(spec, out):
     im = Image.blend(im, glow.filter(ImageFilter.GaussianBlur(200)), 0.6)
     d = ImageDraw.Draw(im)
     # Kopf (Platz für Instagram-Profilzeile oben frei lassen)
+    import os
+    lp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "brand", "logo.png")
+    if os.path.exists(lp):   # Wealth-Club-Logo oben, wie in den Reels
+        lg = Image.open(lp).convert("RGBA"); lg = lg.resize((300, int(lg.height * 300 / lg.width)), Image.LANCZOS)
+        im.paste(lg, (int((W - lg.width) / 2), 150), lg)
     pill = "☀ GOLD-BRIEFING"
-    d.rounded_rectangle((80, 230, 80 + d.textlength(pill, font=SB(30)) + 50, 288), radius=29, outline=GOLD, width=2)
-    d.text((105, 259), pill, font=SB(30), fill=GOLD, anchor="lm")
-    d.text((80, 325), spec.get("date", ""), font=MD(34), fill=MUTED)
-    y = 395
+    pw = d.textlength(pill, font=SB(30))
+    d.rounded_rectangle((80, 330, 80 + pw + 50, 388), radius=29, fill=(52, 40, 16), outline=GOLD, width=2)
+    d.text((105, 359), pill, font=SB(30), fill=GOLD, anchor="lm")
+    d.text((80 + pw + 80, 359), spec.get("date", ""), font=MD(34), fill=MUTED, anchor="lm")
+    y = 425
     size = 92
     while size > 56 and (len(wrap(d, spec["headline"], H1(size), 920)) > 2 or max(d.textlength(l, font=H1(size)) for l in wrap(d, spec["headline"], H1(size), 920)) > 920): size -= 4
     y = block(d, 80, y, spec["headline"], H1(size), WHITE, 920, 1.08, 2) + 30
