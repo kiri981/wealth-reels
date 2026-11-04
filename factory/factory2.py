@@ -216,7 +216,7 @@ def s_words(sc):
 def s_cta(sc):
     def draw(im, t, tl):
         if sc.get("title"): scaled_text(im, W / 2, 640, sc["title"], H1(fit(sc["title"], 920, 84, 56, 1)), GOLD, 0.8 + 0.2 * back(tl / 0.35), clamp(tl / 0.2), glow=True)
-        p = clamp((tl - 0.3) / 0.3); text(im, (W / 2, 900), "Gold-Ideen live auf Telegram", H1(66), WHITE, p, dy=int(30 * (1 - p)))
+        p = clamp((tl - 0.3) / 0.3); sub = sc.get("sub", "Gold-Ideen live auf Telegram"); text(im, (W / 2, 900), sub, H1(fit(sub, 960, 66, 44, 1)), WHITE, p, dy=int(30 * (1 - p)))
         q = back(clamp((tl - 0.6) / 0.35)); s = q * (1 + 0.04 * math.sin(tl * 7) * (tl > 1))
         if q > 0:
             bw, bh = 640 * s, 130 * s; rrect(im, (W / 2 - bw / 2, 1110 - bh / 2, W / 2 + bw / 2, 1110 + bh / 2), GOLD, 1, r=int(65 * s))
