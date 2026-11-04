@@ -51,11 +51,27 @@ def background(t):
         d.ellipse((x - r, yy - r, x + r, yy + r), fill=c)
     return im
 
-def chrome(im, t, total):
-    d = ImageDraw.Draw(im); f = SB(30); txt = "GOLD  ·  XAUUSD"; w = d.textlength(txt, font=f); x0 = (W - w) / 2 - 26
-    d.rounded_rectangle((x0, 150, x0 + w + 52, 204), radius=27, outline=GOLD, width=2)
-    d.text((W / 2, 177), txt, font=f, fill=GOLD, anchor="mm")
+_LOGO = {}
+def logo(width):
+    """Wealth-Club-Logo (brand/logo.png, transparent) in gewünschter Breite."""
+    if width not in _LOGO:
+        p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "brand", "logo.png")
+        if not os.path.exists(p): _LOGO[width] = None
+        else:
+            im = Image.open(p).convert("RGBA"); _LOGO[width] = im.resize((width, int(im.height * width / im.width)), Image.LANCZOS)
+    return _LOGO[width]
+
+CHROME = {"logo": True}
+def chrome(im, t, total, show_logo=True):
+    d = ImageDraw.Draw(im)
+    lg = logo(250) if CHROME.get("logo") and show_logo else None
+    if lg is not None: im.paste(lg, (int((W - lg.width) / 2), 120), lg)
+    elif show_logo:
+        f = SB(30); txt = "GOLD  ·  XAUUSD"; w = d.textlength(txt, font=f); x0 = (W - w) / 2 - 26
+        d.rounded_rectangle((x0, 150, x0 + w + 52, 204), radius=27, outline=GOLD, width=2)
+        d.text((W / 2, 177), txt, font=f, fill=GOLD, anchor="mm")
     d.rectangle((0, 0, W, 8), fill=(30, 34, 44)); d.rectangle((0, 0, int(W * clamp(t / total)), 8), fill=GOLD)
+    d.text((W / 2, 1585), CHROME.get("footer", "Keine Anlageberatung · Trading birgt Verlustrisiken"), font=font("Inter-Medium.otf", 24), fill=(98, 104, 118), anchor="mm")
 
 def scaled_text(im, cx, cy, s, fnt, fill, scale=1.0, alpha=1.0, glow=False):
     """Text als Ebene rendern, skalieren (Pop-Effekt), optional mit Leuchten."""
@@ -207,7 +223,181 @@ def s_cta(sc):
         text(im, (W / 2, 1290), "Keine Anlageberatung. Trading birgt Verlustrisiken.", font("Inter-Medium.otf", 30), MUTED, clamp((tl - 0.9) / 0.3))
     return draw
 
-BUILD = {"hook": s_hook, "counter": s_counter, "line": s_line, "cards": s_cards, "words": s_words, "cta": s_cta}
+# ---------- Neue Bausteine (v2.1): Logo, Kerzen-Chart mit Markierungen, Benachrichtigungen ----------
+def rich_title(im, s, cy, tl, maxw=940, start=64, mn=40, lines=2, delay=0.0):
+    """Titel mit *Hervorhebung* (gold), Wörter ploppen schnell nacheinander auf. Gibt untere Kante zurück."""
+    plain = s.replace("*", ""); fnt = H1(fit(plain, maxw, start, mn, lines)); hl, on = set(), False
+    for k, w in enumerate(s.split()):
+        if w.startswith("*"): on = True
+        if on: hl.add(k)
+        if w.endswith("*") or w.endswith("*,") or w.endswith("*.") or w.endswith("*?"): on = False
+    ws = word_layout(plain, fnt, maxw, cy, 1.15)
+    for k, (w, x, y) in enumerate(ws):
+        p = (tl - delay - k * 0.05) / 0.22
+        if p > 0: scaled_text(im, x, y, w, fnt, GOLD if k in hl else WHITE, 0.85 + 0.15 * back(p), clamp(p * 2))
+    return ws[-1][2] + fnt.size * 0.7 if ws else cy
+
+def step_pill(im, s, cy, a):
+    if not s or a <= 0: return
+    d = ImageDraw.Draw(Image.new("RGB", (1, 1))); f = SB(30); w = d.textlength(s, font=f)
+    rrect(im, (W / 2 - w / 2 - 26, cy - 26, W / 2 + w / 2 + 26, cy + 26), (52, 40, 16), a, r=26, outline=GOLD, width=2)
+    text(im, (W / 2, cy), s, f, GOLD, a)
+
+def tag(im, x, y, s, c, a, side="right"):
+    """Preis-Etikett (z. B. ENTRY, SL, BUY) – Pille an Position x/y."""
+    if a <= 0: return
+    f = font("Inter-Bold.otf", 26); w = ImageDraw.Draw(im).textlength(s, font=f); x0 = x + 16 if side == "right" else x - w - 52
+    x0 = min(max(x0, 70), 1010 - w - 36)
+    rrect(im, (x0, y - 22, x0 + w + 36, y + 22), c, a, r=22); text(im, (x0 + 18 + w / 2, y), s, f, BG if c != RED else WHITE, a)
+
+def stamp(im, cx, cy, s, a, scale):
+    """Schräger Stempel (z. B. AUSGESTOPPT)."""
+    if a <= 0 or scale <= 0.05: return
+    f = H1(58); d0 = ImageDraw.Draw(Image.new("RGB", (1, 1))); w = d0.textlength(s, font=f)
+    lay = Image.new("RGBA", (int(w + 80), 130), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    d.rounded_rectangle((6, 6, w + 74, 124), radius=22, outline=RED + (255,), width=7, fill=(40, 10, 12, 200))
+    d.text(((w + 80) / 2, 65), s, font=f, fill=RED + (255,), anchor="mm")
+    lay = lay.rotate(8, expand=True, resample=Image.BICUBIC)
+    lay = lay.resize((max(1, int(lay.width * scale)), max(1, int(lay.height * scale))), Image.BICUBIC)
+    if a < 1: lay.putalpha(lay.getchannel("A").point(lambda v: int(v * a)))
+    im.paste(lay, (int(cx - lay.width / 2), int(cy - lay.height / 2)), lay)
+
+def make_pattern(kind, seed=7):
+    """Beispiel-Muster für Lern-Reels (immer als „Beispielhafte Darstellung“ kennzeichnen).
+    sweep: Range mit gleichen Tiefs -> Stop-Sweep darunter -> Umkehr nach oben.
+    stopped: Long, Stop knapp unter Tief wird abgeholt -> danach läuft der Preis hoch."""
+    r = random.Random(seed); cs = []; p = 100.0
+    def bar(o, c, wick=0.6):
+        h = max(o, c) + r.uniform(0.1, wick); l = min(o, c) - r.uniform(0.1, wick); cs.append([o, h, l, c]); return c
+    if kind == "stopped":
+        for _ in range(12): p = bar(p, p + r.uniform(0.2, 1.4))
+        top = p
+        for _ in range(4): p = bar(p, p - r.uniform(0.9, 1.6))
+        low = min(c[2] for c in cs[-4:]); entry = cs[-1][3]
+        p = bar(p, p - 0.6, 0.3); cs[-1][2] = low - 1.6; sl_i = len(cs) - 1
+        for _ in range(7): p = bar(p, p + r.uniform(1.2, 2.4))
+        return cs, {"entry": entry, "sl": low - 0.9, "sl_i": sl_i, "entry_i": sl_i - 2}
+    # sweep
+    for _ in range(7): p = bar(p, p - r.uniform(0.8, 1.8))
+    low = min(c[2] for c in cs) ; lows = []
+    for k in range(3):
+        for _ in range(3): p = bar(p, p + r.uniform(0.6, 1.4))
+        for _ in range(3): p = bar(p, p - r.uniform(0.6, 1.4))
+        cs[-1][2] = low + r.uniform(0.0, 0.25); lows.append(len(cs) - 1); p = cs[-1][3] = max(cs[-1][3], cs[-1][2] + 0.4)
+    p = bar(p, p - 0.4, 0.2); cs[-1][2] = low - 2.4; sweep_i = len(cs) - 1; cs[-1][3] = low + 0.6
+    p = cs[-1][3]
+    for _ in range(9): p = bar(p, p + r.uniform(1.0, 2.2))
+    return cs, {"low": low, "sweep_i": sweep_i, "lows": lows, "entry_i": sweep_i + 1, "entry": cs[sweep_i + 1][3], "sl": low - 2.9}
+
+def s_candles(sc):
+    if sc.get("pattern"):
+        cs, info = make_pattern(sc["pattern"], sc.get("seed", 7))
+        lv, tags, zone, stp = [], [], None, None
+        ann = sc.get("show", ["level", "zone", "sweep", "entry"])
+        if sc["pattern"] == "sweep":
+            if "level" in ann: lv.append({"price": info["low"], "text": "OFFENSICHTLICHES TIEF", "color": "white"})
+            if "zone" in ann: zone = {"from": info["low"] - 1.6, "to": info["low"], "text": "LIQUIDITÄT"}
+            if "sweep" in ann: tags.append({"i": info["sweep_i"], "price": cs[info["sweep_i"]][2], "text": "SWEEP", "color": "gold"})
+            if "entry" in ann:
+                tags.append({"i": info["entry_i"], "price": info["entry"], "text": "ENTRY", "color": "white"})
+                tags.append({"i": info["entry_i"], "price": info["sl"], "text": "SL UNTER DEM DOCHT", "color": "red"})
+        else:
+            tags = [{"i": info["entry_i"], "price": info["entry"], "text": "BUY", "color": "white"}, {"i": info["entry_i"], "price": info["sl"], "text": "STOP LOSS", "color": "red"}]
+            lv.append({"price": info["sl"], "text": "", "color": "red", "from_i": info["entry_i"]})
+            if "stamp" in ann or True: stp = {"i": info["sl_i"], "text": "AUSGESTOPPT"}
+        sc = dict(sc); sc.setdefault("levels", lv); sc.setdefault("tags", tags); sc.setdefault("zone", zone); sc.setdefault("stamp", stp)
+        sc.setdefault("footer", "Beispielhafte Darstellung")
+    else:
+        cs = sc["candles"]
+    n = len(cs); lo = min(c[2] for c in cs); hi = max(c[1] for c in cs)
+    for v in [l["price"] for l in sc.get("levels") or []] + [t["price"] for t in sc.get("tags") or []]: lo, hi = min(lo, v), max(hi, v)
+    pad = (hi - lo) * 0.1 or 1; lo -= pad; hi += pad
+    X0, X1, Y0, Y1 = 90, 960, 640 if sc.get("title") else 520, 1330
+    py = lambda v: Y1 - (v - lo) / (hi - lo) * (Y1 - Y0); cw = (X1 - X0) / n; cx = lambda i: X0 + cw * i + cw / 2
+    reveal = sc.get("reveal", float(sc.get("dur", 5)) * 0.55)
+    def draw(im, t, tl):
+        if sc.get("step"): step_pill(im, sc["step"], 360, clamp(tl / 0.2))
+        if sc.get("title"): rich_title(im, sc["title"], 470, tl, 940, 60, 40, 2)
+        d = ImageDraw.Draw(im); k = clamp(tl / reveal) * n; full = int(k)
+        z = sc.get("zone")
+        if z:
+            a = clamp((tl - reveal * 0.6) / 0.4)
+            if a > 0:
+                y1, y2 = py(z["to"]), py(z["from"]); layer = Image.new("RGBA", im.size, (0, 0, 0, 0))
+                ImageDraw.Draw(layer).rectangle((X0, y1, X1, y2), fill=GOLD + (int(55 * a),)); im.paste(layer, (0, 0), layer)
+                if z.get("text"): tag(im, (X0 + X1) / 2 - 60, (y1 + y2) / 2 + 28, z["text"], GOLD, a)
+        for lv in sc.get("levels") or []:
+            a = clamp((tl - reveal * 0.45) / 0.35)
+            if a <= 0: continue
+            c = col(lv.get("color"), "white"); x0 = cx(lv.get("from_i", 0)) - cw / 2
+            for x in range(int(x0), int(X1), 24): d.line((x, py(lv["price"]), x + 12, py(lv["price"])), fill=tuple(int(BG[j] + (c[j] - BG[j]) * a) for j in range(3)), width=3)
+            if lv.get("text"): text(im, (x0 + 4, py(lv["price"]) + 26), lv["text"], font("Inter-Bold.otf", 22), c, a, anchor="lm")
+        for i in range(min(n, full + 1)):
+            o, h, l, c = cs[i]
+            if i == full:
+                f = k - full
+                if f <= 0: break
+                c = o + (c - o) * f; h = max(o, c, o + (h - o) * min(1, f * 1.6)); l = min(o, c, o + (l - o) * min(1, f * 1.6))
+            x = cx(i); cc = GREEN if c >= o else RED
+            d.line((x, py(h), x, py(l)), fill=cc, width=max(2, int(cw * 0.1)))
+            top, bot = py(max(o, c)), py(min(o, c)); d.rectangle((x - cw * 0.3, top, x + cw * 0.3, max(bot, top + 3)), fill=cc)
+        for tg in sc.get("tags") or []:
+            a = clamp((k - tg["i"] - 1) / 0.8) if tg["i"] < n else 0
+            tag(im, cx(tg["i"]), py(tg["price"]), tg["text"], col(tg.get("color"), "white"), back(a) if a < 1 else 1)
+        stp = sc.get("stamp")
+        if stp:
+            a = clamp((k - stp["i"] - 2) / 1.0)
+            if a > 0: stamp(im, W / 2 + 150, py(cs[stp["i"]][2]) + 120, stp["text"], clamp(a * 2), 1.4 - 0.4 * back(a))
+        if sc.get("caption"):
+            p = clamp((tl - reveal - 0.2) / 0.3); cap = sc["caption"].replace("*", "")
+            para_y = 1400; fnt = SB(40)
+            for j, ln in enumerate(wrap_words(cap.split(), fnt, 900)): text(im, (W / 2, para_y + j * 52), " ".join(ln), fnt, WHITE, p, dy=int(20 * (1 - p)))
+        if sc.get("footer"): text(im, (W / 2, 1530), sc["footer"], SB(24), MUTED, clamp(tl / 0.4))
+    return draw
+
+def s_notify(sc):
+    items = sc["items"][:4]
+    def draw(im, t, tl):
+        if sc.get("title"): rich_title(im, sc["title"], 430, tl, 940, 66, 44, 2)
+        av = logo(70)
+        for i, it in enumerate(items):
+            q = back(clamp((tl - 0.5 - i * 0.6) / 0.35)); y = 600 + i * 190
+            if q <= 0: continue
+            shake = 6 * math.sin(tl * 60) * max(0, 1 - (tl - 0.5 - i * 0.6) / 0.25) if q >= 0.9 else 0
+            dy = (1 - q) * -120; x0 = 90 + shake
+            rrect(im, (x0, y + dy, x0 + 900, y + 160 + dy), (26, 30, 42), clamp(q), r=34, outline=(48, 54, 70))
+            rrect(im, (x0 + 26, y + 30 + dy, x0 + 126, y + 130 + dy), (8, 9, 12), clamp(q), r=22)
+            if av is not None and q > 0.5:
+                sm = av.resize((92, int(av.height * 92 / av.width))); im.paste(sm, (int(x0 + 30), int(y + 80 + dy - sm.height / 2)), sm)
+            text(im, (x0 + 150, y + 55 + dy), it.get("app", "Wealth Club"), font("Inter-Bold.otf", 32), WHITE, clamp(q), anchor="lm")
+            text(im, (x0 + 870, y + 55 + dy), it.get("time", "jetzt"), SB(26), MUTED, clamp(q), anchor="rm")
+            dot = col(it.get("color"), "green"); d = ImageDraw.Draw(im)
+            if q > 0.5: d.ellipse((x0 + 150, y + 103 + dy, x0 + 166, y + 119 + dy), fill=dot)
+            text(im, (x0 + 180, y + 111 + dy), it["text"], SB(32), (210, 214, 222), clamp(q), anchor="lm")
+    return draw
+
+def s_logo(sc):
+    """Logo-Intro/-Outro: Logo zoomt sanft rein, Glanz läuft drüber."""
+    big = logo(860)
+    def draw(im, t, tl):
+        if big is None: return
+        p = back(clamp(tl / 0.6)); s = 0.85 + 0.15 * p + 0.02 * tl
+        lg = big.resize((max(1, int(big.width * s)), max(1, int(big.height * s))), Image.LANCZOS)
+        if p < 1: lg.putalpha(lg.getchannel("A").point(lambda v: int(v * clamp(p))))
+        sx = (tl - 0.5) / 0.9
+        if 0 < sx < 1:   # Glanzstreifen
+            sh = Image.new("L", lg.size, 0); dd = ImageDraw.Draw(sh); x = int(-200 + (lg.width + 400) * sx)
+            dd.polygon([(x, 0), (x + 90, 0), (x - 60, lg.height), (x - 150, lg.height)], fill=150)
+            sh = sh.filter(ImageFilter.GaussianBlur(18))
+            white = Image.new("RGBA", lg.size, (255, 255, 255, 0)); white.putalpha(Image.composite(sh, Image.new("L", lg.size, 0), lg.getchannel("A")))
+            lg = Image.alpha_composite(lg, white)
+        im.paste(lg, (int((W - lg.width) / 2), int(820 - lg.height / 2)), lg)
+        if sc.get("sub"): p2 = clamp((tl - 0.9) / 0.3); text(im, (W / 2, 1120), sc["sub"], SB(44), MUTED, p2, dy=int(20 * (1 - p2)))
+    draw.no_logo = True
+    return draw
+
+BUILD = {"hook": s_hook, "counter": s_counter, "line": s_line, "cards": s_cards, "words": s_words, "cta": s_cta,
+         "candles": s_candles, "notify": s_notify, "logo": s_logo}
 
 def render(scenes, out, total):
     import subprocess
@@ -215,7 +405,7 @@ def render(scenes, out, total):
     if os.environ.get("PREVIEW"):
         t0 = 0.0
         for k, (dur, fn) in enumerate(scenes):
-            tl = dur * 0.9; im = background(t0 + tl); fn(im, t0 + tl, tl); chrome(im, t0 + tl, total); im.save(f"{base}_prev{k}.jpg", quality=85); t0 += dur
+            tl = dur * 0.9; im = background(t0 + tl); fn(im, t0 + tl, tl); chrome(im, t0 + tl, total, not getattr(fn, 'no_logo', False)); im.save(f"{base}_prev{k}.jpg", quality=85); t0 += dur
         return
     tmp = base + "_v.mp4"
     p = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
@@ -226,7 +416,7 @@ def render(scenes, out, total):
         for i in range(n):
             tl = i / FPS; tg = t0 + tl; im = background(tg)
             zoom = 1 + 0.05 * math.exp(-tl * 5) if k > 0 else 1 + 0.06 * (1 - ease(tl / 0.5))   # Ruck/Zoom beim Szenenwechsel
-            fn(im, tg, tl); chrome(im, tg, total)
+            fn(im, tg, tl); chrome(im, tg, total, not getattr(fn, 'no_logo', False))
             if zoom > 1.001:
                 zw, zh = int(W * zoom), int(H * zoom); im = im.resize((zw, zh), Image.BILINEAR).crop(((zw - W) // 2, (zh - H) // 2, (zw - W) // 2 + W, (zh - H) // 2 + H))
             fade = min(1.0, (dur - tl) / 0.12)

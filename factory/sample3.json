@@ -1,0 +1,80 @@
+{
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.8
+  },
+  {
+   "type": "candles",
+   "dur": 4.2,
+   "pattern": "stopped",
+   "title": "Dein Stop wird abgeholt – *und DANN* läuft der Preis in deine Richtung?"
+  },
+  {
+   "type": "words",
+   "dur": 2.6,
+   "kicker": "Das ist kein Pech.",
+   "text": "Das ist Liquidität."
+  },
+  {
+   "type": "candles",
+   "dur": 4.6,
+   "pattern": "sweep",
+   "show": [
+    "level",
+    "zone"
+   ],
+   "step": "SCHRITT 01",
+   "title": "Trader setzen ihren Stop unter das *offensichtliche Tief*"
+  },
+  {
+   "type": "candles",
+   "dur": 4.6,
+   "pattern": "sweep",
+   "show": [
+    "level",
+    "zone",
+    "sweep"
+   ],
+   "step": "SCHRITT 02",
+   "title": "Große Player holen sich genau *diese Liquidität*",
+   "caption": "Die Stops werden ausgelöst – dann dreht der Markt."
+  },
+  {
+   "type": "candles",
+   "dur": 4.8,
+   "pattern": "sweep",
+   "show": [
+    "level",
+    "entry"
+   ],
+   "step": "SCHRITT 03",
+   "title": "Steig *NACH* dem Sweep ein – nicht davor"
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Neue Gold-Idee: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "Update: SL auf Einstieg",
+     "color": "gold"
+    },
+    {
+     "text": "Neue Gold-Idee: XAUUSD SELL",
+     "color": "red"
+    }
+   ]
+  },
+  {
+   "type": "cta",
+   "dur": 2.8,
+   "title": "Gold. Mit Plan."
+  }
+ ]
+}
