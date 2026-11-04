@@ -7,7 +7,7 @@ Die Kerzen sind echte Kurse (Kraken). Das Reel kennzeichnet den Trade klar als a
 import json, sys
 from datetime import datetime, timezone, timedelta
 
-NAMES = {"BTCUSD": "Bitcoin", "ETHUSD": "Ethereum", "XAUUSD": "Gold"}
+NAMES = {"BTCUSD": "Bitcoin", "ETHUSD": "Ethereum", "XAUUSD": "Gold", "GOLD": "Gold", "XAGUSD": "Silber", "NAS100": "Nasdaq", "NASDAQ": "Nasdaq", "US100": "Nasdaq", "USTEC": "Nasdaq", "US500": "S&P 500", "SPX500": "S&P 500", "SP500": "S&P 500", "US30": "Dow Jones"}
 ONES = ["null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn"]
 
 
@@ -50,7 +50,7 @@ def make_spec(t):
                         {"price": t["tp"], "text": "FULL TP " + fmt(t["tp"]), "color": "green", "from_i": ei}],
              "tags": [{"i": ei, "price": t["entry"], "text": side, "color": "white"},
                       {"i": xi, "price": t.get("exit") or t["tp"], "text": "ZIEL ERREICHT", "color": "green"}],
-             "footer": "Echte Kurse (Kraken) · ausgewählter Trade",
+             "footer": f"Echte Kurse ({t.get('source') or 'Kraken'}) · ausgewählter Trade",
              "say": f"Einstieg bei {round(t['entry'])}. Stopp bei {round(t['sl'])}. Ziel bei {round(t['tp'])}."},
             {"type": "words", "dur": 3.0, "kicker": "ERGEBNIS", "text": f"{rs} in {dur_text((t.get('closed') or ts[-1]) - t['opened'])}.",
              "say": f"Ziel erreicht: plus {r_words(r)} R in {dur_text((t.get('closed') or ts[-1]) - t['opened'])}."},
