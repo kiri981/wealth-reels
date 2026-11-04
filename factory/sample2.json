@@ -1,0 +1,8 @@
+{"music":"drive","scenes":[
+ {"type":"hook","dur":2.4,"text":"Gold fällt 30 $ in Minuten.","accent":"Und ich kaufe nicht.","icon":"bolt"},
+ {"type":"line","dur":3.6,"title":"Gold am Fed-Abend (Beispiel)","values":[4041,4040,4036,4028,4034,4033,4041,4058,4055],"labels":["19:30","","20:00","","20:15","","20:30","","20:40"],"end_label":"+30 $","footer":"Darstellung vereinfacht"},
+ {"type":"words","dur":3.4,"kicker":"Meine Regel","text":"Erst der Kerzenschluss zählt – nie der Docht."},
+ {"type":"counter","dur":2.8,"label":"Danach in 10 Minuten","from":0,"to":30,"decimals":0,"prefix":"+","suffix":" $","color":"green","sub":"Wer früh geshortet hat: ausgestoppt"},
+ {"type":"cards","dur":3.4,"title":"Diese Woche wichtig","items":[{"left":"Mi 21:00","right":"Fed-Zinsentscheid","hot":true},{"left":"Do 15:30","right":"Arbeitslosenanträge"},{"left":"Fr 15:30","right":"US-Arbeitsmarkt","hot":true}]},
+ {"type":"cta","dur":2.6,"title":"Plan vor der News."}
+]}
