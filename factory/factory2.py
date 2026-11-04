@@ -77,8 +77,9 @@ def scaled_text(im, cx, cy, s, fnt, fill, scale=1.0, alpha=1.0, glow=False):
     """Text als Ebene rendern, skalieren (Pop-Effekt), optional mit Leuchten."""
     if alpha <= 0 or scale <= 0.01: return
     d0 = ImageDraw.Draw(Image.new("RGB", (1, 1))); bb = d0.textbbox((0, 0), s, font=fnt)
-    w, h = bb[2] - bb[0] + 40, bb[3] - bb[1] + 40
-    lay = Image.new("RGBA", (w, h), (0, 0, 0, 0)); ImageDraw.Draw(lay).text((20 - bb[0], 20 - bb[1]), s, font=fnt, fill=fill + (255,))
+    asc, desc = fnt.getmetrics()   # einheitliche Höhe je Schrift -> alle Wörter auf derselben Grundlinie (nicht krumm)
+    w, h = bb[2] - bb[0] + 40, asc + desc + 40
+    lay = Image.new("RGBA", (w, h), (0, 0, 0, 0)); ImageDraw.Draw(lay).text((20 - bb[0], 20), s, font=fnt, fill=fill + (255,))
     if glow:
         g = lay.filter(ImageFilter.GaussianBlur(14)); lay = Image.alpha_composite(g, lay)
     if scale != 1: lay = lay.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.BICUBIC)
@@ -409,16 +410,17 @@ def render(scenes, out, total):
         return
     tmp = base + "_v.mp4"
     p = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-                          "-c:v", "libx264", "-crf", os.environ.get("REEL_CRF", "23"), "-preset", "veryfast", "-pix_fmt", "yuv420p", tmp], stdin=subprocess.PIPE)
+                          "-c:v", "libx264", "-crf", os.environ.get("REEL_CRF", "20"), "-preset", "fast", "-pix_fmt", "yuv420p", tmp], stdin=subprocess.PIPE)
     t0 = 0.0
     for k, (dur, fn) in enumerate(scenes):
         n = int(round(dur * FPS))
         for i in range(n):
             tl = i / FPS; tg = t0 + tl; im = background(tg)
-            zoom = 1 + 0.05 * math.exp(-tl * 5) if k > 0 else 1 + 0.06 * (1 - ease(tl / 0.5))   # Ruck/Zoom beim Szenenwechsel
+            zoom = 1 + 0.03 * math.exp(-tl * 6) if k > 0 else 1 + 0.04 * (1 - ease(tl / 0.5))   # sanfter Zoom beim Szenenwechsel
             fn(im, tg, tl); chrome(im, tg, total, not getattr(fn, 'no_logo', False))
-            if zoom > 1.001:
-                zw, zh = int(W * zoom), int(H * zoom); im = im.resize((zw, zh), Image.BILINEAR).crop(((zw - W) // 2, (zh - H) // 2, (zw - W) // 2 + W, (zh - H) // 2 + H))
+            if zoom > 1.0005:   # Subpixel-genau (kein Wackeln der Schrift durch Rundung auf ganze Pixel)
+                cw, ch = W / zoom, H / zoom; x0, y0 = (W - cw) / 2, (H - ch) / 2
+                im = im.resize((W, H), Image.BICUBIC, box=(x0, y0, x0 + cw, y0 + ch))
             fade = min(1.0, (dur - tl) / 0.12)
             if fade < 1: im = Image.blend(Image.new("RGB", (W, H), BG), im, max(0, fade))
             p.stdin.write(im.tobytes())
