@@ -542,7 +542,8 @@ if __name__ == "__main__":
                     sc["dur"] = round(max(float(sc.get("dur", 3)), len(w) / 44100 + 1.0), 2)
                 else: clips.append(None)
             tot = sum(float(sc.get("dur", 3)) for sc in spec["scenes"]) + (0 if spec["scenes"][-1]["type"] == "cta" else 2.6)
-            buf = np.zeros(int((tot + 1) * 44100)); t0 = 0.0
+            cov = 0.5 if spec.get("cover") else 0.0   # Titelbild steht 0,5 s vorne -> Stimme verschieben
+            tot += cov; buf = np.zeros(int((tot + 1) * 44100)); t0 = cov
             for sc, c in zip(spec["scenes"], clips):
                 if c is not None: i = int((t0 + 0.15) * 44100); buf[i:i + len(c)] += c[: len(buf) - i]
                 t0 += float(sc.get("dur", 3))
