@@ -319,5 +319,10 @@
    "sub": "Live-Signale im VIP-Kanal",
    "say": "Live-Signale im VIP. Kommentiere VIP für Infos."
   }
- ]
+ ],
+ "cover": {
+  "kicker": "REPLAY",
+  "title": "Bitcoin *+2,0 R* Trend Breakout",
+  "chart": "up"
+ }
 }

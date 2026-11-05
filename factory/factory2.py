@@ -494,8 +494,9 @@ def render(scenes, out, total):
         for i in range(n):
             tl = i / FPS; tg = t0 + tl; im = background(tg)
             zoom = 1 + 0.03 * math.exp(-tl * 6) if k > 0 else 1 + 0.04 * (1 - ease(tl / 0.5))   # sanfter Zoom beim Szenenwechsel
-            fn(im, tg, tl); chrome(im, tg, total, not getattr(fn, 'no_logo', False))
-            if zoom > 1.0005:   # Subpixel-genau (kein Wackeln der Schrift durch Rundung auf ganze Pixel)
+            fn(im, tg, tl)
+            if not getattr(fn, 'no_chrome', False): chrome(im, tg, total, not getattr(fn, 'no_logo', False))
+            if zoom > 1.0005 and not getattr(fn, 'no_chrome', False):   # Subpixel-genau (kein Wackeln der Schrift durch Rundung auf ganze Pixel)
                 cw, ch = W / zoom, H / zoom; x0, y0 = (W - cw) / 2, (H - ch) / 2
                 im = im.resize((W, H), Image.BICUBIC, box=(x0, y0, x0 + cw, y0 + ch))
             fade = min(1.0, (dur - tl) / 0.12)
@@ -552,6 +553,15 @@ if __name__ == "__main__":
             print("Stimme nicht verfügbar:", e); voice = None
     if voice: os.environ["REEL_VOICE"] = voice
     scenes = [(float(s.get("dur", 3)), BUILD[s["type"]](s)) for s in spec["scenes"]]
+    # Titelbild: spec "cover": {"kicker": "LERN-REEL", "title": "… *Wort* …", "chart": "up"} -> <out>_cover.jpg + 0,5 s als erstes Bild
+    if spec.get("cover"):
+        import cover as _cv
+        cp = os.path.splitext(out)[0] + "_cover.jpg"; cv = spec["cover"]
+        _cv.make(cv.get("kicker", "LERN-REEL"), cv["title"], cp, cv.get("chart", "up"))
+        _still = Image.open(cp).convert("RGB")
+        def _draw_cover(im, t, tl, _s=_still): im.paste(_s, (0, 0))
+        _draw_cover.no_logo = True; _draw_cover.no_chrome = True
+        scenes.insert(0, (0.5, _draw_cover))
     if spec["scenes"][-1]["type"] != "cta": scenes.append((2.6, s_cta({})))
     total = sum(d for d, _ in scenes)
     here = os.path.dirname(os.path.abspath(__file__)); import glob, subprocess as sp
