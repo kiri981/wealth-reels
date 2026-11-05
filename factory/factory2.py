@@ -512,8 +512,32 @@ def s_signal(sc):
         if sc.get("time"): text(im, (x0 + bw - 34, y0 + bh - 40 + dy), sc["time"], SB(28), MUTED, clamp((tl - 0.6) / 0.3), anchor="rm")
     return draw
 
+def s_shot(sc):
+    """Echter Screenshot des Original-Signals (Datei oder URL) als Karte mit sanftem Zoom."""
+    import io, urllib.request
+    src = sc["image"]
+    raw = urllib.request.urlopen(src, timeout=30).read() if src.startswith("http") else open(src, "rb").read()
+    img = Image.open(io.BytesIO(raw)).convert("RGB")
+    maxw, maxh = 920, 1120
+    k = min(maxw / img.width, maxh / img.height); base = img.resize((int(img.width * k), int(img.height * k)), Image.LANCZOS)
+    m = Image.new("L", base.size, 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, base.width, base.height), radius=28, fill=255)
+    def draw(im, t, tl):
+        step_pill(im, sc.get("kicker", "DAS ORIGINAL-SIGNAL"), 290, clamp(tl / 0.25))
+        q = back(clamp((tl - 0.15) / 0.4))
+        if q <= 0: return
+        z = 0.9 + 0.1 * q + 0.02 * tl
+        b = base.resize((max(1, int(base.width * z)), max(1, int(base.height * z))), Image.BICUBIC)
+        mm = m.resize(b.size)
+        if q < 1: mm = mm.point(lambda v: int(v * clamp(q)))
+        cy = 900; x = int((W - b.width) / 2); y = int(cy - b.height / 2)
+        rrect(im, (x - 6, y - 6, x + b.width + 6, y + b.height + 6), GOLD, clamp(q) * 0.9, r=32)
+        im.paste(b, (x, y), mm)
+        if sc.get("time"):
+            p = clamp((tl - 0.8) / 0.3); text(im, (W / 2, min(1500, y + b.height + 60)), sc["time"], SB(34), GOLD, p)
+    return draw
+
 BUILD = {"hook": s_hook, "counter": s_counter, "line": s_line, "cards": s_cards, "words": s_words, "cta": s_cta,
-         "candles": s_candles, "notify": s_notify, "logo": s_logo, "signal": s_signal}
+         "candles": s_candles, "notify": s_notify, "logo": s_logo, "signal": s_signal, "shot": s_shot}
 
 def render(scenes, out, total):
     import subprocess
