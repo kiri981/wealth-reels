@@ -1,0 +1,22 @@
+{
+ "cover": {"kicker": "MARKT", "title": "Gold: *+3 %* nach der Wahl", "chart": "up"},
+ "music": "drive",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 3.0, "text": "Gold +3 % an einem Tag.", "accent": "Der Auslöser war nicht Gold.", "icon": "bolt"},
+  {"type": "counter", "dur": 3.8, "label": "Gold heute (Do.)", "from": 0, "to": 4124, "decimals": 0, "suffix": " $", "color": "green", "sub": "+1,6 % · 2-Wochen-Hoch (Trading Economics)"},
+  {"type": "cards", "dur": 4.8, "title": "Die Treiber seit Mittwoch", "items": [
+    {"left": "Wahl", "right": "Demokraten holen Kongress", "hot": true},
+    {"left": "Dollar", "right": "Index −0,37 % auf 101,49"},
+    {"left": "Rendite", "right": "10 J. fällt auf 4,90 %"},
+    {"left": "Öl", "right": "fällt – Iran-Hoffnung"}
+  ]},
+  {"type": "words", "dur": 4.2, "kicker": "FREITAG 14:30", "text": "US-Arbeitsmarkt: Starke Daten können Gold bremsen, schwache stützen."},
+  {"type": "notify", "dur": 4.0, "title": "Keine Zeit, den Markt *selbst* zu analysieren?", "items": [
+    {"text": "Gold-Update: Treiber kurz erklärt", "time": "jetzt"},
+    {"text": "Termin-Check: Arbeitsmarkt Fr 14:30", "time": "1 Min.", "color": "gold"},
+    {"text": "Live-Analyse in der Gruppe", "time": "2 Min."}
+  ]},
+  {"type": "cta", "dur": 3.0, "title": "Erst die Treiber. Dann der Chart.", "button": "Kommentiere GOLD"}
+ ]
+}
