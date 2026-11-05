@@ -47,7 +47,7 @@ def make_spec(t):
              "title": f"{setup}: *{side}*",
              "levels": [{"price": t["entry"], "text": "ENTRY " + fmt(t["entry"]), "color": "white", "from_i": ei},
                         {"price": t["sl"], "text": "STOP " + fmt(t["sl"]), "color": "red", "from_i": ei},
-                        {"price": t["tp"], "text": "FULL TP " + fmt(t["tp"]), "color": "green", "from_i": ei}],
+                        {"price": t["tp"], "text": ((t.get("result") if str(t.get("result") or "").startswith("TP") and t.get("result") != "TP" else "FULL TP") + " " + fmt(t["tp"])), "color": "green", "from_i": ei}],
              "tags": [{"i": ei, "price": t["entry"], "text": side, "color": "white"},
                       {"i": xi, "price": t.get("exit") or t["tp"], "text": "ZIEL ERREICHT", "color": "green"}],
              "footer": f"Echte Kurse ({t.get('source') or 'Kraken'}) · ausgewählter Trade",
@@ -68,7 +68,7 @@ def caption(t):
             f"Einstieg, Stopp und Ziel standen vorher fest – der Plan hat gehalten.\n\n"
             f"💬 Kommentiere VIP für Infos zu den Live-Signalen.\n\n"
             f"Ausgewählter Trade, nicht repräsentativ. Verluste gehören dazu. Keine Anlageberatung.\n\n"
-            f"#{name.lower()} #trading #{t['symbol'].lower()} #krypto #tradingdeutsch")
+            f"#{name.lower()} #trading #{t['symbol'].lower()} " + ("#goldtrading #xauusd" if t["symbol"] in ("XAUUSD", "GOLD") else "#krypto") + " #tradingdeutsch")
 
 
 if __name__ == "__main__":
