@@ -47,7 +47,7 @@ def make_spec(t):
              "title": f"{setup}: *{side}*",
              "levels": [{"price": t["entry"], "text": "ENTRY " + fmt(t["entry"]), "color": "white", "from_i": ei},
                         {"price": t["sl"], "text": "STOP " + fmt(t["sl"]), "color": "red", "from_i": ei},
-                        {"price": t["tp"], "text": ((t.get("result") if str(t.get("result") or "").startswith("TP") and t.get("result") != "TP" else "FULL TP") + " " + fmt(t["tp"])), "color": "green", "from_i": ei}],
+                        {"price": t["tp"], "text": (("AUSSTIEG" if "PIPS" in str(t.get("result") or "") else t.get("result") if str(t.get("result") or "").startswith("TP") and t.get("result") != "TP" else "FULL TP") + " " + fmt(t["tp"])), "color": "green", "from_i": ei}],
              "tags": [{"i": ei, "price": t["entry"], "text": side, "color": "white"},
                       {"i": xi, "price": t.get("exit") or t["tp"], "text": "ZIEL ERREICHT", "color": "green"}],
              "footer": f"Echte Kurse ({t.get('source') or 'Kraken'}) · ausgewählter Trade",
