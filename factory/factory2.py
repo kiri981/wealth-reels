@@ -442,12 +442,16 @@ def render(scenes, out, total):
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", tmp, "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-c:v", "copy", "-c:a", "aac", "-shortest", "-movflags", "+faststart", fin], check=True)
     os.replace(fin, out); os.remove(tmp)
 
+# Zentrale Schalter (factory/settings.json), z. B. {"voice": false} = Reels ohne Sprecherstimme
+try: SETTINGS = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.json"), encoding="utf-8"))
+except Exception: SETTINGS = {}
+
 if __name__ == "__main__":
     spec = json.load(open(sys.argv[1], encoding="utf-8")); out = sys.argv[2]
     here = os.path.dirname(os.path.abspath(__file__))
     # Erzählerstimme: Szenen mit "say" bekommen Sprache (Piper/Thorsten), Szenendauer passt sich an
     voice = None
-    if any(s.get("say") for s in spec["scenes"]) and not os.environ.get("PREVIEW") and spec.get("voice", True):
+    if any(s.get("say") for s in spec["scenes"]) and not os.environ.get("PREVIEW") and spec.get("voice", SETTINGS.get("voice", True)):
         try:
             import numpy as np
             from scipy.signal import resample_poly
