@@ -35,6 +35,36 @@ def pill(d, cy, s, col=GOLD):
     d.text((W / 2, cy), s, font=f, fill=col, anchor="mm")
 
 
+def analyse(img):
+    """Findet im Screenshot: Preisachse rechts (bleibt hell), waagerechte Linien (Entry/SL/TP – bleiben sichtbar)
+    und den Kerzenabstand (für das Aufdecken Kerze für Kerze)."""
+    import numpy as np
+    a = np.asarray(img).astype(int); h, w, _ = a.shape
+    vals, cnt = np.unique((a // 8).reshape(-1, 3), axis=0, return_counts=True); bgc = vals[cnt.argmax()] * 8 + 4
+    diff = np.abs(a - bgc).sum(2) > 60
+    colfrac = diff[int(h * .05):int(h * .95)].mean(0)
+    axis = [x for x in range(int(w * .55), w) if colfrac[x] > 0.75]
+    right = min(axis) if axis else int(w * .86)
+    rowfrac = diff[:, :right].mean(1)
+    lines = rowfrac > 0.2                       # Level-Linien / Rahmen über die ganze Breite
+    act = diff[:, :right].copy(); act[lines] = False
+    act[: int(h * 0.12)] = False; act[int(h * 0.97):] = False   # Kopfzeile (Symbole, Menü) und Zeitachse ignorieren
+    # Kerzen = senkrechte Striche: längster senkrechter Lauf je Spalte (gestrichelte Waagerechte zählen so nicht)
+    run = np.zeros(act.shape[1], int); cur = np.zeros(act.shape[1], int)
+    for row in act:
+        cur = np.where(row, cur + 1, 0); run = np.maximum(run, cur)
+    colact = run
+    xs = [x for x in range(right) if colact[x] >= 3]
+    left = xs[0] if xs else 0
+    sig = (colact[left:right] >= 3).astype(float); sig -= sig.mean()
+    pitch = 8
+    if len(sig) > 40:
+        ac = [float((sig[:-L] * sig[L:]).sum()) for L in range(3, 41)]
+        pitch = 3 + int(np.argmax(ac))
+    last = xs[-1] + 2 if xs else right
+    return {"bg": tuple(int(v) for v in bgc), "right": right, "lines": lines, "left": left, "last": min(right, last), "pitch": max(3, pitch)}
+
+
 def make(shot, out, info):
     import cover as _cv
     side = (info.get("side") or "").upper()
@@ -43,7 +73,15 @@ def make(shot, out, info):
     bw, bh = 960, 1260
     k = min(bw / src.width, bh / src.height); tw, th = int(src.width * k), int(src.height * k)
     img = src.resize((tw, th), Image.LANCZOS)
-    dim = ImageEnhance.Brightness(img).enhance(0.22)
+    A = analyse(img); R, LW, PITCH = A["right"], A["left"], A["pitch"]
+    import numpy as np
+    dim_full = Image.new("RGB", img.size, (28, 30, 36))   # noch nicht gelaufener Bereich: neutral dunkel (keine Kerzen-Vorschau)
+    dim = img.copy(); dim.paste(dim_full.crop((0, 0, R, th)), (0, 0))   # nur der Chartbereich wird abgedunkelt, Preisachse bleibt
+    keep = np.asarray(A["lines"])                                       # Entry/SL/TP-Linien bleiben von Anfang an sichtbar
+    if keep.any():
+        dn = np.asarray(dim).copy(); im_np = np.asarray(img)
+        dn[keep, :R] = im_np[keep, :R]; dim = Image.fromarray(dn)
+    LAST = A["last"]; steps = max(1, (LAST - LW) // PITCH)   # nur bis zur letzten Kerze aufdecken (leerer Bereich rechts kostet keine Zeit)
     x0, y0 = (W - tw) // 2, 330 + (bh - th) // 2
     bg = base_bg(); d = ImageDraw.Draw(bg)
     pill(d, 245, info.get("kicker", "TRADE-REPLAY"))
@@ -73,10 +111,12 @@ def make(shot, out, info):
         elif t < T_COV + T_DIM + T_REV + T_RES:
             fr = bg.copy(); dd = ImageDraw.Draw(fr)
             tr = t - T_COV - T_DIM
-            q = ease(tr / T_REV) if tr > 0 else 0.0
-            cut = int(tw * q)
+            q = min(1.0, tr / T_REV) if tr > 0 else 0.0
+            c = int(q * steps)                                   # Kerze für Kerze
+            cut = R if q >= 1 else min(LAST, LW + (c + 1) * PITCH) if tr > 0 else LW
             layer = dim.copy()
             if cut > 0: layer.paste(img.crop((0, 0, cut, th)), (0, 0))
+            if q >= 1: layer = img.copy()
             if tr >= T_REV:   # Ergebnis: sanfter Zoom auf das ganze Bild
                 z = 1 + 0.035 * ease((tr - T_REV) / T_RES)
                 zw, zh = int(tw * z), int(th * z); layer = img.resize((zw, zh), Image.LANCZOS).crop(((zw - tw) // 2, (zh - th) // 2, (zw - tw) // 2 + tw, (zh - th) // 2 + th))
