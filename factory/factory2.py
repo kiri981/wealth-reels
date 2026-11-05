@@ -290,7 +290,77 @@ def make_pattern(kind, seed=7):
     for _ in range(9): p = bar(p, p + r.uniform(1.0, 2.2))
     return cs, {"low": low, "sweep_i": sweep_i, "lows": lows, "entry_i": sweep_i + 1, "entry": cs[sweep_i + 1][3], "sl": low - 2.9}
 
+def make_pattern2(kind, seed=7):
+    """Weitere Lern-Muster -> (Kerzen, Deko{levels,tags,zone,lines}). Immer „Beispielhafte Darstellung“."""
+    r = random.Random(seed); cs = []; p = [100.0]
+    def bar(o, c, wick=0.5):
+        h = max(o, c) + r.uniform(0.1, wick); l = min(o, c) - r.uniform(0.1, wick); cs.append([o, h, l, c]); p[0] = c; return c
+    up = lambda n, a=0.6, b=1.4: [bar(p[0], p[0] + r.uniform(a, b)) for _ in range(n)]
+    dn = lambda n, a=0.6, b=1.4: [bar(p[0], p[0] - r.uniform(a, b)) for _ in range(n)]
+    D = {"levels": [], "tags": [], "zone": None, "lines": []}
+    if kind == "fvg":                       # Impuls mit Lücke, Rücklauf in die Lücke, Fortsetzung
+        up(5, 0.2, 0.8); i1 = len(cs) - 1
+        bar(p[0], p[0] + 4.5, 0.2); bar(p[0], p[0] + 1.2, 0.3); i3 = len(cs) - 1
+        top_gap, bot_gap = cs[i3][2], cs[i1][1]
+        up(2, 0.3, 0.9); dn(4, 0.6, 1.2); cs[-1][2] = (top_gap + bot_gap) / 2; ri = len(cs) - 1
+        up(7, 0.9, 1.8)
+        D["zone"] = {"from": bot_gap, "to": top_gap, "text": ""}
+        D["tags"] = [{"i": i1 + 1, "price": top_gap + 0.3, "text": "FAIR VALUE GAP", "color": "gold"}, {"i": ri, "price": cs[ri][2], "text": "RÜCKLAUF", "color": "white"}]
+    elif kind == "orderblock":              # letzte rote Kerze vor dem Impuls = Order Block
+        dn(5, 0.4, 1.0); ob = len(cs); bar(p[0], p[0] - 1.0, 0.3)
+        up(4, 1.6, 2.6); dn(4, 0.6, 1.1); cs[-1][2] = cs[ob][1] - 0.2; ri = len(cs) - 1; up(6, 1.0, 1.9)
+        D["zone"] = {"from": cs[ob][2], "to": cs[ob][1], "text": ""}
+        D["tags"] = [{"i": ob, "price": cs[ob][2], "text": "ORDER BLOCK", "color": "gold"}, {"i": ri, "price": cs[ri][2], "text": "REAKTION", "color": "gold"}]
+    elif kind in ("bos", "choch"):          # Abwärtstrend (LH/LL) -> Bruch des letzten tieferen Hochs
+        dn(3); lh1 = len(cs); up(2, 0.4, 0.9); h1 = cs[-1][1]; dn(4); ll1 = len(cs) - 1
+        up(2, 0.4, 0.9); lh2 = len(cs) - 1; h2 = cs[-1][1]; dn(3); ll2 = len(cs) - 1
+        up(5, 0.9, 1.6); bi = len(cs) - 1; up(3, 0.3, 1.0)
+        D["tags"] = [{"i": lh2, "price": h2, "text": "LH", "color": "white"}, {"i": ll1, "price": cs[ll1][2], "text": "LL", "color": "white"},
+                     {"i": ll2, "price": cs[ll2][2], "text": "LL", "color": "white"}, {"i": bi, "price": cs[bi][1], "text": "CHoCH – TRENDWECHSEL" if kind == "choch" else "BREAK OF STRUCTURE", "color": "gold"}]
+        D["levels"] = [{"price": h2, "text": "", "color": "gold", "from_i": lh2}]
+    elif kind == "trendline":               # Aufwärtstrend, 3 Berührungen, dann Bruch
+        lows = []
+        for k in range(3):
+            up(3, 0.8, 1.5); dn(2, 0.5, 0.9); lows.append(len(cs) - 1)
+        base = cs[lows[0]][2]; slope = (cs[lows[2]][2] - base) / (lows[2] - lows[0])
+        for j, li in enumerate(lows[1:]): cs[li][2] = base + slope * (li - lows[0]) + 0.05
+        up(2, 0.5, 1.0); dn(5, 0.9, 1.6); bi = len(cs) - 1
+        D["lines"] = [{"i0": lows[0], "p0": base, "i1": bi, "p1": base + slope * (bi - lows[0]), "color": "gold", "text": "TRENDLINIE"}]
+        D["tags"] = [{"i": li, "price": cs[li][2], "text": str(k + 1), "color": "white"} for k, li in enumerate(lows)] + [{"i": bi, "price": cs[bi][2], "text": "BRUCH", "color": "red"}]
+    elif kind == "sr":                      # Seitwärts zwischen Unterstützung und Widerstand
+        lo, hi = 100.0, 106.0
+        for k in range(3):
+            while p[0] < hi - 1: bar(p[0], min(hi - 0.3, p[0] + r.uniform(0.8, 1.6)))
+            cs[-1][1] = hi + r.uniform(0, 0.3)
+            while p[0] > lo + 1: bar(p[0], max(lo + 0.3, p[0] - r.uniform(0.8, 1.6)))
+            cs[-1][2] = lo - r.uniform(0, 0.3)
+        D["levels"] = [{"price": hi, "text": "WIDERSTAND", "color": "red"}, {"price": lo, "text": "UNTERSTÜTZUNG", "color": "green"}]
+    elif kind == "fib":                     # Impuls hoch, Rücksetzer bis 61,8 %, weiter
+        a0 = p[0]; up(8, 1.0, 1.8); b0 = max(c[1] for c in cs)
+        f618 = b0 - (b0 - a0) * 0.618; f50 = b0 - (b0 - a0) * 0.5; f382 = b0 - (b0 - a0) * 0.382
+        while p[0] > f618 + 0.6: bar(p[0], p[0] - r.uniform(0.7, 1.3))
+        cs[-1][2] = f618 - 0.2; ri = len(cs) - 1; up(6, 1.0, 1.8)
+        D["levels"] = [{"price": f382, "text": "38,2 %", "color": "white"}, {"price": f50, "text": "50 %", "color": "white"}, {"price": f618, "text": "61,8 %", "color": "gold"}]
+        D["tags"] = [{"i": ri, "price": cs[ri][2], "text": "REAKTION", "color": "gold"}]
+    elif kind == "fakeout":                 # Ausbruch über Widerstand nur mit Docht, dann runter
+        hi = 104.0
+        for k in range(2):
+            while p[0] < hi - 0.8: bar(p[0], min(hi - 0.2, p[0] + r.uniform(0.6, 1.3)))
+            dn(3, 0.6, 1.2)
+        while p[0] < hi - 0.6: bar(p[0], p[0] + r.uniform(0.6, 1.2))
+        bar(p[0], hi - 0.3, 0.2); cs[-1][1] = hi + 2.2; fi = len(cs) - 1; dn(6, 0.8, 1.5)
+        D["levels"] = [{"price": hi, "text": "WIDERSTAND", "color": "red"}]
+        D["tags"] = [{"i": fi, "price": cs[fi][1], "text": "NUR DOCHT – FAKEOUT", "color": "red"}]
+    else:
+        return None, None
+    return cs, D
+
 def s_candles(sc):
+    if sc.get("pattern") and sc["pattern"] not in ("sweep", "stopped"):
+        cs, D = make_pattern2(sc["pattern"], sc.get("seed", 7))
+        sc = dict(sc); sc["candles"] = cs
+        for k in ("levels", "tags", "zone", "lines"): sc.setdefault(k, D[k])
+        sc.setdefault("footer", "Beispielhafte Darstellung"); sc.pop("pattern")
     if sc.get("pattern"):
         cs, info = make_pattern(sc["pattern"], sc.get("seed", 7))
         lv, tags, zone, stp = [], [], None, None
@@ -333,6 +403,13 @@ def s_candles(sc):
             c = col(lv.get("color"), "white"); x0 = cx(lv.get("from_i", 0)) - cw / 2
             for x in range(int(x0), int(X1), 24): d.line((x, py(lv["price"]), x + 12, py(lv["price"])), fill=tuple(int(BG[j] + (c[j] - BG[j]) * a) for j in range(3)), width=3)
             if lv.get("text"): text(im, (x0 + 4, py(lv["price"]) + 26), lv["text"], font("Inter-Bold.otf", 22), c, a, anchor="lm")
+        for ln in sc.get("lines") or []:
+            a = clamp((k - ln["i1"]) / 1.5 + 0.6)
+            if a > 0:
+                c = col(ln.get("color"), "gold"); x0, y0 = cx(ln["i0"]), py(ln["p0"]); x1, y1 = cx(ln["i1"]), py(ln["p1"])
+                x1 = x0 + (x1 - x0) * min(1, a); y1 = y0 + (y1 - y0) * min(1, a)
+                d.line((x0, y0, x1, y1), fill=c, width=5)
+                if ln.get("text") and a >= 1: text(im, ((x0 + x1) / 2, (y0 + y1) / 2 + 36), ln["text"], font("Inter-Bold.otf", 24), c, 1)
         for i in range(min(n, full + 1)):
             o, h, l, c = cs[i]
             if i == full:

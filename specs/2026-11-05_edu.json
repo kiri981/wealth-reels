@@ -1,37 +1,13 @@
 {
  "music": "drive",
  "scenes": [
-  {"type": "logo", "dur": 1.6},
-  {"type": "candles", "dur": 4.4, "pattern": "stopped", "seed": 11,
-   "title": "Warum wird *dein Stop* immer abgeholt?",
-   "say": "Warum wird dein Stop gefühlt immer abgeholt?"},
-  {"type": "words", "dur": 3.0, "kicker": "Der Fehler:",
-   "text": "Dein Stop liegt genau dort, wo alle ihn haben.",
-   "say": "Der Fehler: Dein Stop liegt genau dort, wo alle ihn haben."},
-  {"type": "candles", "dur": 4.8, "pattern": "sweep", "show": ["level", "zone"],
-   "step": "SCHRITT 01",
-   "title": "Direkt unter dem Tief liegen *die meisten Stops*",
-   "say": "Schritt eins: Direkt unter dem offensichtlichen Tief liegen die meisten Stops."},
-  {"type": "candles", "dur": 5.0, "pattern": "sweep", "show": ["level", "zone", "sweep"],
-   "step": "SCHRITT 02",
-   "title": "Ein Docht *knapp darunter* reicht",
-   "caption": "Die Stops werden ausgelöst – dann dreht der Markt.",
-   "say": "Schritt zwei: Ein kurzer Docht darunter reicht, und du bist raus."},
-  {"type": "candles", "dur": 5.4, "pattern": "sweep", "show": ["level", "entry"],
-   "step": "SCHRITT 03",
-   "title": "Stop *mit Puffer* – nicht genau aufs Tief",
-   "caption": "Größerer Abstand = kleinere Position. Risiko bleibt gleich.",
-   "say": "Schritt drei: Stop mit Puffer setzen. Und dafür die Position verkleinern."},
-  {"type": "notify", "dur": 3.6,
-   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
-   "items": [
-    {"text": "Neue Gold-Idee: XAUUSD BUY", "color": "green"},
-    {"text": "Update: SL auf Einstieg", "color": "gold"},
-    {"text": "Neue Gold-Idee: XAUUSD SELL", "color": "red"}
-   ],
-   "say": "Keine Zeit, das selbst zu analysieren?"},
-  {"type": "cta", "dur": 3.0, "title": "Puffer rein. Risiko gleich.",
-   "say": "Merke: Puffer rein, Risiko gleich. Kommentiere GOLD für den Link.",
-   "button": "Kommentiere GOLD"}
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 2.6, "text": "Gold springt hoch.", "accent": "Und kommt oft zurück.", "icon": "bolt"},
+  {"type": "words", "dur": 3.2, "kicker": "FAIR VALUE GAP", "text": "Eine Lücke, die ein starker Impuls hinterlässt."},
+  {"type": "candles", "dur": 5.2, "pattern": "fvg", "step": "SCHRITT 01", "title": "Erkennen: Docht von Kerze 1 und 3 *überlappen nicht*", "caption": "Die Lücke dazwischen ist das Fair Value Gap."},
+  {"type": "candles", "dur": 5.2, "pattern": "fvg", "seed": 11, "step": "SCHRITT 02", "title": "Warten, bis der Preis *in die Lücke* zurückläuft", "caption": "Nicht dem Impuls hinterherspringen."},
+  {"type": "words", "dur": 3.4, "kicker": "SCHRITT 03", "text": "Einstieg in der Lücke – Stop hinter dem Gap."},
+  {"type": "words", "dur": 3.4, "kicker": "TYPISCHER FEHLER", "text": "Jede Lücke handeln. Nur Gaps in Trendrichtung zählen."},
+  {"type": "cta", "dur": 3.0, "title": "Gold. Mit Plan.", "button": "Kommentiere GOLD"}
  ]
 }
