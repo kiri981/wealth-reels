@@ -1,0 +1,239 @@
+{
+ "cover": {
+  "kicker": "REPLAY",
+  "title": "S&P 500 *+2,0 R* ORB",
+  "chart": "down"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.6,
+   "text": "S&P500: +2,0 R",
+   "accent": "So lief der Trade.",
+   "icon": "down",
+   "say": "S&P 500. Plus zwei R. So lief der Trade."
+  },
+  {
+   "type": "signal",
+   "dur": 5.5,
+   "channel": "NASDAQ | S&P500 OPEN",
+   "time": "05.11.2026 · 17:00 Uhr",
+   "lines": [
+    "🔴 S&P500 ORB SHORT #SPX261105",
+    "Einstieg: 7571.60",
+    "SL: 7636.58",
+    "TP: 7441.65  (CRV 1:2)"
+   ],
+   "say": "So stand das Signal im VIP-Kanal."
+  },
+  {
+   "type": "candles",
+   "dur": 7.5,
+   "candles": [
+    [
+     7717.35,
+     7719.1,
+     7713.6,
+     7715.1
+    ],
+    [
+     7714.85,
+     7717.35,
+     7714.1,
+     7714.1
+    ],
+    [
+     7714.1,
+     7717.6,
+     7705.1,
+     7710.35
+    ],
+    [
+     7710.35,
+     7713.85,
+     7708.85,
+     7708.85
+    ],
+    [
+     7708.85,
+     7708.85,
+     7704.1,
+     7704.35
+    ],
+    [
+     7704.1,
+     7707.1,
+     7701.1,
+     7702.1
+    ],
+    [
+     7702.1,
+     7707.1,
+     7669.1,
+     7669.1
+    ],
+    [
+     7669.1,
+     7674.1,
+     7651.35,
+     7653.6
+    ],
+    [
+     7653.35,
+     7654.35,
+     7615.85,
+     7616.1
+    ],
+    [
+     7616.1,
+     7620.35,
+     7600.1,
+     7606.35
+    ],
+    [
+     7606.35,
+     7618.35,
+     7592.1,
+     7592.6
+    ],
+    [
+     7592.35,
+     7592.85,
+     7575.1,
+     7588.35
+    ],
+    [
+     7588.35,
+     7597.35,
+     7568.35,
+     7571.6
+    ],
+    [
+     7571.6,
+     7576.35,
+     7558.35,
+     7565.1
+    ],
+    [
+     7565.1,
+     7567.1,
+     7542.35,
+     7549.6
+    ],
+    [
+     7549.85,
+     7563.1,
+     7533.85,
+     7534.6
+    ],
+    [
+     7534.6,
+     7541.1,
+     7520.35,
+     7522.1
+    ],
+    [
+     7521.85,
+     7522.85,
+     7492.6,
+     7518.85
+    ],
+    [
+     7518.85,
+     7533.35,
+     7512.1,
+     7522.85
+    ],
+    [
+     7522.6,
+     7525.85,
+     7505.1,
+     7506.6
+    ],
+    [
+     7506.6,
+     7514.1,
+     7488.6,
+     7494.85
+    ],
+    [
+     7494.85,
+     7496.6,
+     7462.1,
+     7462.85
+    ],
+    [
+     7476.6,
+     7476.6,
+     7476.6,
+     7476.6
+    ]
+   ],
+   "step": "REPLAY · US500 · 5M · 05.11.",
+   "title": "ORB: *SELL*",
+   "levels": [
+    {
+     "price": 7571.6,
+     "text": "ENTRY 7.572",
+     "color": "white",
+     "from_i": 0
+    },
+    {
+     "price": 7636.58,
+     "text": "STOP 7.637",
+     "color": "red",
+     "from_i": 0
+    },
+    {
+     "price": 7441.65,
+     "text": "FULL TP 7.442",
+     "color": "green",
+     "from_i": 0
+    }
+   ],
+   "tags": [
+    {
+     "i": 12,
+     "price": 7571.6,
+     "text": "SELL",
+     "color": "white"
+    },
+    {
+     "i": 21,
+     "price": 7441.65,
+     "text": "ZIEL ERREICHT",
+     "color": "green"
+    }
+   ],
+   "footer": "Echte Kurse (Futures, angeglichen) · ausgewählter Trade",
+   "say": "Einstieg bei 7572. Stopp bei 7637. Ziel bei 7442."
+  },
+  {
+   "type": "words",
+   "dur": 3.0,
+   "kicker": "ERGEBNIS",
+   "text": "+2,0 R in 50 Minuten.",
+   "say": "Ziel erreicht: plus zwei R in 50 Minuten."
+  },
+  {
+   "type": "words",
+   "dur": 3.0,
+   "kicker": "WICHTIG",
+   "text": "Ausgewählter Trade – nicht jeder Trade geht auf.",
+   "say": "Wichtig: Das ist ein ausgewählter Trade. Nicht jeder geht auf."
+  },
+  {
+   "type": "cta",
+   "dur": 2.8,
+   "title": "S&P 500. Mit Plan.",
+   "button": "Kommentiere VIP",
+   "sub": "Live-Signale im VIP-Kanal",
+   "say": "Live-Signale im VIP. Kommentiere VIP für Infos."
+  }
+ ]
+}
