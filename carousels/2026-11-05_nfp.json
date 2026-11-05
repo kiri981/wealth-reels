@@ -1,0 +1,61 @@
+{
+ "caption": "NFP-Freitag: So schützt du dein Konto 🛡️\n\nMorgen um 14:30 Uhr (deutsche Zeit) kommt der US-Arbeitsmarktbericht – einer der volatilsten Momente für Gold. Speicher dir die 5 Regeln 📌\n\n💬 Kommentiere GOLD und ich schick dir den Link zur kostenlosen Gold-Community.\n\nKeine Anlageberatung.\n\n#gold #xauusd #nfp #trading #tradingdeutsch",
+ "slides": [
+  {
+   "type": "cover",
+   "pill": "FREITAG · 14:30 UHR",
+   "title": "NFP-Freitag: So *schützt* du dein Konto",
+   "sub": "5 Regeln für einen der wildesten Tage im Gold-Monat.",
+   "chart": "spike",
+   "tag": "14:30 NFP"
+  },
+  {
+   "type": "text",
+   "title": "Was ist *NFP*?",
+   "body": "Der US-Arbeitsmarktbericht. Er kommt meist am ersten Freitag im Monat um 14:30 Uhr deutscher Zeit – und kann Gold in Sekunden um viele Dollar bewegen."
+  },
+  {
+   "type": "step",
+   "n": 1,
+   "title": "Kein Trade *kurz vor* der Zahl",
+   "body": "Die erste Kerze nach der Zahl ist reiner Zufall. Wer vorher drin ist, spielt Lotto.",
+   "chart": "spike",
+   "tag": "14:30"
+  },
+  {
+   "type": "step",
+   "n": 2,
+   "title": "Der *Spread* explodiert",
+   "body": "Um 14:30 Uhr wird der Abstand zwischen Kauf- und Verkaufskurs oft ein Vielfaches breiter. Dein Stop kann dadurch ohne echte Bewegung ausgelöst werden.",
+   "quote": "Plane Stop und Ziel VOR 14:30 Uhr."
+  },
+  {
+   "type": "step",
+   "n": 3,
+   "title": "Erst den *Kerzenschluss* abwarten",
+   "body": "Lass mindestens die erste 5- bis 15-Minuten-Kerze schließen. Ein Docht ist kein Signal.",
+   "chart": "sweep",
+   "tag": "Fehlausbruch"
+  },
+  {
+   "type": "step",
+   "n": 4,
+   "title": "*Kleineres* Risiko",
+   "body": "Wenn du an NFP tradest: halbe Positionsgröße, weiterer Stop. So überlebst du auch die Ausreißer.",
+   "quote": "Erst überleben, dann verdienen."
+  },
+  {
+   "type": "step",
+   "n": 5,
+   "title": "*Kein* Trade ist auch ein Trade",
+   "body": "Du musst nicht jede Bewegung mitnehmen. Der Markt ist nächste Woche auch noch da.",
+   "quote": "Geduld ist auch eine Position."
+  },
+  {
+   "type": "cta",
+   "title": "Willst du meine *Gold-Setups* live?",
+   "body": "Jeden Tag Briefing, Lern-Reels und Trade-Ideen mit Entry, Stop und Ziel.",
+   "button": "Kommentiere GOLD"
+  }
+ ]
+}
