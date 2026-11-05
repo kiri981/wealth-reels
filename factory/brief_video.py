@@ -51,7 +51,7 @@ def make(spec_path, img, out):
         z = 1 + 0.05 * e; cw, ch = W * 2 / z, H * 2 / z
         x0, y0 = (W * 2 - cw) / 2, (H * 2 - ch) * 0.35         # leicht nach oben (Logo + Schlagzeile)
         fr = src.resize((W, H), Image.BICUBIC, box=(x0, y0, x0 + cw, y0 + ch))
-        if i < 12: fr = Image.blend(Image.new("RGB", (W, H)), fr, i / 12)
+        # kein Einblenden aus Schwarz: das erste Bild ist das Vorschaubild auf TikTok/Instagram
         p.stdin.write(fr.tobytes())
     p.stdin.close(); p.wait()
     print("ok", out, f"{dur:.1f}s")

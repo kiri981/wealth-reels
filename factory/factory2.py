@@ -588,6 +588,8 @@ except Exception: SETTINGS = {}
 
 if __name__ == "__main__":
     spec = json.load(open(sys.argv[1], encoding="utf-8")); out = sys.argv[2]
+    COVER_DUR = 1.0   # Titelbild 1 s vorne: TikTok/Instagram nehmen sonst leicht ein unscharfes Übergangsbild als Vorschau
+    if spec.get("cover") and spec["scenes"] and spec["scenes"][0].get("type") == "logo": spec["scenes"].pop(0)   # Logo steckt schon im Titelbild
     here = os.path.dirname(os.path.abspath(__file__))
     # Erzählerstimme: Szenen mit "say" bekommen Sprache (Piper/Thorsten), Szenendauer passt sich an
     voice = None
@@ -604,7 +606,7 @@ if __name__ == "__main__":
                     sc["dur"] = round(max(float(sc.get("dur", 3)), len(w) / 44100 + 1.0), 2)
                 else: clips.append(None)
             tot = sum(float(sc.get("dur", 3)) for sc in spec["scenes"]) + (0 if spec["scenes"][-1]["type"] == "cta" else 2.6)
-            cov = 0.5 if spec.get("cover") else 0.0   # Titelbild steht 0,5 s vorne -> Stimme verschieben
+            cov = COVER_DUR if spec.get("cover") else 0.0   # Titelbild steht vorne -> Stimme verschieben
             tot += cov; buf = np.zeros(int((tot + 1) * 44100)); t0 = cov
             for sc, c in zip(spec["scenes"], clips):
                 if c is not None: i = int((t0 + 0.15) * 44100); buf[i:i + len(c)] += c[: len(buf) - i]
@@ -624,7 +626,7 @@ if __name__ == "__main__":
         _still = Image.open(cp).convert("RGB")
         def _draw_cover(im, t, tl, _s=_still): im.paste(_s, (0, 0))
         _draw_cover.no_logo = True; _draw_cover.no_chrome = True
-        scenes.insert(0, (0.5, _draw_cover))
+        scenes.insert(0, (COVER_DUR, _draw_cover))
     if spec["scenes"][-1]["type"] != "cta": scenes.append((2.6, s_cta({})))
     total = sum(d for d, _ in scenes)
     here = os.path.dirname(os.path.abspath(__file__)); import glob, subprocess as sp
