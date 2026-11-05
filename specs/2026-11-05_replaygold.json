@@ -19,6 +19,31 @@
    "say": "Gold. Plus sechshundertvierundfünfzig Pips."
   },
   {
+   "type": "signal",
+   "dur": 5.5,
+   "channel": "XAUUSD | GOLD SCALPING",
+   "time": "05.11.2026 · 02:20 Uhr",
+   "lines": [
+    "📊 SCALP IDEE – XAUUSD",
+    "",
+    "🟢 ICH GEHE BUY",
+    "",
+    "📍 Entry Zone: 4068.85",
+    "❌ SL: 4060.85",
+    "",
+    "🎯 TP1: 4073.85",
+    "🎯 TP2: 4076.85",
+    "🎯 TP3: 4080.85",
+    "🎯 TP4: 4084.85",
+    "🎯 TP5: OPEN 🚀",
+    "",
+    "🔍 CHECK",
+    "📊 Volumen: stark (2.1× Ø) ✅",
+    "📐 Fib: weit weg von Fib-Leveln"
+   ],
+   "say": "So stand das Signal im VIP-Kanal."
+  },
+  {
    "type": "candles",
    "dur": 7.5,
    "candles": [

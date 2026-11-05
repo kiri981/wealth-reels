@@ -25,6 +25,24 @@ def dur_text(sec):
     return f"{round(h / 24)} Tagen"
 
 
+CHANNELS = {"XAUUSD": "XAUUSD | GOLD SCALPING", "GOLD": "XAUUSD | GOLD SCALPING", "NAS100": "NASDAQ | S&P500 OPEN", "US500": "NASDAQ | S&P500 OPEN",
+            "BTCUSD": "BTCUSD | BITCOIN SCALPING", "ETHUSD": "Wealth Club VIP"}
+
+
+def signal_scene(t):
+    """Original-Signaltext (wie im VIP-Kanal gepostet) als eigene Szene – mit Datum und Uhrzeit."""
+    txt = (t.get("text") or "").strip()
+    if txt.startswith("["): txt = txt.split("\n", 1)[1] if "\n" in txt else ""   # Gold: erste Zeile = TP-Liste (intern)
+    lines = [l.rstrip() for l in txt.split("\n")]
+    while lines and not lines[-1].strip(): lines.pop()
+    lines = [l for l in lines if not l.strip().startswith("#")][:18]
+    if len([l for l in lines if l.strip()]) < 2: return []
+    tz = timezone(timedelta(hours=2))
+    when = datetime.fromtimestamp(t["opened"], tz).strftime("%d.%m.%Y · %H:%M Uhr")
+    return [{"type": "signal", "dur": 5.5, "channel": CHANNELS.get(t["symbol"], "Wealth Club VIP"), "time": when, "lines": lines,
+             "say": "So stand das Signal im VIP-Kanal."}]
+
+
 def make_spec(t):
     cs = json.loads(t["candles"]) if isinstance(t["candles"], str) else t["candles"]
     name = NAMES.get(t["symbol"], t["symbol"]); side = t["side"]; r = float(t.get("r") or 0)
@@ -43,6 +61,7 @@ def make_spec(t):
             {"type": "logo", "dur": 1.4},
             {"type": "hook", "dur": 2.6, "text": f"{name}: {rs}", "accent": "So lief der Trade.", "icon": "up" if side == "BUY" else "down",
              "say": f"{name}. Plus {r_words(r)} R. So lief der Trade."},
+            *signal_scene(t),
             {"type": "candles", "dur": 7.5, "candles": ohlc, "step": f"REPLAY · {t['symbol']} · {t.get('tf', 15)}M · {when}",
              "title": f"{setup}: *{side}*",
              "levels": [{"price": t["entry"], "text": "ENTRY " + fmt(t["entry"]), "color": "white", "from_i": ei},

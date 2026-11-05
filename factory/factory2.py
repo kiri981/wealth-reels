@@ -474,8 +474,46 @@ def s_logo(sc):
     draw.no_logo = True
     return draw
 
+def s_signal(sc):
+    """Original-Signal als Telegram-Nachricht: Zeile für Zeile aufgebaut, Einstieg/SL/TP farbig, Uhrzeit unten rechts."""
+    import re as _re
+    strip = lambda x: _re.sub(r"[\U0001F000-\U0001FFFF\u2600-\u27BF\uFE0F\u200d]", "", x).strip()
+    lines = [strip(l) for l in sc.get("lines", [])]
+    lines = lines[:18]
+    lh = 50; pad = 40; bw = 900; x0 = (W - bw) / 2
+    body_h = sum(lh if l else 22 for l in lines)
+    bh = 110 + body_h + 80; y0 = max(330, 900 - bh / 2)
+    def colr(l):
+        u = l.upper()
+        if _re.match(r"^(SL|STOP|STOPP)", u): return RED
+        if _re.match(r"^(TP|ZIEL|FULL TP)", u): return GREEN
+        if _re.match(r"^(ENTRY|EINSTIEG)", u): return GOLD
+        return (226, 230, 238)
+    def draw(im, t, tl):
+        pill = sc.get("kicker", "DAS ORIGINAL-SIGNAL"); step_pill(im, pill, 290, clamp(tl / 0.25))
+        q = back(clamp((tl - 0.15) / 0.35))
+        if q <= 0: return
+        dy = (1 - q) * 80
+        rrect(im, (x0, y0 + dy, x0 + bw, y0 + bh + dy), (24, 28, 38), clamp(q), r=36, outline=(48, 54, 70))
+        av = logo(64)
+        rrect(im, (x0 + 28, y0 + 26 + dy, x0 + 100, y0 + 98 + dy), (8, 9, 12), clamp(q), r=36)
+        if av is not None and q > 0.5: sm = av.resize((60, int(av.height * 60 / av.width))); im.paste(sm, (int(x0 + 34), int(y0 + 62 + dy - sm.height / 2)), sm)
+        text(im, (x0 + 122, y0 + 62 + dy), sc.get("channel", "Wealth Club VIP"), font("Inter-Bold.otf", 32), GOLD, clamp(q), anchor="lm")
+        y = y0 + 120 + dy; n = len([l for l in lines if l]); per = max(0.12, (sc.get("dur", 5) - 1.6) / max(1, n)); k = 0
+        for l in lines:
+            if not l: y += 22; continue
+            p = clamp((tl - 0.5 - k * per) / 0.2); k += 1
+            if p > 0:
+                c = colr(l); fn_ = "Inter-Bold.otf" if c != (226, 230, 238) else "Inter-SemiBold.otf"; fs = 34
+                while fs > 22 and ImageDraw.Draw(im).textlength(l, font=font(fn_, fs)) > bw - 2 * pad: fs -= 2
+                f = font(fn_, fs)
+                text(im, (x0 + pad + (1 - p) * 30, y + lh / 2), l, f, c, p, anchor="lm")
+            y += lh
+        if sc.get("time"): text(im, (x0 + bw - 34, y0 + bh - 40 + dy), sc["time"], SB(28), MUTED, clamp((tl - 0.6) / 0.3), anchor="rm")
+    return draw
+
 BUILD = {"hook": s_hook, "counter": s_counter, "line": s_line, "cards": s_cards, "words": s_words, "cta": s_cta,
-         "candles": s_candles, "notify": s_notify, "logo": s_logo}
+         "candles": s_candles, "notify": s_notify, "logo": s_logo, "signal": s_signal}
 
 def render(scenes, out, total):
     import subprocess
