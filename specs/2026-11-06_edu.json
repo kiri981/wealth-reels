@@ -1,0 +1,85 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "PSYCHOLOGIE",
+  "title": "Warum du immer *am Top* kaufst",
+  "chart": "down"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Du kaufst immer am Top?",
+   "accent": "Das hat einen Namen.",
+   "icon": "alert",
+   "say": "Du kaufst immer am Top? Das hat einen Namen."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "FOMO",
+   "text": "Fear of Missing Out – die Angst, eine Bewegung zu verpassen.",
+   "say": "FOMO: die Angst, etwas zu verpassen."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "SCHRITT 01 · Beispiel",
+   "from": 0,
+   "to": 25,
+   "decimals": 0,
+   "prefix": "+",
+   "suffix": " $",
+   "color": "green",
+   "sub": "Gold rennt – du siehst es erst jetzt.",
+   "say": "Schritt eins: Gold steigt fünfundzwanzig Dollar. Du siehst es zu spät."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "SCHRITT 02",
+   "text": "„Jetzt oder nie!“ – Dein Einstieg ist oft der Ausstieg der Profis.",
+   "say": "Schritt zwei: Jetzt oder nie? Dein Einstieg ist oft der Ausstieg der Profis."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 03 · Das Gegenmittel",
+   "items": [
+    {
+     "left": "01",
+     "right": "Plan steht vor dem Trade"
+    },
+    {
+     "left": "02",
+     "right": "Auf den Rücksetzer warten",
+     "hot": true
+    },
+    {
+     "left": "03",
+     "right": "Verpasst ist kein Verlust"
+    }
+   ],
+   "say": "Schritt drei: Plan vorher, Rücksetzer abwarten. Verpasst ist kein Verlust."
+  },
+  {
+   "type": "words",
+   "dur": 3.4,
+   "kicker": "MERKE",
+   "text": "Jeden Tag gibt es neue Setups. Hinterherrennen musst du nie.",
+   "say": "Merke: Jeden Tag gibt es neue Setups."
+  },
+  {
+   "type": "cta",
+   "dur": 3.0,
+   "title": "Warten ist auch eine Position.",
+   "button": "Kommentiere GOLD",
+   "say": "Geplante Setups zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}
