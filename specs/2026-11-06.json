@@ -1,0 +1,22 @@
+{
+ "cover": {"kicker": "MARKT", "title": "Gold: beste Woche *seit August*", "chart": "up"},
+ "music": "drive",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 3.0, "text": "Beste Gold-Woche seit August.", "accent": "Und dann wurde verkauft.", "icon": "bolt"},
+  {"type": "counter", "dur": 3.8, "label": "Wochenhoch (Do.)", "from": 0, "to": 4135, "decimals": 0, "suffix": " $", "color": "green", "sub": "Höchster Stand seit 22. Okt. (Kitco)"},
+  {"type": "cards", "dur": 5.0, "title": "Die Woche in 4 Zügen", "items": [
+    {"left": "Di", "right": "Gold unter 4.000 $"},
+    {"left": "Mi", "right": "Wahl: Demokraten siegen", "hot": true},
+    {"left": "Do", "right": "Aktien-Rutsch: S&P 500 −4,4 %"},
+    {"left": "Fr", "right": "Öl ~100 $ · Gold −1,1 % früh"}
+  ]},
+  {"type": "words", "dur": 4.0, "kicker": "FREITAG 14:30", "text": "US-Jobdaten entscheiden über den Wochenschluss."},
+  {"type": "notify", "dur": 4.0, "title": "Keine Zeit, den Markt *selbst* zu analysieren?", "items": [
+    {"text": "Wochenrückblick: Treiber kurz erklärt", "time": "jetzt"},
+    {"text": "Termin-Check: Arbeitsmarkt Fr 14:30", "time": "1 Min.", "color": "gold"},
+    {"text": "Live-Analyse in der Gruppe", "time": "2 Min."}
+  ]},
+  {"type": "cta", "dur": 3.0, "title": "Erst die Treiber. Dann der Chart.", "button": "Kommentiere GOLD"}
+ ]
+}
