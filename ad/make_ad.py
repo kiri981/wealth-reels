@@ -10,18 +10,18 @@ sys.path.insert(0, os.path.join(HERE, "..", "factory"))
 from lib import font, GOLD, WHITE, MUTED, BG
 
 W, H, FPS = 1080, 1920, 30
-VO = json.load(open(os.path.join(WK, "vo.json")))
+LANG = os.environ.get("AD_LANG", "de")
+from ad_texts import TXT
+T = TXT[LANG]
+VW = os.path.join(WK, LANG)   # Sprecher-Dateien je Sprache
+VO = json.load(open(os.path.join(VW, "vo.json")))
 DUR = [round(v + 0.7, 2) for v in VO]; DUR[-1] = max(DUR[-1], 5.2)
+BC = "bc_clip.webm" if LANG == "de" else f"bc_clip_{LANG}.webm"
 
 # Segmente: (Kicker, Überschrift mit *gold*, [(Bild/Video, Anteil der Segmentzeit)])
-SEG = [
-    ("KOSTENLOSE GOLD-GRUPPE", "Genug von *teuren* Signalgruppen?", [("c_signal.jpg", .34), ("c_ladder.jpg", .33), ("c_brief.jpg", .33)]),
-    ("SIGNALE", "Einstieg, Stop & Ziel – *vorher*", [("c_signal.jpg", .5), ("c_ladder.jpg", .5)]),
-    ("JEDEN MORGEN", "Das *Gold-Briefing*", [("c_brief.jpg", 1)]),
-    ("EHRLICH", "Auch *Verluste* – mit Erklärung", [("c_sl1.jpg", .45), ("c_sl2.jpg", .55)]),
-    ("BOOTCAMP", "55 Lektionen mit *Lern-Clips*", [("bc_clip.webm", 1)]),
-    ("ECHTE TRADES", "Echte Charts. *Kein Abo.*", [("c_tp.jpg", .5), ("c_mt5.jpg", .5)]),
-]
+_IT = [[("c_signal.jpg", .34), ("c_ladder.jpg", .33), ("c_brief.jpg", .33)], [("c_signal.jpg", .5), ("c_ladder.jpg", .5)], [("c_brief.jpg", 1)],
+       [("c_sl1.jpg", .45), ("c_sl2.jpg", .55)], [(BC, 1)], [("c_tp.jpg", .5), ("c_mt5.jpg", .5)]]
+SEG = [(k, h, it) for (k, h), it in zip(T["seg"], _IT)]
 CARD_Y0, CARD_Y1, CARD_W = 560, 1700, 900
 
 
@@ -34,7 +34,7 @@ def background():
     if os.path.exists(lp):
         lg = Image.open(lp).convert("RGBA"); lg = lg.resize((200, int(lg.height * 200 / lg.width)), Image.LANCZOS); im.paste(lg, ((W - lg.width) // 2, 70), lg)
     d = ImageDraw.Draw(im)
-    d.text((W / 2, 1860), "Ausgewählte Beispiele · Keine Anlageberatung · Trading birgt Verlustrisiken", font=font("Inter-Medium.otf", 24), fill=(120, 124, 136), anchor="mm")
+    d.text((W / 2, 1860), T["disc"], font=font("Inter-Medium.otf", 24), fill=(120, 124, 136), anchor="mm")
     return im
 
 
@@ -115,16 +115,20 @@ def cta_frame(t):
         lg = Image.open(lp).convert("RGBA"); s = int(420 + 30 * min(1, t / 4)); lg = lg.resize((s, int(lg.height * s / lg.width)), Image.LANCZOS)
         im.paste(lg, ((W - lg.width) // 2, 430), lg)
     al = int(255 * a)
-    d.text((W / 2, 900), "Kostenlos. Ohne Abo.", font=font("InterDisplay-Black.otf", 84), fill=GOLD + (al,), anchor="mm")
-    lines = ["Gold-Signale mit Einstieg, Stop & Ziel", "Tägliches Gold-Briefing", "Bootcamp mit 55 Lektionen", "Partnerprogramm: wirb mit und werde beteiligt"]
+    fb = 84
+    while d.textlength(T["cta"], font=font("InterDisplay-Black.otf", fb)) > W - 100: fb -= 4
+    d.text((W / 2, 900), T["cta"], font=font("InterDisplay-Black.otf", fb), fill=GOLD + (al,), anchor="mm")
+    lines = T["lines"]
     for i, l in enumerate(lines):
         ai = int(255 * max(0, min(1, (t - 0.3 - i * 0.25) / 0.3)))
-        d.text((W / 2, 1010 + i * 62), "✓  " + l if False else l, font=font("Inter-SemiBold.otf", 40), fill=WHITE + (ai,), anchor="mm")
-    f = font("InterDisplay-Black.otf", 60); bw = d.textlength("Link in Bio", font=f) + 140
+        fl = 40
+        while d.textlength(l, font=font("Inter-SemiBold.otf", fl)) > W - 80: fl -= 2
+        d.text((W / 2, 1010 + i * 62), l, font=font("Inter-SemiBold.otf", fl), fill=WHITE + (ai,), anchor="mm")
+    f = font("InterDisplay-Black.otf", 60); bw = d.textlength(T["link"], font=f) + 140
     pulse = 1 + 0.03 * abs(((t * 1.6) % 2) - 1)
     bw2, bh = bw * pulse, 130 * pulse
     d.rounded_rectangle(((W - bw2) / 2, 1330 - bh / 2, (W + bw2) / 2, 1330 + bh / 2), radius=bh / 2, fill=GOLD + (al,))
-    d.text((W / 2, 1330), "Link in Bio", font=f, fill=BG + (al,), anchor="mm")
+    d.text((W / 2, 1330), T["link"], font=f, fill=BG + (al,), anchor="mm")
     d.text((W / 2, 1460), "Wealth Club · Telegram", font=font("Inter-Medium.otf", 34), fill=MUTED + (al,), anchor="mm")
     return im
 
@@ -171,7 +175,7 @@ def main(out):
     subprocess.run([sys.executable, os.path.join(HERE, "..", "factory", "music.py"), "drive", f"{total + 1:.2f}", mus, "4242"], check=True, capture_output=True)
     ins, flt = [], []
     for i, s in enumerate(starts):
-        ins += ["-i", os.path.join(WK, f"vo{i}.wav")]; flt.append(f"[{i + 1}:a]adelay={int(s * 1000)}|{int(s * 1000)},aresample=44100[v{i}]")
+        ins += ["-i", os.path.join(VW, f"vo{i}.wav")]; flt.append(f"[{i + 1}:a]adelay={int(s * 1000)}|{int(s * 1000)},aresample=44100[v{i}]")
     vo_mix = "".join(f"[v{i}]" for i in range(len(starts))) + f"amix=inputs={len(starts)}:normalize=0,volume=1.6[vo]"
     fc = ";".join(flt) + ";" + vo_mix + f";[{len(starts) + 1}:a]volume=0.22,afade=t=out:st={total - 1.5:.2f}:d=1.5[m];[vo][m]amix=inputs=2:normalize=0,alimiter=limit=0.95[a]"
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS), "-i", os.path.join(fr, "%05d.jpg")] + ins + ["-i", mus,
