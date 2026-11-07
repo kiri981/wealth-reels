@@ -33,6 +33,10 @@ def signal_scene(t):
     """Original-Signaltext (wie im VIP-Kanal gepostet) als eigene Szene – mit Datum und Uhrzeit."""
     tz = timezone(timedelta(hours=2))
     if t.get("shot"):   # echter Screenshot aus dem VIP-Kanal (per Bot hochgeladen) statt Nachbildung
+        import urllib.request, sys
+        try: urllib.request.urlopen(t["shot"], timeout=20).read(64)
+        except Exception as e:   # nicht still auf die Nachbildung ausweichen
+            sys.exit(f"SCREENSHOT NICHT LADBAR ({t['shot']}): {e} – Domain welcome-bot.kheid645.workers.dev muss in claude.ai > Einstellungen > Funktionen > Domain-Zulassungsliste stehen. Replay NICHT ohne Screenshot posten.")
         return [{"type": "shot", "dur": 4.5, "image": t["shot"], "time": "Gepostet am " + datetime.fromtimestamp(t["opened"], tz).strftime("%d.%m.%Y um %H:%M Uhr"),
                  "say": "So stand das Signal im VIP-Kanal."}]
     txt = (t.get("text") or "").strip()
