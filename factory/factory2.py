@@ -591,17 +591,17 @@ if __name__ == "__main__":
     COVER_DUR = 1.0   # Titelbild 1 s vorne: TikTok/Instagram nehmen sonst leicht ein unscharfes Übergangsbild als Vorschau
     if spec.get("cover") and spec["scenes"] and spec["scenes"][0].get("type") == "logo": spec["scenes"].pop(0)   # Logo steckt schon im Titelbild
     here = os.path.dirname(os.path.abspath(__file__))
-    # Erzählerstimme: Szenen mit "say" bekommen Sprache (Piper/Thorsten), Szenendauer passt sich an
+    # Erzählerstimme: Szenen mit "say" bekommen Sprache (ElevenLabs, sonst je nach settings.json Piper), Szenendauer passt sich an
     voice = None
-    if any(s.get("say") for s in spec["scenes"]) and not os.environ.get("PREVIEW") and spec.get("voice", SETTINGS.get("voice", True)):
+    if any(s.get("say") for s in spec["scenes"]) and not os.environ.get("PREVIEW") and spec.get("voice", SETTINGS.get("voice", True)) is not False:
         try:
             import numpy as np
             from scipy.signal import resample_poly
-            os.environ.setdefault("TTS_DIR", os.path.join(here, "..", "tts")); sys.path.insert(0, os.environ["TTS_DIR"]); import piper_tts as P
+            os.environ.setdefault("TTS_DIR", os.path.join(here, "..", "tts")); sys.path.insert(0, os.environ["TTS_DIR"]); import voice as V
             clips = []
             for sc in spec["scenes"]:
                 if sc.get("say"):
-                    w, sr = P.synth(sc["say"], length_scale=float(spec.get("voice_speed", 1.08)), pause=0.3)
+                    w, sr = V.synth(sc["say"], lang=spec.get("lang", "de"), speed=float(spec.get("voice_speed", 1.0)), pause=0.3)
                     w = resample_poly(w, 44100, sr); clips.append(w)
                     sc["dur"] = round(max(float(sc.get("dur", 3)), len(w) / 44100 + 1.0), 2)
                 else: clips.append(None)

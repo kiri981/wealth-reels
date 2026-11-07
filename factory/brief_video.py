@@ -10,7 +10,7 @@ from scipy.signal import resample_poly
 
 here = os.path.dirname(os.path.abspath(__file__))
 os.environ.setdefault("TTS_DIR", os.path.join(here, "..", "tts")); sys.path.insert(0, os.environ["TTS_DIR"])
-import piper_tts as P
+import voice as V
 
 SR = 44100
 
@@ -28,7 +28,9 @@ def make(spec_path, img, out):
     spec = json.load(open(spec_path, encoding="utf-8"))
     clips = []
     for s in script(spec):
-        w, sr = P.synth(s, length_scale=1.08, pause=0.3)
+        try: w, sr = V.synth(s, lang=spec.get("lang", "de"), pause=0.3)
+        except RuntimeError:   # ohne ElevenLabs wie bisher Piper – das Briefing-Video braucht eine Stimme
+            import piper_tts as P; w, sr = P.synth(s, length_scale=1.08, pause=0.3)
         clips.append(resample_poly(w, SR, sr)); clips.append(np.zeros(int(0.25 * SR)))
     voice = np.concatenate([np.zeros(int(0.4 * SR))] + clips)
     dur = len(voice) / SR + 1.2

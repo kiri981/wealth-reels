@@ -1,3 +1,5 @@
 {
- "voice": false
+ "voice": "premium",
+ "voice_id": "JBFqnCBsd6RMkjVDRZzb",
+ "voice_model": "eleven_multilingual_v2"
 }
