@@ -1,0 +1,115 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "RISIKO",
+  "title": "Wie viel *pro Trade* riskieren?",
+  "chart": "range"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Ein Trade killt dein Konto?",
+   "accent": "Dann war er zu groß.",
+   "icon": "alert",
+   "say": "Ein einziger Trade killt dein Konto? Dann war er zu groß."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "RISIKO PRO TRADE",
+   "text": "Riskiere pro Trade nur 0,5 bis 1 % deines Kontos – nie mehr.",
+   "say": "Die Regel: pro Trade nur ein halbes bis ein Prozent deines Kontos riskieren."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "SCHRITT 01 · Beispiel",
+   "from": 0,
+   "to": 50,
+   "decimals": 0,
+   "prefix": "",
+   "suffix": " $",
+   "color": "gold",
+   "sub": "5.000 $ Konto × 1 % = max. 50 $ Verlust",
+   "say": "Schritt eins: Bei fünftausend Dollar Konto sind ein Prozent fünfzig Dollar."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 02 · Lot-Größe berechnen",
+   "items": [
+    {
+     "left": "Risiko",
+     "right": "50 $"
+    },
+    {
+     "left": "Stop",
+     "right": "5 $ Abstand"
+    },
+    {
+     "left": "1 Lot",
+     "right": "5 $ = 500 $ Verlust"
+    },
+    {
+     "left": "Lot",
+     "right": "50 ÷ 500 = 0,10 Lot",
+     "hot": true
+    }
+   ],
+   "say": "Schritt zwei: Stop fünf Dollar entfernt. Dann passen null Komma eins Lot."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "SCHRITT 03 · Beispiel",
+   "from": 0,
+   "to": -9.6,
+   "decimals": 1,
+   "prefix": "",
+   "suffix": " %",
+   "color": "red",
+   "sub": "10 Verluste in Folge bei 1 % – Konto lebt.",
+   "say": "Schritt drei: Selbst zehn Verluste in Folge kosten dich nur rund zehn Prozent."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "TYPISCHER FEHLER",
+   "text": "Erst die Lot-Größe wählen, dann den Stop. Immer umgekehrt!",
+   "say": "Typischer Fehler: erst die Lot-Größe wählen. Erst kommt der Stop, dann die Größe."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Neue Gold-Idee: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "Risiko: max. 1 % pro Trade",
+     "color": "gold"
+    },
+    {
+     "text": "Update: SL auf Einstieg",
+     "color": "gold"
+    }
+   ],
+   "say": "Keine Zeit, den Markt selbst zu analysieren?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Klein riskieren. Lange bleiben.",
+   "button": "Kommentiere GOLD",
+   "say": "Wie ich mein Risiko plane, zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}
