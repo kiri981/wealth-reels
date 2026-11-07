@@ -516,9 +516,9 @@ def s_shot(sc):
     """Echter Screenshot des Original-Signals (Datei oder URL) als Karte mit sanftem Zoom."""
     import io, urllib.request
     src = sc["image"]
-    raw = urllib.request.urlopen(src, timeout=30).read() if src.startswith("http") else open(src, "rb").read()
+    raw = urllib.request.urlopen(urllib.request.Request(src, headers={"User-Agent": "WealthClubFactory/1.0"}), timeout=30).read() if src.startswith("http") else open(src, "rb").read()
     img = Image.open(io.BytesIO(raw)).convert("RGB")
-    maxw, maxh = 920, 1120
+    maxw, maxh = 920, 1000   # Platz für Pille oben (bis ~330) und Zeitangabe unten
     k = min(maxw / img.width, maxh / img.height); base = img.resize((int(img.width * k), int(img.height * k)), Image.LANCZOS)
     m = Image.new("L", base.size, 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, base.width, base.height), radius=28, fill=255)
     def draw(im, t, tl):
@@ -529,7 +529,7 @@ def s_shot(sc):
         b = base.resize((max(1, int(base.width * z)), max(1, int(base.height * z))), Image.BICUBIC)
         mm = m.resize(b.size)
         if q < 1: mm = mm.point(lambda v: int(v * clamp(q)))
-        cy = 900; x = int((W - b.width) / 2); y = int(cy - b.height / 2)
+        cy = 880; x = int((W - b.width) / 2); y = int(cy - b.height / 2)
         rrect(im, (x - 6, y - 6, x + b.width + 6, y + b.height + 6), GOLD, clamp(q) * 0.9, r=32)
         im.paste(b, (x, y), mm)
         if sc.get("time"):
