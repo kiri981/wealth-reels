@@ -33,7 +33,10 @@ def ease(x): x = max(0.0, min(1.0, x)); return 1 - (1 - x) ** 3
 def back(x):   # Überschwinger für „Pop“
     x = max(0.0, min(1.0, x)); c = 1.9; return 1 + (c + 1) * (x - 1) ** 3 + c * (x - 1) ** 2
 def lab(t): return LBL.get(t, t) if t else ""
-def F(name, size): return font(name, int(size))
+from functools import lru_cache
+@lru_cache(maxsize=512)
+def _F(name, size): return font(name, size)
+def F(name, size): return _F(name, max(6, int(size)))
 BLACK = "InterDisplay-Black.otf"; BOLD = "Inter-Bold.otf"; SEMI = "Inter-SemiBold.otf"
 
 
@@ -252,7 +255,7 @@ def draw_chart(cv, im, box, ch, seg, t, bpad=40):
             yy = hit[1] + (ph + 6) * (1 if not top else -1)
         placed.append((xx, yy, pw))
         if e < .9: cv.glowdot(im, xx, yy, 46, COL["red"] if kind == "red" else COL["green"] if kind == "green" else GOLD, (1 - e / .9) * .9)
-        pill(cv, im, xx, yy, txt, kind, ease(e / .2), pop=back(e / .45), size=fs)
+        pill(cv, im, xx, yy, txt, kind, ease(e / .2), pop=max(.35, back(e / .45)), size=fs)
     if intro: ImageDraw.Draw(im, "RGBA").rounded_rectangle(box, radius=26, fill=(6, 6, 8, 120))
 
 
