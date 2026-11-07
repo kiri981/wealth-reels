@@ -10,7 +10,7 @@ spec.json:
     {"type": "chart", "dur": 7.0, "title": "Gold gestern (1h)", "candles": [[o,h,l,c], ...], "labels": ["08:00", ...],
                       "levels": [{"price": 4028, "text": "24h-Tief", "color": "red"}], "notes": [{"i": 6, "price": 4030, "text": "Fehlausbruch", "color": "red"}],
                       "footer": "Kursdaten: echte Stundenkerzen"},
-    {"type": "rule",  "dur": 6.0, "kicker": "Meine Regel", "title": "Erst der Kerzenschluss zählt.", "body": "Ein Docht ist kein Signal ..."},
+    {"type": "rule",  "dur": 6.0, "kicker": "Meine Regel", "title": "Erst der Kerzenschluss zählt.", "body": "Ein Docht ist noch kein Einstieg ..."},
     {"type": "stat",  "dur": 5.0, "kicker": "Bot seit Montag", "value": "+1,4 R", "color": "green", "sub": "4 Trades · 2 Gewinner · 1 BE · 1 Verlust"},
     {"type": "cta",   "dur": 4.0, "title": "Weniger Trades. Bessere Trades."}
   ]

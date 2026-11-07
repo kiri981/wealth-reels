@@ -490,7 +490,7 @@ def s_signal(sc):
         if _re.match(r"^(ENTRY|EINSTIEG)", u): return GOLD
         return (226, 230, 238)
     def draw(im, t, tl):
-        pill = sc.get("kicker", "DAS ORIGINAL-SIGNAL"); step_pill(im, pill, 290, clamp(tl / 0.25))
+        pill = sc.get("kicker", "DIE ORIGINAL-TRADE-IDEE"); step_pill(im, pill, 290, clamp(tl / 0.25))
         q = back(clamp((tl - 0.15) / 0.35))
         if q <= 0: return
         dy = (1 - q) * 80
@@ -522,7 +522,7 @@ def s_shot(sc):
     k = min(maxw / img.width, maxh / img.height); base = img.resize((int(img.width * k), int(img.height * k)), Image.LANCZOS)
     m = Image.new("L", base.size, 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, base.width, base.height), radius=28, fill=255)
     def draw(im, t, tl):
-        step_pill(im, sc.get("kicker", "DAS ORIGINAL-SIGNAL"), 290, clamp(tl / 0.25))
+        step_pill(im, sc.get("kicker", "DIE ORIGINAL-TRADE-IDEE"), 290, clamp(tl / 0.25))
         q = back(clamp((tl - 0.15) / 0.4))
         if q <= 0: return
         z = 0.9 + 0.1 * q + 0.02 * tl

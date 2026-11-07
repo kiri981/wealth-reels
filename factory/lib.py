@@ -75,7 +75,7 @@ def rrect(im, box, fill, a=1.0, r=28, outline=None, width=2):
 
 def cta(im, t, start):
     p = prog(t, start)
-    pop(im, W / 2, 1010, "Gold-Signale live auf Telegram", font("InterDisplay-Black.otf", 74), WHITE, t, start, 880)
+    pop(im, W / 2, 1010, "Gold-Trade-Ideen auf Telegram", font("InterDisplay-Black.otf", 74), WHITE, t, start, 880)
     pp = prog(t, start + 0.5)
     rrect(im, (240, 1250 - 10 * (1 - pp), 840, 1370 - 10 * (1 - pp)), GOLD, pp, r=60)
     text(im, (W / 2, 1310 - 10 * (1 - pp)), "Link in Bio", font("InterDisplay-Black.otf", 60), BG, pp)

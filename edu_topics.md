@@ -18,7 +18,7 @@ Regeln für die Auswahl (wichtig):
 9. [TECHNIK] Change of Character (CHoCH) – der erste Hinweis auf eine Trendwende | choch
 10. [TECHNIK] Marktstruktur: Higher High, Higher Low, Lower High, Lower Low | choch
 11. [TECHNIK] Trendlinie richtig zeichnen – 3 Berührungen | trendline
-12. [TECHNIK] Trendlinien-Bruch: Signal oder Falle? | trendline
+12. [TECHNIK] Trendlinien-Bruch: Einstieg oder Falle? | trendline
 13. [TECHNIK] Unterstützung und Widerstand richtig einzeichnen (Zonen statt Linien) | sr
 14. [TECHNIK] Range-Trading: oben verkaufen, unten kaufen – und wann nicht | sr
 15. [TECHNIK] Fibonacci: warum Rücksetzer oft bei 50–61,8 % enden | fib
@@ -34,7 +34,7 @@ Regeln für die Auswahl (wichtig):
 ## PSYCHOLOGIE
 24. [PSYCHOLOGIE] FOMO – warum du immer am Top kaufst
 25. [PSYCHOLOGIE] Revenge-Trading: was nach einem Verlust in deinem Kopf passiert
-26. [PSYCHOLOGIE] Overtrading erkennen – 3 Warnsignale
+26. [PSYCHOLOGIE] Overtrading erkennen – 3 Warnzeichen
 27. [PSYCHOLOGIE] Den Stop verschieben – der teuerste Fehler
 28. [PSYCHOLOGIE] Gewinne zu früh mitnehmen, Verluste laufen lassen – warum wir das tun
 29. [PSYCHOLOGIE] Geduld: der beste Trade ist manchmal keiner
@@ -59,7 +59,7 @@ Regeln für die Auswahl (wichtig):
 46. [RISIKO] Teilgewinne mitnehmen (TP1/TP2)
 47. [RISIKO] Trefferquote vs. CRV – 40 % Trefferquote kann profitabel sein | counter
 48. [RISIKO] Wochenend-Risiko: Positionen übers Wochenende?
-49. [RISIKO] Signale kopieren – worauf du achten musst
+49. [RISIKO] Trade-Ideen kopieren – worauf du achten musst
 
 ## FUNDAMENTAL
 50. [FUNDAMENTAL] Was bewegt Gold? Dollar, Zinsen, Unsicherheit
@@ -73,3 +73,5 @@ Regeln für die Auswahl (wichtig):
 58. [FUNDAMENTAL] Gap am Montag
 59. [FUNDAMENTAL] Prop-Firmen kurz erklärt (Regeln, Drawdown)
 60. [FUNDAMENTAL] Warum 90 % scheitern – die 3 Hauptgründe
+
+> Wortwahl (rechtlich): In Reels, Captions, Bildtexten und Sprechertext NIE „Signal/Signale“ (EN signal, PL sygnał, FR signal) – stattdessen „Trade-Idee(n)“ / trade idea / pomysł tradingowy / idée de trade.

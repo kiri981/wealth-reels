@@ -38,7 +38,7 @@ def signal_scene(t):
         except Exception as e:   # nicht still auf die Nachbildung ausweichen
             sys.exit(f"SCREENSHOT NICHT LADBAR ({t['shot']}): {e} – Domain welcome-bot.kheid645.workers.dev muss in claude.ai > Einstellungen > Funktionen > Domain-Zulassungsliste stehen. Replay NICHT ohne Screenshot posten.")
         return [{"type": "shot", "dur": 4.5, "image": t["shot"], "time": "Gepostet am " + datetime.fromtimestamp(t["opened"], tz).strftime("%d.%m.%Y um %H:%M Uhr"),
-                 "say": "So stand das Signal im VIP-Kanal."}]
+                 "say": "So stand die Trade-Idee im VIP-Kanal."}]
     txt = (t.get("text") or "").strip()
     if txt.startswith("["): txt = txt.split("\n", 1)[1] if "\n" in txt else ""   # Gold: erste Zeile = TP-Liste (intern)
     lines = [l.rstrip() for l in txt.split("\n")]
@@ -48,7 +48,7 @@ def signal_scene(t):
     tz = timezone(timedelta(hours=2))
     when = datetime.fromtimestamp(t["opened"], tz).strftime("%d.%m.%Y · %H:%M Uhr")
     return [{"type": "signal", "dur": 5.5, "channel": CHANNELS.get(t["symbol"], "Wealth Club VIP"), "time": when, "lines": lines,
-             "say": "So stand das Signal im VIP-Kanal."}]
+             "say": "So stand die Trade-Idee im VIP-Kanal."}]
 
 
 def make_spec(t):
@@ -83,8 +83,8 @@ def make_spec(t):
              "say": f"Ziel erreicht: plus {r_words(r)} R in {dur_text((t.get('closed') or ts[-1]) - t['opened'])}."},
             {"type": "words", "dur": 3.0, "kicker": "WICHTIG", "text": "Ausgewählter Trade – nicht jeder Trade geht auf.",
              "say": "Wichtig: Das ist ein ausgewählter Trade. Nicht jeder geht auf."},
-            {"type": "cta", "dur": 2.8, "title": f"{name}. Mit Plan.", "button": "Kommentiere VIP", "sub": "Live-Signale im VIP-Kanal",
-             "say": "Live-Signale im VIP. Kommentiere VIP für Infos."},
+            {"type": "cta", "dur": 2.8, "title": f"{name}. Mit Plan.", "button": "Kommentiere VIP", "sub": "Live-Trade-Ideen im VIP-Kanal",
+             "say": "Live-Trade-Ideen im VIP. Kommentiere VIP für Infos."},
         ],
     }
 
@@ -93,7 +93,7 @@ def caption(t):
     name = NAMES.get(t["symbol"], t["symbol"]); r = float(t.get("r") or 0)
     return (f"📼 Replay: {name} {t['side']} – {(t.get('setup') or 'Breakout').strip()} (+{r:.1f} R)\n\n"
             f"Einstieg, Stopp und Ziel standen vorher fest – der Plan hat gehalten.\n\n"
-            f"💬 Kommentiere VIP für Infos zu den Live-Signalen.\n\n"
+            f"💬 Kommentiere VIP für Infos zu den Live-Trade-Ideen.\n\n"
             f"Ausgewählter Trade, nicht repräsentativ. Verluste gehören dazu. Keine Anlageberatung.\n\n"
             f"#{name.lower()} #trading #{t['symbol'].lower()} " + ("#goldtrading #xauusd" if t["symbol"] in ("XAUUSD", "GOLD") else "#krypto") + " #tradingdeutsch")
 
