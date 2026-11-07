@@ -1,0 +1,357 @@
+{
+ "id": "ac01",
+ "title": "Das komplette Gold-Setup in *4 Schritten*",
+ "yt_title": "Das komplette Gold-Setup in 4 Schritten – Sweep, CHoCH, FVG & Entry erklärt",
+ "thumb": [
+  "GOLD-SETUP",
+  "in 4 Schritten"
+ ],
+ "tags": [
+  "Gold Trading",
+  "XAUUSD",
+  "Smart Money",
+  "Trading lernen",
+  "Marktstruktur",
+  "Fair Value Gap",
+  "Order Block",
+  "Liquidity Sweep"
+ ],
+ "chapters": [
+  {
+   "kind": "intro",
+   "title": "Das komplette Gold-Setup",
+   "segs": [
+    {
+     "say": "Die meisten Trader verlieren am Goldmarkt kein Geld, weil Gold unberechenbar ist – sondern weil sie zur falschen Zeit einsteigen."
+    },
+    {
+     "say": "In diesem Video zeige ich dir ein Setup in vier Schritten: Marktstruktur, Liquidität, Order Blocks und Fair Value Gaps. Und am Ende setzen wir alles an einem Beispiel zusammen.",
+     "agenda": [
+      "Marktstruktur",
+      "Liquidität",
+      "Order Blocks",
+      "Fair Value Gaps"
+     ]
+    },
+    {
+     "say": "Wichtig vorab: Das ist Bildungsinhalt, keine Anlageberatung. Trading birgt Verlustrisiken – übe neue Strategien zuerst auf einem Demokonto.",
+     "disclaimer": true
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Die *Marktstruktur*",
+   "clip": "bos",
+   "hook": "Wann ist ein Trend wirklich ein Trend?",
+   "segs": [
+    {
+     "say": "Alles beginnt mit der Marktstruktur. Bevor du über einen Einstieg nachdenkst, musst du wissen, in welche Richtung der Markt läuft.",
+     "step": -1
+    },
+    {
+     "say": "Der Markt steigt und bildet ein höheres Hoch – im Chart markiert als H H.",
+     "step": 0,
+     "point": "Höheres Hoch *(HH)*"
+    },
+    {
+     "say": "Dann kommt ein Rücksetzer. Das neue Tief bleibt über dem vorherigen. Das ist ein höheres Tief, H L.",
+     "step": 1,
+     "point": "Höheres Tief *(HL)*"
+    },
+    {
+     "say": "Jetzt markierst du das letzte Hoch. Genau diese Linie muss fallen, damit der Trend bestätigt ist.",
+     "step": 2
+    },
+    {
+     "say": "Eine Kerze schließt über dem Hoch: Das ist ein Break of Structure, kurz BOS. Achte darauf: Ein Docht allein reicht nicht – es zählt der Kerzenschluss.",
+     "step": 3,
+     "point": "Kerzen*schluss* über dem Hoch = *BOS*"
+    },
+    {
+     "say": "Das Muster wiederholt sich: neues höheres Tief, neuer Break of Structure. Solange das so läuft, suchst du nur nach Käufen.",
+     "step": 4,
+     "point": "Solange BOS: nur *Käufe*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Change of *Character*",
+   "clip": "choch",
+   "hook": "So erkennst du eine Trendwende früh",
+   "segs": [
+    {
+     "say": "Doch kein Trend hält ewig. Der Change of Character zeigt dir, wann sich die Richtung dreht.",
+     "step": -1
+    },
+    {
+     "say": "Hier sehen wir einen Abwärtstrend: tiefere Hochs und tiefere Tiefs.",
+     "step": 0,
+     "point": "Tiefere Hochs & *Tiefe*"
+    },
+    {
+     "say": "Das letzte tiefere Hoch ist die entscheidende Linie.",
+     "step": 1,
+     "point": "Letztes LH = *Schlüssellinie*"
+    },
+    {
+     "say": "Der Markt macht noch ein tieferes Tief – aber der Abverkauf wird schwächer.",
+     "step": 2
+    },
+    {
+     "say": "Dann schließt eine Kerze über dem letzten tieferen Hoch. Das ist der Change of Character – der erste Hinweis auf eine Wende.",
+     "step": 3,
+     "point": "Schluss darüber = *CHoCH*"
+    },
+    {
+     "say": "Bestätigt wird die Wende durch ein höheres Tief und einen Break of Structure nach oben. Jetzt ist der neue Trend da.",
+     "step": 4,
+     "point": "HL + BOS = *neuer Trend*"
+    }
+   ]
+  },
+  {
+   "kind": "remember",
+   "title": "Merke *dir*",
+   "cards": [
+    [
+     "BOS",
+     "bestätigt den *Trend*"
+    ],
+    [
+     "CHoCH",
+     "warnt vor einem *Wechsel*"
+    ]
+   ],
+   "segs": [
+    {
+     "say": "Merke dir also:",
+     "card": -1
+    },
+    {
+     "say": "Der Break of Structure bestätigt den Trend.",
+     "card": 0
+    },
+    {
+     "say": "Der Change of Character warnt vor einem Wechsel.",
+     "card": 1
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Liquidität & *Sweep*",
+   "clip": "liquiditaet-sweep",
+   "hook": "Warum dein Stop-Loss immer getroffen wird",
+   "segs": [
+    {
+     "say": "Schritt zwei: Liquidität. Große Marktteilnehmer brauchen Gegenparteien für ihre Orders – und die finden sie dort, wo viele Stop-Losses liegen.",
+     "step": -1
+    },
+    {
+     "say": "Hier ein klares Tief. Direkt darunter liegen die Stop-Losses der Käufer.",
+     "step": 0,
+     "point": "Unter Tiefs liegen *Stops*"
+    },
+    {
+     "say": "Dann ein zweites, fast gleiches Tief. Gleiche Tiefs ziehen Liquidität an wie ein Magnet.",
+     "step": 1,
+     "point": "Gleiche Tiefs = *Magnet*"
+    },
+    {
+     "say": "Der Docht sticht darunter. Die Stops werden ausgelöst – und große Marktteilnehmer kaufen genau diese Verkäufe.",
+     "step": 2
+    },
+    {
+     "say": "Die Kerze schließt schnell wieder über dem Tief. Das war ein Sweep, kein echter Ausbruch.",
+     "step": 3,
+     "point": "Schneller Schluss zurück = *Sweep*",
+     "arrow": [
+      12,
+      53.5,
+      15,
+      63.5
+     ]
+    },
+    {
+     "say": "Dann folgt der Impuls nach oben. Wer beim vermeintlichen Ausbruch verkauft hat, wird jetzt zum Treibstoff für die Bewegung.",
+     "step": 4,
+     "point": "Verkäufer werden *Treibstoff*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Der *Order Block*",
+   "clip": "order-block",
+   "hook": "Hier haben große Marktteilnehmer gekauft",
+   "segs": [
+    {
+     "say": "Schritt drei: der Order Block. Er zeigt dir, wo große Orders platziert wurden – und wo der Preis oft wieder reagiert.",
+     "step": -1
+    },
+    {
+     "say": "Zuerst eine Abwärtsbewegung. Noch nichts Besonderes.",
+     "step": 0
+    },
+    {
+     "say": "Plötzlich ein starker Impuls nach oben. Hier waren große Orders im Spiel.",
+     "step": 1,
+     "point": "Starker *Impuls*"
+    },
+    {
+     "say": "Die letzte rote Kerze vor dem Impuls ist der Order Block. Die Zone reicht vom Tief bis zum Hoch dieser Kerze.",
+     "step": 2,
+     "point": "Letzte Gegenkerze = *Order Block*",
+     "arrow": [
+      8,
+      69,
+      12,
+      56.5
+     ]
+    },
+    {
+     "say": "Später kommt der Preis zurück und testet die Zone.",
+     "step": 3
+    },
+    {
+     "say": "Aus dem Order Block kommt die Reaktion. Der Einstieg erfolgt mit dem Stop unter der Zone.",
+     "step": 4,
+     "point": "Rücklauf → *Reaktion*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Die *Fair Value Gap*",
+   "clip": "fvg",
+   "hook": "Diese Lücke wirkt bei Gold wie ein Magnet",
+   "segs": [
+    {
+     "say": "Schritt vier: die Fair Value Gap. Sie entsteht, wenn der Markt so schnell läuft, dass er Preise überspringt.",
+     "step": -1
+    },
+    {
+     "say": "Erst ein ruhiger Markt.",
+     "step": 0
+    },
+    {
+     "say": "Dann eine riesige Kerze – der Markt überspringt mehrere Preise.",
+     "step": 1,
+     "point": "3 Kerzen, große *Mitte*"
+    },
+    {
+     "say": "Zwischen dem Hoch der ersten Kerze und dem Tief der dritten Kerze bleibt eine Lücke. Das ist die Fair Value Gap.",
+     "step": 2,
+     "point": "Docht 1 & 3 überlappen *nicht*",
+     "arrow": [
+      6,
+      60,
+      10,
+      53.5
+     ]
+    },
+    {
+     "say": "Gold kommt oft zurück, um diese Lücke zu füllen.",
+     "step": 3,
+     "point": "Lücke wird oft *gefüllt*"
+    },
+    {
+     "say": "Und aus der Fair Value Gap geht es dann in Trendrichtung weiter.",
+     "step": 4
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Das *komplette Setup*",
+   "clip": "setup-kombi",
+   "hook": "Alle 4 Schritte an einem Gold-Chart",
+   "segs": [
+    {
+     "say": "Jetzt setzen wir alles zusammen – an einem Kauf-Setup.",
+     "step": -1
+    },
+    {
+     "say": "Auf dem Stundenchart läuft ein Aufwärtstrend. Auf dem Fünf-Minuten-Chart sehen wir eine Korrektur nach unten.",
+     "step": 0
+    },
+    {
+     "say": "Erster Baustein: der Sweep. Der Docht holt die Stops unter dem Tief.",
+     "step": 1,
+     "hl": 0
+    },
+    {
+     "say": "Zweiter Baustein: der Change of Character auf dem Fünf-Minuten-Chart – ein Schluss über dem letzten tieferen Hoch.",
+     "step": 2,
+     "hl": 1
+    },
+    {
+     "say": "Der Impuls hinterlässt eine Fair Value Gap im Discount-Bereich. Das ist deine Einstiegszone.",
+     "step": 3,
+     "hl": 2,
+     "arrow": [
+      11,
+      61,
+      14,
+      55
+     ]
+    },
+    {
+     "say": "Der Einstieg erfolgt beim Rücklauf in die Fair Value Gap. Der Stop liegt unter dem Sweep-Docht.",
+     "step": 4,
+     "hl": 3
+    },
+    {
+     "say": "Das Ziel ist das nächste Hoch. Wichtig: Das Chance-Risiko-Verhältnis berechnest du, bevor du einsteigst.",
+     "step": 5,
+     "hl": 3
+    }
+   ],
+   "side": "steps",
+   "side_items": [
+    "Liquidity *Sweep*",
+    "Change of *Character*",
+    "Rücklauf in die *FVG*",
+    "Entry · *SL* · *TP*"
+   ]
+  },
+  {
+   "kind": "summary",
+   "title": "Risiko & *Fazit*",
+   "hook": "Ohne das funktioniert kein Setup",
+   "segs": [
+    {
+     "say": "Ein Setup ist nur so gut wie dein Risikomanagement.",
+     "bullet": null
+    },
+    {
+     "say": "Riskiere pro Trade höchstens ein bis zwei Prozent deines Kontos.",
+     "bullet": "Max. 1–2 % Risiko pro Trade"
+    },
+    {
+     "say": "Lege deinen Stop-Loss fest, bevor du einsteigst – und verschiebe ihn nicht gegen dich.",
+     "bullet": "Stop-Loss vor dem Einstieg festlegen"
+    },
+    {
+     "say": "Nimm nur Trades mit einem Chance-Risiko-Verhältnis von mindestens eins zu zwei.",
+     "bullet": "Chance-Risiko mindestens 1 : 2"
+    },
+    {
+     "say": "Und kein Setup funktioniert immer. Verluste gehören dazu – entscheidend ist, dass deine Gewinner größer sind als deine Verlierer.",
+     "bullet": "Verluste gehören dazu"
+    }
+   ]
+  },
+  {
+   "kind": "outro",
+   "title": "Wealth Club",
+   "segs": [
+    {
+     "say": "Wenn du solche Setups jeden Tag mit uns am Goldchart üben willst: Komm in unsere kostenlose Gold-Gruppe auf Telegram. Den Link findest du in der Beschreibung. Dort wartet auch unser Bootcamp mit fünfundfünfzig Lektionen auf dich. Bis zum nächsten Video!"
+    }
+   ]
+  }
+ ]
+}

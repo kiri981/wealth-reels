@@ -1,0 +1,111 @@
+[
+ {
+  "id": "bos",
+  "t": "Break of Structure (BOS)",
+  "clip": "bos",
+  "cs": [
+   "Der Markt steigt und bildet ein höheres Hoch (HH).",
+   "Rücksetzer: Das Tief bleibt über dem vorherigen – ein höheres Tief (HL).",
+   "Markiere das letzte Hoch. Genau diese Linie muss fallen.",
+   "Eine Kerze SCHLIESST über dem Hoch – Break of Structure. Ein Docht allein reicht nicht.",
+   "Das Muster wiederholt sich: neues HL, neuer BOS. Solange das läuft, suchst du nur Käufe."
+  ]
+ },
+ {
+  "id": "choch",
+  "t": "Change of Character (CHoCH)",
+  "clip": "choch",
+  "cs": [
+   "Abwärtstrend: tiefere Hochs (LH) und tiefere Tiefs (LL).",
+   "Das letzte tiefere Hoch ist die entscheidende Linie.",
+   "Noch ein tieferes Tief – aber der Abverkauf wird schwächer.",
+   "Schluss über dem letzten LH: Change of Character. Erster Hinweis auf eine Wende.",
+   "Bestätigung: höheres Tief, danach BOS nach oben. Jetzt ist der neue Trend da."
+  ]
+ },
+ {
+  "id": "mtf",
+  "t": "Multi-Timeframe-Analyse: H4 → M5",
+  "clip": "praxis-mtf",
+  "cs": [
+   "Auf H4 liegt eine Nachfragezone. Wir wechseln auf M5 und warten.",
+   "Der Preis sweept in die H4-Zone hinein.",
+   "CHoCH auf M5 – die Bestätigung, auf die wir gewartet haben.",
+   "Entry auf dem Rücklauf, Stop unter dem Sweep.",
+   "Ziel erreicht. Entscheidung auf H4, Einstieg auf M5."
+  ]
+ },
+ {
+  "id": "bullflagge",
+  "t": "Bullflagge",
+  "clip": "bullflag-clip",
+  "cs": [
+   "Starker Anstieg: die Fahnenstange.",
+   "Leicht fallender Kanal: die Flagge. Gewinne werden mitgenommen, keine Panik.",
+   "Kerzenschluss über der oberen Flaggenlinie = Ausbruch.",
+   "Kursziel: grob die Länge der Fahnenstange."
+  ]
+ },
+ {
+  "id": "liquiditaet-sweep",
+  "t": "Liquidity Sweep (Stop-Hunt)",
+  "clip": "liquiditaet-sweep",
+  "cs": [
+   "Ein klares Tief. Darunter liegen die Stop-Losses der Käufer.",
+   "Ein zweites, fast gleiches Tief. Gleiche Tiefs ziehen Liquidität an wie ein Magnet.",
+   "Der Docht sticht darunter: Stops werden ausgelöst, große Marktteilnehmer kaufen diese Verkäufe.",
+   "Schneller Schluss zurück über dem Tief – das war ein Sweep, kein echter Ausbruch.",
+   "Dann der Impuls nach oben. Wer beim Ausbruch verkauft hat, ist jetzt der Treibstoff."
+  ]
+ },
+ {
+  "id": "order-block",
+  "t": "Order Block finden und handeln",
+  "clip": "order-block",
+  "cs": [
+   "Abwärtsbewegung – noch nichts Besonderes.",
+   "Plötzlich ein starker Impuls nach oben. Hier waren große Orders im Spiel.",
+   "Die letzte rote Kerze vor dem Impuls ist der Order Block: Zone vom Tief bis zum Hoch dieser Kerze.",
+   "Der Preis kommt zurück und testet die Zone.",
+   "Reaktion aus dem Order Block. Einstieg mit Stop unter der Zone."
+  ]
+ },
+ {
+  "id": "fvg",
+  "t": "Fair Value Gap (FVG) als Magnet",
+  "clip": "fvg",
+  "cs": [
+   "Ruhiger Markt.",
+   "Eine riesige Kerze – der Markt überspringt Preise.",
+   "Zwischen dem Hoch von Kerze 1 und dem Tief von Kerze 3 bleibt eine Lücke: die Fair Value Gap.",
+   "Gold kommt oft zurück, um die Lücke zu füllen.",
+   "Aus der FVG geht es in Trendrichtung weiter."
+  ]
+ },
+ {
+  "id": "setup-kombi",
+  "t": "Das komplette Setup – Kauf",
+  "clip": "setup-kombi",
+  "cs": [
+   "H1 im Aufwärtstrend, auf M5 läuft eine Korrektur nach unten.",
+   "Sweep: Der Docht holt die Stops unter dem Tief.",
+   "CHoCH auf M5: Schluss über dem letzten tieferen Hoch.",
+   "Der Impuls hinterlässt eine FVG im Discount-Bereich – deine Einstiegszone.",
+   "Entry beim Rücklauf in die FVG, Stop unter dem Sweep-Docht.",
+   "Ziel: das nächste Hoch. Chance-Risiko-Verhältnis vorher berechnen."
+  ]
+ },
+ {
+  "id": "setup-sell",
+  "t": "Das komplette Setup – Verkauf",
+  "clip": "setup-sell",
+  "cs": [
+   "H1 im Abwärtstrend, auf M5 läuft eine Korrektur nach oben.",
+   "Sweep: Der Docht holt die Stops über dem Hoch.",
+   "CHoCH auf M5: Schluss unter dem letzten höheren Tief.",
+   "Die FVG im Premium-Bereich wird zur Einstiegszone.",
+   "Entry beim Rücklauf in die FVG, Stop über dem Sweep-Docht.",
+   "Ziel: das nächste Tief."
+  ]
+ }
+]
