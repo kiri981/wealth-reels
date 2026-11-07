@@ -40,7 +40,7 @@ RELAY = "https://welcome-bot.kheid645.workers.dev/tts"   # Bot leitet an ElevenL
 
 
 def _post(url, body, headers):
-    req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST", headers={"Content-Type": "application/json", **headers})
+    req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST", headers={"Content-Type": "application/json", "User-Agent": "WealthClubFactory/1.0", **headers})
     with urllib.request.urlopen(req, timeout=90) as r: return r.read()
 
 
@@ -72,11 +72,15 @@ def _eleven(text, lang, speed):
     if _route() == "relay":
         pcm = _post(RELAY, body, {"x-code": os.environ["WC_CODE"]})
     else:
-        h = {"Accept": "audio/pcm"}
+        h = {"Accept": "audio/mpeg"}
         if os.environ.get("ELEVENLABS_API_KEY"): h["xi-api-key"] = os.environ["ELEVENLABS_API_KEY"]
         b = {k: v for k, v in body.items() if k != "voice_id"}
-        pcm = _post(f"https://api.elevenlabs.io/v1/text-to-speech/{vid}?output_format=pcm_44100", b, h)
-    return np.frombuffer(pcm, dtype="<i2").astype(np.float32) / 32768.0, SR
+        pcm = _post(f"https://api.elevenlabs.io/v1/text-to-speech/{vid}?output_format=mp3_44100_128", b, h)
+    # MP3 (44,1 kHz ist erst ab Pro als PCM erlaubt) -> mono 44,1 kHz Float
+    import subprocess
+    raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", "pipe:0", "-f", "s16le", "-ac", "1", "-ar", str(SR), "pipe:1"],
+                         input=pcm, capture_output=True, check=True).stdout
+    return np.frombuffer(raw, dtype="<i2").astype(np.float32) / 32768.0, SR
 
 
 def available():
