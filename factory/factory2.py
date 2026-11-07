@@ -588,6 +588,7 @@ except Exception: SETTINGS = {}
 
 if __name__ == "__main__":
     spec = json.load(open(sys.argv[1], encoding="utf-8")); out = sys.argv[2]
+    import wording; spec = wording.clean(spec)
     if spec.get("footer"): CHROME["footer"] = spec["footer"]   # übersetzter Footer (Partner-Varianten in anderer Sprache)
     COVER_DUR = 1.0   # Titelbild 1 s vorne: TikTok/Instagram nehmen sonst leicht ein unscharfes Übergangsbild als Vorschau
     if spec.get("cover") and spec["scenes"] and spec["scenes"][0].get("type") == "logo": spec["scenes"].pop(0)   # Logo steckt schon im Titelbild
