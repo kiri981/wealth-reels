@@ -7,7 +7,7 @@ TXT = {
         "disc": "Ausgewählte Beispiele · Keine Anlageberatung · Trading birgt Verlustrisiken",
         "cta": "Kostenlos. Ohne Abo.", "link": "Link in Bio",
         "lines": ["Trade-Ideen mit Einstieg, Stop & Ziel", "Tägliches Gold-Briefing", "Bootcamp mit 55 Lektionen", "Partnerprogramm: wirb mit und werde beteiligt"],
-        "vo": ["Genug von teuren Trading-Gruppen?",
+        "vo": ["Keine Lust mehr auf teure Trading-Gruppen?",
                "Bei Wealth Club bekommst du Trade-Ideen auf Gold – mit Einstieg, Stop-Loss und Ziel. Vor dem Trade, nicht danach.",
                "Jeden Morgen: das Gold-Briefing. Wichtige Marken, News und der Plan für den Tag.",
                "Und ja, auch Verluste gehören dazu. Dann erklären wir genau, warum.",
