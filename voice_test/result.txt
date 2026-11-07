@@ -1,6 +1,6 @@
-ElevenLabs Stimmtest – 2026-11-07
-HTTP-Code /v1/user/subscription: 000
-Credits: nicht abrufbar (character_count / character_limit unbekannt)
-Fehler: Verbindung zu api.elevenlabs.io:443 vom Egress-Proxy abgelehnt (connect_rejected) – Host ist fuer diese Session nicht freigegeben.
+ElevenLabs Stimmtest 2 – 2026-11-07
+HTTP-Code /v1/user/subscription: 401
+character_count / character_limit: nicht abrufbar
+Fehler: unauthorized – "Neither authorization header nor xi-api-key received, please provide one." (status: needs_authorization)
+Der Host ist jetzt erreichbar, aber der Proxy hat keinen API-Schlüssel angehängt (Network Secret fehlt oder ist nicht für api.elevenlabs.io konfiguriert).
 Keine Stimmproben erzeugt. factory/settings.json unveraendert (voice_id JBFqnCBsd6RMkjVDRZzb).
-Behebung: api.elevenlabs.io in claude.ai unter Settings > Capabilities (bzw. Organisations-Einstellungen) als erlaubte Domain eintragen.
