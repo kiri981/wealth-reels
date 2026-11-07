@@ -642,3 +642,9 @@ if __name__ == "__main__":
     render(scenes, out, total)
     if track and track.endswith("_music.wav") and os.path.exists(track): os.remove(track)
     print("ok", out, f"{total:.1f}s", "musik:", os.path.basename(str(choice)) if track else "keine")
+    # YouTube-Fassung mit durchgehender Titelleiste (<out>_yt.mp4) – der Bot lädt bei YouTube automatisch diese hoch
+    if spec.get("cover") and not os.environ.get("PREVIEW") and not os.environ.get("NO_YT") and os.path.basename(os.path.dirname(os.path.abspath(out))) == "reels":
+        try:
+            import yt_variant
+            yt_variant.make(out, os.path.splitext(out)[0] + "_yt.mp4", spec["cover"]["title"], spec["cover"].get("kicker", ""), start=COVER_DUR)
+        except Exception as e: print("YouTube-Fassung fehlgeschlagen:", e)
