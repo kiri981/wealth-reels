@@ -221,7 +221,7 @@ def s_cta(sc):
         if q > 0:
             bw, bh = 640 * s, 130 * s; rrect(im, (W / 2 - bw / 2, 1110 - bh / 2, W / 2 + bw / 2, 1110 + bh / 2), GOLD, 1, r=int(65 * s))
             scaled_text(im, W / 2, 1110, sc.get("button", "Link in Bio"), H1(fit(sc.get("button", "Link in Bio"), 560, 60, 40, 1)), BG, s)
-        text(im, (W / 2, 1290), "Keine Anlageberatung. Trading birgt Verlustrisiken.", font("Inter-Medium.otf", 30), MUTED, clamp((tl - 0.9) / 0.3))
+        text(im, (W / 2, 1290), sc.get("disclaimer", "Keine Anlageberatung. Trading birgt Verlustrisiken."), font("Inter-Medium.otf", 30), MUTED, clamp((tl - 0.9) / 0.3))
     return draw
 
 # ---------- Neue Bausteine (v2.1): Logo, Kerzen-Chart mit Markierungen, Benachrichtigungen ----------
@@ -588,6 +588,7 @@ except Exception: SETTINGS = {}
 
 if __name__ == "__main__":
     spec = json.load(open(sys.argv[1], encoding="utf-8")); out = sys.argv[2]
+    if spec.get("footer"): CHROME["footer"] = spec["footer"]   # übersetzter Footer (Partner-Varianten in anderer Sprache)
     COVER_DUR = 1.0   # Titelbild 1 s vorne: TikTok/Instagram nehmen sonst leicht ein unscharfes Übergangsbild als Vorschau
     if spec.get("cover") and spec["scenes"] and spec["scenes"][0].get("type") == "logo": spec["scenes"].pop(0)   # Logo steckt schon im Titelbild
     here = os.path.dirname(os.path.abspath(__file__))
