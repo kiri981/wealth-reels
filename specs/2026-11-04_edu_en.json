@@ -1,0 +1,89 @@
+{
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.8
+  },
+  {
+   "type": "candles",
+   "dur": 4.2,
+   "pattern": "stopped",
+   "title": "Your stop gets hit – *and THEN* price runs your way?",
+   "say": "Your stop gets hit. And then price runs exactly your way?"
+  },
+  {
+   "type": "words",
+   "dur": 2.6,
+   "kicker": "That's not bad luck.",
+   "text": "That's liquidity.",
+   "say": "That's not bad luck. That's liquidity."
+  },
+  {
+   "type": "candles",
+   "dur": 4.6,
+   "pattern": "sweep",
+   "show": [
+    "level",
+    "zone"
+   ],
+   "step": "STEP 01",
+   "title": "Traders put their stop below the *obvious low*",
+   "say": "Step one: most traders put their stop below the obvious low."
+  },
+  {
+   "type": "candles",
+   "dur": 4.6,
+   "pattern": "sweep",
+   "show": [
+    "level",
+    "zone",
+    "sweep"
+   ],
+   "step": "STEP 02",
+   "title": "Big players grab exactly *this liquidity*",
+   "caption": "The stops get triggered – then the market turns.",
+   "say": "Step two: big players grab exactly those stops. Then the market turns."
+  },
+  {
+   "type": "candles",
+   "dur": 4.8,
+   "pattern": "sweep",
+   "show": [
+    "level",
+    "entry"
+   ],
+   "step": "STEP 03",
+   "title": "Enter *AFTER* the sweep – not before",
+   "say": "Step three: only enter after the sweep. Not before."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "No time to analyze the market *yourself*?",
+   "items": [
+    {
+     "text": "New gold idea: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "Update: SL to entry",
+     "color": "gold"
+    },
+    {
+     "text": "New gold idea: XAUUSD SELL",
+     "color": "red"
+    }
+   ],
+   "say": "No time to analyze this yourself?"
+  },
+  {
+   "type": "cta",
+   "dur": 2.8,
+   "title": "Gold. With a plan.",
+   "say": "Gold ideas live on Telegram. Comment GOLD and I'll send you the link.",
+   "button": "Comment GOLD"
+  }
+ ],
+ "lang": "en"
+}

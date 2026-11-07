@@ -1,0 +1,116 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "RISK",
+  "title": "How much to risk *per trade*?",
+  "chart": "range"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "One trade kills your account?",
+   "accent": "Then it was too big.",
+   "icon": "alert",
+   "say": "One single trade kills your account? Then it was too big."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "RISK PER TRADE",
+   "text": "Risk only 0.5 to 1% of your account per trade – never more.",
+   "say": "The rule: risk only half a percent to one percent of your account per trade."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "STEP 01 · Example",
+   "from": 0,
+   "to": 50,
+   "decimals": 0,
+   "prefix": "",
+   "suffix": " $",
+   "color": "gold",
+   "sub": "$5,000 account × 1% = max. $50 loss",
+   "say": "Step one: with a five thousand dollar account, one percent is fifty dollars."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "STEP 02 · Calculate lot size",
+   "items": [
+    {
+     "left": "Risk",
+     "right": "$50"
+    },
+    {
+     "left": "Stop",
+     "right": "$5 away"
+    },
+    {
+     "left": "1 lot",
+     "right": "$5 = $500 loss"
+    },
+    {
+     "left": "Lot",
+     "right": "50 ÷ 500 = 0.10 lot",
+     "hot": true
+    }
+   ],
+   "say": "Step two: stop five dollars away. Then zero point one lot fits."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "STEP 03 · Example",
+   "from": 0,
+   "to": -9.6,
+   "decimals": 1,
+   "prefix": "",
+   "suffix": " %",
+   "color": "red",
+   "sub": "10 losses in a row at 1% – account survives.",
+   "say": "Step three: even ten losses in a row only cost you about ten percent."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "COMMON MISTAKE",
+   "text": "Picking the lot size first, then the stop. Always the other way round!",
+   "say": "Common mistake: picking the lot size first. Stop comes first, then size."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "No time to analyze the market *yourself*?",
+   "items": [
+    {
+     "text": "New gold idea: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "Risk: max. 1% per trade",
+     "color": "gold"
+    },
+    {
+     "text": "Update: SL to entry",
+     "color": "gold"
+    }
+   ],
+   "say": "No time to analyze the market yourself?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Risk small. Stay long.",
+   "button": "Comment GOLD",
+   "say": "I show how I plan my risk live in my free group. Comment GOLD."
+  }
+ ],
+ "lang": "en"
+}
