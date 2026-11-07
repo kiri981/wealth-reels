@@ -1,6 +1,7 @@
 """Individuelle Partner-Variante eines Reels: eigene Hook, eigenes Titelbild, eigene Musik, Handle im Bild.
 
 python3 partner_variant.py ../specs/<day>.json ../reels/partner/<day>_<pid>.mp4 '{"handle": "@tom.trades", "hook": "Warum dein Einstieg zu früh ist", "accent": "…", "cover_title": "Dein Einstieg ist *zu früh*", "music": "lofi", "seed": 7}'
+Andere Sprache: vorher eine übersetzte Kopie der Spec schreiben und diese übergeben, dazu {"lang": "en|pl|fr", "kicker": "LEARN"}.
 
 - Ersetzt Text (und Sprechtext) der ersten Hook-Szene, setzt Titelbild-Titel und Musik.
 - Rendert mit factory2.py und blendet danach den Handle klein unten rechts ein (ab Sekunde 1, nach dem Titelbild).
@@ -25,6 +26,8 @@ def main(spec_path, out, opts):
     if opts.get("cover_title"):
         spec.setdefault("cover", {"kicker": "LERN-REEL", "chart": "up"})["title"] = opts["cover_title"]
     if opts.get("music"): spec["music"] = opts["music"]
+    if opts.get("lang"): spec["lang"] = opts["lang"]   # Sprache der Stimme (ElevenLabs multilingual); Texte vorher übersetzt in der Spec
+    if opts.get("kicker"): spec.setdefault("cover", {})["kicker"] = opts["kicker"]
     tmp = tempfile.mkdtemp()
     sp = os.path.join(tmp, "spec.json"); json.dump(spec, open(sp, "w", encoding="utf-8"), ensure_ascii=False)
     raw = os.path.join(tmp, "raw.mp4")
