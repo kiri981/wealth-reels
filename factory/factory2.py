@@ -640,6 +640,15 @@ if __name__ == "__main__":
             cand = os.path.join(here, "..", "music", os.path.basename(choice)); track = cand if os.path.exists(cand) else None
     if track: os.environ["REEL_MUSIC"] = track
     render(scenes, out, total)
+    # Untertitel (Sprechtext je Szene) als WebVTT neben dem Video: <out>.vtt – Grundlage für Übersetzungen (Bibliothek)
+    if any(sc.get("say") for sc in spec["scenes"]) and not os.environ.get("PREVIEW"):
+        def _ts(x): return f"{int(x // 3600):02d}:{int(x % 3600 // 60):02d}:{x % 60:06.3f}"
+        t0 = COVER_DUR if spec.get("cover") else 0.0; cues = []
+        for sc in spec["scenes"]:
+            d = float(sc.get("dur", 3))
+            if sc.get("say"): cues.append(f"{_ts(t0)} --> {_ts(t0 + d - 0.05)}\n{sc['say']}")
+            t0 += d
+        open(os.path.splitext(out)[0] + ".vtt", "w", encoding="utf-8").write("WEBVTT\n\n" + "\n\n".join(cues) + "\n")
     if track and track.endswith("_music.wav") and os.path.exists(track): os.remove(track)
     print("ok", out, f"{total:.1f}s", "musik:", os.path.basename(str(choice)) if track else "keine")
     # YouTube-Fassung mit durchgehender Titelleiste (<out>_yt.mp4) – der Bot lädt bei YouTube automatisch diese hoch
