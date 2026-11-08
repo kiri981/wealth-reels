@@ -27,6 +27,7 @@ SEGS = [
     dict(k="supp", say="Persönlicher Support, ein Bot, der rund um die Uhr hilft – und den VIP-Bereich kannst du vierzehn Tage testen."),
     dict(k="cta", say="Starte jetzt kostenlos. Link in der Bio."),
 ]
+CTA_LINE = os.environ.get("CTA_LINE", "Fragen? Telegram @KKIUTz")   # leer = Partner-Basis (Handle per ffmpeg)
 FLAGS = ["🇩🇪", "🇬🇧", "🇵🇱", "🇫🇷", "🇷🇺", "🇪🇸", "🇹🇷"]
 
 
@@ -136,7 +137,7 @@ def scene(seg, t, dur, T):
         bw, bh = 520 * s, 130 * s; cy = 1300
         d.rounded_rectangle((W / 2 - bw / 2, cy - bh / 2, W / 2 + bw / 2, cy + bh / 2), radius=bh / 2, fill=GOLD + (int(255 * e),))
         d.text((W / 2, cy + 18), "Link in Bio", font=font("InterDisplay-Black.otf", int(58 * max(s, .3))), fill=(18, 14, 6, int(255 * e)), anchor="ms")
-        d.text((W / 2, 1450), "Fragen? Telegram @KKIUTz", font=font("Inter-Bold.otf", 38), fill=GOLD + (int(255 * ease((t - 1.8) / .4)),), anchor="ms")
+        if CTA_LINE: d.text((W / 2, 1450), CTA_LINE, font=font("Inter-Bold.otf", 38), fill=GOLD + (int(255 * ease((t - 1.8) / .4)),), anchor="ms")
     P.caption(im, seg["say"], t, dur, a)
     disclaimer(im)
     return im
@@ -157,7 +158,7 @@ def main():
     mins = {"hook": 3.4, "ideas": 4.0, "brief": 4.0, "boot": 4.5, "fehler": 4.5, "multi": 4.0, "supp": 4.2, "cta": 3.8}
     t = 0
     for s in SEGS: s["t0"] = t; s["dur"] = max(s["vo"] + .5, mins[s["k"]]); t += s["dur"]
-    T = t; print("Länge", round(T, 1))
+    T = t; print("Länge", round(T, 1), "CTA-Start", round(SEGS[-1]["t0"], 2))
     v = os.path.join(OUT, "v.mp4")
     p = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
                           "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p", v], stdin=subprocess.PIPE)
