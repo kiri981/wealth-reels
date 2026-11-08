@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-sys.path.insert(0, os.path.join(HERE, "..", "factory")); sys.path.insert(0, os.path.join(HERE, "..", "ad"))
+sys.path.insert(0, os.path.join(HERE, "..", "factory")); sys.path.insert(0, os.path.join(HERE, "..", "ad")); sys.path.insert(0, os.path.join(HERE, "..", "tts"))
 from lib import font                     # noqa: E402
 from boxes import BOX                    # noqa: E402
 
