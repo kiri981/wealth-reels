@@ -123,7 +123,7 @@ def shot_scene(im, seg, prev, t, dur):
     img = seg["img"]; boxes = seg["boxes"]; nb = max(1, len(boxes))
     per = (dur - .3) / nb; idx = min(int(max(t - .2, 0) / per), nb - 1) if boxes else 0
     full = seg.get("focus", (0, 0) + IMG[img].size)
-    together = boxes and max(BOX[img][x][2] for x in boxes) - min(BOX[img][x][0] for x in boxes) < 900 and max(BOX[img][x][3] for x in boxes) - min(BOX[img][x][1] for x in boxes) < 330
+    together = not seg.get("solo") and boxes and max(BOX[img][x][2] for x in boxes) - min(BOX[img][x][0] for x in boxes) < 900 and max(BOX[img][x][3] for x in boxes) - min(BOX[img][x][1] for x in boxes) < 330
     def tv(j): return view_for(img, full if not boxes else union(img, boxes if together else [boxes[j]]))
     tgt = tv(idx)
     if idx == 0 or together:
