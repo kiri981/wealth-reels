@@ -22,7 +22,7 @@ S = [  # k: card | shot ; img, boxes (nacheinander), lab: Beschriftung, ch: Kapi
     dict(k="shot", ch=0, img="register", boxes=[], focus=(150, 80, 740, 905), say="Über den Link landest du auf dieser Seite: Live-Konto eröffnen."),
     dict(k="shot", ch=0, img="register", boxes=["land", "vorname"], lab=["Wohnsitzland", "Vorname"], say="Wähle dein Wohnsitzland und trag deinen Vornamen ein."),
     dict(k="shot", ch=0, img="register", boxes=["email", "pass"], lab=["E-Mail", "Passwort"], say="Dann deine E-Mail-Adresse und ein sicheres Passwort, das du dir gut merken kannst."),
-    dict(k="shot", ch=0, img="register", boxes=["empf"], lab=["Code aus der Videobeschreibung"], hot=True, say="Ganz wichtig ist das Feld Empfehler. Hier muss unser Code stehen. Du findest ihn in der Videobeschreibung."),
+    dict(k="shot", ch=0, img="register", boxes=["empf"], lab=["Leer lassen"], say="Das Feld Empfehler lässt du einfach leer. Weil du über unseren Link gekommen bist, wird dein Konto automatisch uns zugeordnet."),
     dict(k="shot", ch=0, img="register", boxes=["indiv", "checks", "erstellen"], lab=["Individuum", "Beide Häkchen", "Konto erstellen"], say="Wähle Individuum, setz die beiden Häkchen und tippe auf Konto erstellen."),
     dict(k="verify", ch=1, say="Jetzt bestätigst du deine E-Mail-Adresse und deine Telefonnummer – jeweils mit dem Code, den du zugeschickt bekommst. Beides ist Pflicht."),
     dict(k="shot", ch=2, img="nav", boxes=["konten", "eroeffnen"], lab=["Konten", "Konto eröffnen"], say="Im Kundenbereich gehst du oben auf Konten und dann rechts auf Konto eröffnen."),
