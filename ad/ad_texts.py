@@ -46,10 +46,10 @@ TXT = {
                "Dołącz za darmo. A jako partner zarabiasz na udziale. Link w bio."],
     },
     "fr": {
-        "seg": [("GROUPE OR GRATUIT", "Marre des groupes de trading *hors de prix* ?"), ("IDÉES DE TRADE", "Entrée, stop & objectif – *à l'avance*"),
+        "seg": [("GROUPE OR GRATUIT", "Marre des groupes *trop chers* ?"), ("IDÉES DE TRADE", "Entrée, stop & objectif – *à l'avance*"),
                 ("CHAQUE MATIN", "Le *briefing or*"), ("HONNÊTE", "Les pertes aussi – *expliquées*"),
                 ("BOOTCAMP", "55 leçons avec *clips vidéo*"), ("VRAIS TRADES", "De vrais graphiques. *Sans abonnement.*")],
-        "disc": "Exemples choisis · Pas un conseil en investissement · Le trading comporte un risque de perte",
+        "disc": "Exemples choisis · Pas de conseil en investissement · Risque de perte",
         "cta": "Gratuit. Sans abonnement.", "link": "Lien en bio",
         "lines": ["Idées de trade sur l'or : entrée, stop & objectif", "Briefing or quotidien", "Bootcamp de 55 leçons", "Programme partenaire : recommande et gagne"],
         "vo": ["Marre de payer des groupes de trading hors de prix ?",
