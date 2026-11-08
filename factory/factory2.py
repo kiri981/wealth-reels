@@ -310,7 +310,7 @@ def make_pattern2(kind, seed=7):
         dn(5, 0.4, 1.0); ob = len(cs); bar(p[0], p[0] - 1.0, 0.3)
         up(4, 1.6, 2.6); dn(4, 0.6, 1.1); cs[-1][2] = cs[ob][1] - 0.2; ri = len(cs) - 1; up(6, 1.0, 1.9)
         D["zone"] = {"from": cs[ob][2], "to": cs[ob][1], "text": ""}
-        D["tags"] = [{"i": ob, "price": cs[ob][2], "text": "ORDER BLOCK", "color": "gold"}, {"i": ri, "price": cs[ri][2], "text": "REAKTION", "color": "gold"}]
+        D["tags"] = [{"i": ob, "price": cs[ob][2], "text": "ORDER BLOCK", "color": "gold"}, {"i": ri, "price": cs[ri][2], "text": CHROME.get("reaction", "REAKTION"), "color": "gold"}]
     elif kind in ("bos", "choch"):          # Abwärtstrend (LH/LL) -> Bruch des letzten tieferen Hochs
         dn(3); lh1 = len(cs); up(2, 0.4, 0.9); h1 = cs[-1][1]; dn(4); ll1 = len(cs) - 1
         up(2, 0.4, 0.9); lh2 = len(cs) - 1; h2 = cs[-1][1]; dn(3); ll2 = len(cs) - 1
@@ -341,7 +341,7 @@ def make_pattern2(kind, seed=7):
         while p[0] > f618 + 0.6: bar(p[0], p[0] - r.uniform(0.7, 1.3))
         cs[-1][2] = f618 - 0.2; ri = len(cs) - 1; up(6, 1.0, 1.8)
         D["levels"] = [{"price": f382, "text": "38,2 %", "color": "white"}, {"price": f50, "text": "50 %", "color": "white"}, {"price": f618, "text": "61,8 %", "color": "gold"}]
-        D["tags"] = [{"i": ri, "price": cs[ri][2], "text": "REAKTION", "color": "gold"}]
+        D["tags"] = [{"i": ri, "price": cs[ri][2], "text": CHROME.get("reaction", "REAKTION"), "color": "gold"}]
     elif kind == "fakeout":                 # Ausbruch über Widerstand nur mit Docht, dann runter
         hi = 104.0
         for k in range(2):
@@ -590,6 +590,7 @@ if __name__ == "__main__":
     spec = json.load(open(sys.argv[1], encoding="utf-8")); out = sys.argv[2]
     import wording; spec = wording.clean(spec)
     if spec.get("footer"): CHROME["footer"] = spec["footer"]   # übersetzter Footer (Partner-Varianten in anderer Sprache)
+    if spec.get("reaction"): CHROME["reaction"] = spec["reaction"]   # übersetztes Chart-Tag „REAKTION“
     COVER_DUR = 1.0   # Titelbild 1 s vorne: TikTok/Instagram nehmen sonst leicht ein unscharfes Übergangsbild als Vorschau
     if spec.get("cover") and spec["scenes"] and spec["scenes"][0].get("type") == "logo": spec["scenes"].pop(0)   # Logo steckt schon im Titelbild
     here = os.path.dirname(os.path.abspath(__file__))
