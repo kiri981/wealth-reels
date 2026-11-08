@@ -28,6 +28,9 @@ SEGS = [
     dict(k="cta", say="Starte jetzt kostenlos. Link in der Bio."),
 ]
 CTA_LINE = os.environ.get("CTA_LINE", "Fragen? Telegram @KKIUTz")   # leer = Partner-Basis (Handle per ffmpeg)
+HOOK = int(os.environ.get("AD_HOOK", "1"))
+HK = json.load(open(os.path.join(HERE, "hooks_de.json")))[HOOK - 1]
+SEGS[0]["say"] = HK["say"]
 FLAGS = ["🇩🇪", "🇬🇧", "🇵🇱", "🇫🇷", "🇷🇺", "🇪🇸", "🇹🇷"]
 
 
@@ -79,7 +82,7 @@ def scene(seg, t, dur, T):
     if k == "hook":
         lo = LOGO.resize((420, int(LOGO.height * 420 / LOGO.width))); paste(im, lo, W / 2, 330, ease(t / .6))
         f = font("InterDisplay-Black.otf", 92)
-        for j, (l, g) in enumerate([("GOLD TRADEN", False), ("LERNEN.", False), ("KOSTENLOS.", True)]):
+        for j, (l, g) in enumerate([(a, bool(b)) for a, b in HK["lines"]]):
             e = ease((t - .3 - j * .3) / .4); d.text((W / 2, 680 + j * 108 + (1 - e) * 40), l, font=f, fill=(GOLD if g else WHITE) + (int(255 * e),), anchor="ms")
         chips = ["Trade-Ideen", "Briefings", "Bootcamp", "Fehleranalyse", "7 Sprachen", "Support"]
         fc = font("Inter-Bold.otf", 36)
@@ -169,7 +172,7 @@ def main():
         p.stdin.write(im.tobytes())
     p.stdin.close(); p.wait()
     mus = os.path.join(OUT, "music.wav")
-    subprocess.run([sys.executable, os.path.join(HERE, "..", "factory", "music.py"), "drive", f"{T + 1:.2f}", mus, "7"], check=True, capture_output=True)
+    subprocess.run([sys.executable, os.path.join(HERE, "..", "factory", "music.py"), "drive", f"{T + 1:.2f}", mus, str(6 + HOOK)], check=True, capture_output=True)
     ins = ["-i", mus]; flt = ["[1:a]volume=0.22[m]"]; mix = ["[m]"]   # 0 = Video, 1 = Musik, ab 2 = Sprecher
     for i, s in enumerate(SEGS):
         ms = int(s["t0"] * 1000) + 150; ins += ["-i", s["wav"]]; flt.append(f"[{i + 2}:a]aresample=44100,volume=1.6,adelay={ms}|{ms}[v{i}]"); mix.append(f"[v{i}]")

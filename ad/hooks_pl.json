@@ -1,0 +1,5 @@
+[{"say": "Chcesz nauczyć się tradingu złotem – bez drogich kursów i pustych obietnic?", "lines": [["NAUCZ SIĘ", 0], ["TRADINGU ZŁOTEM.", 0], ["ZA DARMO.", 1]], "cap": "Naucz się tradingu złotem – za darmo."},
+ {"say": "Przestań wydawać pieniądze na drogie kursy tradingu.", "lines": [["KONIEC Z", 0], ["DROGIMI", 0], ["KURSAMI.", 1]], "cap": "Koniec z drogimi kursami tradingu."},
+ {"say": "A gdyby nauka tradingu złotem była całkowicie darmowa?", "lines": [["TRADING ZŁOTEM", 0], ["CAŁKOWICIE", 0], ["ZA DARMO?", 1]], "cap": "Trading złotem całkowicie za darmo?"},
+ {"say": "Większość początkujących traci pieniądze – prawie zawsze przez te same dziesięć błędów.", "lines": [["10 BŁĘDÓW,", 0], ["KTÓRE KOSZTUJĄ", 0], ["PIENIĄDZE.", 1]], "cap": "Te 10 błędów kosztuje początkujących pieniądze."},
+ {"say": "Codziennie pomysły tradingowe na złoto – i każdy jest wyjaśniony.", "lines": [["CODZIENNIE", 0], ["POMYSŁY", 0], ["NA ZŁOTO.", 1]], "cap": "Codziennie pomysły tradingowe na złoto."}]

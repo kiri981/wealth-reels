@@ -1,0 +1,5 @@
+[{"say": "Du willst Gold traden lernen – ohne teure Kurse und ohne leere Versprechen?", "lines": [["GOLD TRADEN", 0], ["LERNEN.", 0], ["KOSTENLOS.", 1]], "cap": "Gold traden lernen – kostenlos."},
+ {"say": "Hör auf, Geld für teure Trading-Kurse auszugeben.", "lines": [["SCHLUSS MIT", 0], ["TEUREN", 0], ["KURSEN.", 1]], "cap": "Schluss mit teuren Trading-Kursen."},
+ {"say": "Was wäre, wenn du Gold-Trading komplett kostenlos lernen könntest?", "lines": [["GOLD-TRADING", 0], ["KOMPLETT", 0], ["KOSTENLOS?", 1]], "cap": "Gold-Trading komplett kostenlos lernen?"},
+ {"say": "Die meisten Anfänger verlieren Geld – fast immer wegen derselben zehn Fehler.", "lines": [["10 FEHLER,", 0], ["DIE DICH", 0], ["GELD KOSTEN.", 1]], "cap": "Diese 10 Fehler kosten Anfänger Geld."},
+ {"say": "Jeden Tag Trade-Ideen für Gold – und jede einzelne wird erklärt.", "lines": [["JEDEN TAG", 0], ["TRADE-IDEEN", 0], ["FÜR GOLD.", 1]], "cap": "Jeden Tag Trade-Ideen für Gold."}]
