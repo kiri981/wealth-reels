@@ -1,0 +1,275 @@
+{
+ "cover": {
+  "kicker": "REPLAY",
+  "title": "S&P 500 *+2,0 R* ORB",
+  "chart": "up"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.6,
+   "text": "S&P500: +2,0 R",
+   "accent": "So lief der Trade.",
+   "icon": "up",
+   "say": "S&P 500. Plus zwei R. So lief der Trade."
+  },
+  {
+   "type": "signal",
+   "dur": 5.5,
+   "channel": "NASDAQ | S&P500 OPEN",
+   "time": "09.11.2026 · 17:00 Uhr",
+   "lines": [
+    "🟢 S&P500 ORB LONG #SPX261109",
+    "Einstieg: 7504.55",
+    "SL: 7468.05",
+    "TP: 7577.55  (CRV 1:2)"
+   ],
+   "say": "So stand die Trade-Idee im VIP-Kanal."
+  },
+  {
+   "type": "candles",
+   "dur": 7.5,
+   "candles": [
+    [
+     7426.8,
+     7427.55,
+     7424.3,
+     7426.55
+    ],
+    [
+     7426.8,
+     7447.8,
+     7426.3,
+     7439.3
+    ],
+    [
+     7439.05,
+     7442.55,
+     7422.55,
+     7423.8
+    ],
+    [
+     7423.55,
+     7429.8,
+     7423.05,
+     7429.55
+    ],
+    [
+     7429.55,
+     7443.8,
+     7427.55,
+     7434.3
+    ],
+    [
+     7434.05,
+     7446.3,
+     7433.3,
+     7437.8
+    ],
+    [
+     7438.05,
+     7440.05,
+     7431.05,
+     7434.3
+    ],
+    [
+     7434.05,
+     7442.05,
+     7431.55,
+     7436.55
+    ],
+    [
+     7436.55,
+     7485.05,
+     7427.05,
+     7483.8
+    ],
+    [
+     7483.8,
+     7496.8,
+     7475.3,
+     7494.55
+    ],
+    [
+     7494.55,
+     7507.3,
+     7490.55,
+     7504.55
+    ],
+    [
+     7504.8,
+     7512.3,
+     7502.55,
+     7509.05
+    ],
+    [
+     7509.05,
+     7519.3,
+     7507.55,
+     7515.05
+    ],
+    [
+     7515.05,
+     7535.8,
+     7511.55,
+     7534.3
+    ],
+    [
+     7534.55,
+     7534.8,
+     7515.55,
+     7517.3
+    ],
+    [
+     7517.3,
+     7522.8,
+     7511.05,
+     7513.8
+    ],
+    [
+     7513.8,
+     7523.8,
+     7509.05,
+     7523.3
+    ],
+    [
+     7523.3,
+     7529.3,
+     7520.8,
+     7528.8
+    ],
+    [
+     7528.8,
+     7541.3,
+     7524.8,
+     7539.55
+    ],
+    [
+     7539.55,
+     7543.3,
+     7537.8,
+     7543.05
+    ],
+    [
+     7543.05,
+     7547.3,
+     7537.8,
+     7539.55
+    ],
+    [
+     7539.55,
+     7545.3,
+     7537.05,
+     7542.05
+    ],
+    [
+     7542.05,
+     7545.55,
+     7540.05,
+     7544.3
+    ],
+    [
+     7544.3,
+     7545.55,
+     7533.3,
+     7540.05
+    ],
+    [
+     7539.8,
+     7545.05,
+     7539.55,
+     7543.3
+    ],
+    [
+     7543.3,
+     7551.3,
+     7542.8,
+     7545.8
+    ],
+    [
+     7545.8,
+     7547.8,
+     7543.8,
+     7545.05
+    ],
+    [
+     7545.05,
+     7545.3,
+     7534.8,
+     7536.05
+    ],
+    [
+     7536.05,
+     7567.05,
+     7535.8,
+     7563.55
+    ]
+   ],
+   "step": "REPLAY · US500 · 15M · 09.11.",
+   "title": "ORB: *BUY*",
+   "levels": [
+    {
+     "price": 7504.55,
+     "text": "ENTRY 7.505",
+     "color": "white",
+     "from_i": 10
+    },
+    {
+     "price": 7468.05,
+     "text": "STOP 7.468",
+     "color": "red",
+     "from_i": 10
+    },
+    {
+     "price": 7577.55,
+     "text": "FULL TP 7.578",
+     "color": "green",
+     "from_i": 10
+    }
+   ],
+   "tags": [
+    {
+     "i": 10,
+     "price": 7504.55,
+     "text": "BUY",
+     "color": "white"
+    },
+    {
+     "i": 28,
+     "price": 7577.55,
+     "text": "ZIEL ERREICHT",
+     "color": "green"
+    }
+   ],
+   "footer": "Echte Kurse (Futures, angeglichen) · ausgewählter Trade",
+   "say": "Einstieg bei 7505. Stopp bei 7468. Ziel bei 7578."
+  },
+  {
+   "type": "words",
+   "dur": 3.0,
+   "kicker": "ERGEBNIS",
+   "text": "+2,0 R in 5 Stunden.",
+   "say": "Ziel erreicht: plus zwei R in 5 Stunden."
+  },
+  {
+   "type": "words",
+   "dur": 3.0,
+   "kicker": "WICHTIG",
+   "text": "Ausgewählter Trade – nicht jeder Trade geht auf.",
+   "say": "Wichtig: Das ist ein ausgewählter Trade. Nicht jeder geht auf."
+  },
+  {
+   "type": "cta",
+   "dur": 2.8,
+   "title": "S&P 500. Mit Plan.",
+   "button": "Kommentiere VIP",
+   "sub": "Live-Trade-Ideen im VIP-Kanal",
+   "say": "Live-Trade-Ideen im VIP. Kommentiere VIP für Infos."
+  }
+ ]
+}
