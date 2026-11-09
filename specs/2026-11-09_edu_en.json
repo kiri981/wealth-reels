@@ -1,0 +1,129 @@
+{
+ "voice": true,
+ "voice_speed": 1.1,
+ "cover": {
+  "kicker": "LEARN",
+  "title": "What really moves *gold*?",
+  "chart": "up"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Good news – and gold drops?",
+   "accent": "There's a reason.",
+   "icon": "alert",
+   "say": "Good news – and gold drops? There's a reason."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "THE 3 GOLD DRIVERS",
+   "text": "The dollar, interest rates and uncertainty move the gold price.",
+   "say": "Three drivers move gold: the dollar, rates and uncertainty."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "STEP 01 · The dollar",
+   "items": [
+    {
+     "left": "Price",
+     "right": "in US dollars"
+    },
+    {
+     "left": "USD up",
+     "right": "Gold often weaker"
+    },
+    {
+     "left": "USD down",
+     "right": "Gold often stronger",
+     "hot": true
+    }
+   ],
+   "say": "Step one: when the dollar rises, gold often falls."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "STEP 02 · Interest rates",
+   "items": [
+    {
+     "left": "Yield",
+     "right": "Gold pays none"
+    },
+    {
+     "left": "Rates up",
+     "right": "Bonds more attractive"
+    },
+    {
+     "left": "Rates down",
+     "right": "Gold more attractive",
+     "hot": true
+    }
+   ],
+   "say": "Step two: gold pays no interest. When rates fall, gold wins."
+  },
+  {
+   "type": "cards",
+   "dur": 4.0,
+   "title": "STEP 03 · Uncertainty",
+   "items": [
+    {
+     "left": "Crisis",
+     "right": "Flight to gold"
+    },
+    {
+     "left": "Calm",
+     "right": "Money into stocks"
+    },
+    {
+     "left": "Gold",
+     "right": "Safe haven",
+     "hot": true
+    }
+   ],
+   "say": "Step three: in a crisis, investors flee into gold."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "COMMON MISTAKE",
+   "text": "Reading only the chart and ignoring the news. They belong together.",
+   "say": "Common mistake: chart only, no news. They belong together."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "No time to analyze the market *yourself*?",
+   "items": [
+    {
+     "text": "Today 2:30 pm: US data",
+     "color": "gold"
+    },
+    {
+     "text": "Dollar weaker – gold rising",
+     "color": "green"
+    },
+    {
+     "text": "New gold idea: XAUUSD",
+     "color": "green"
+    }
+   ],
+   "say": "No time to track all of this yourself?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Understand first. Then trade.",
+   "button": "Comment GOLD",
+   "say": "I explain it live in my free group. Comment GOLD."
+  }
+ ],
+ "lang": "en"
+}

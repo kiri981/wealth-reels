@@ -1,0 +1,128 @@
+{
+ "voice": true,
+ "voice_speed": 1.1,
+ "cover": {
+  "kicker": "FUNDAMENTAL",
+  "title": "Was bewegt *Gold* wirklich?",
+  "chart": "up"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Gute Nachrichten – und Gold fällt?",
+   "accent": "Das hat einen Grund.",
+   "icon": "alert",
+   "say": "Gute Nachrichten – und Gold fällt? Das hat einen Grund."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "DIE 3 GOLD-TREIBER",
+   "text": "Dollar, Zinsen und Unsicherheit bewegen den Goldpreis.",
+   "say": "Drei Treiber bewegen Gold: Dollar, Zinsen und Unsicherheit."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 01 · Der Dollar",
+   "items": [
+    {
+     "left": "Preis",
+     "right": "in US-Dollar"
+    },
+    {
+     "left": "USD steigt",
+     "right": "Gold oft schwächer"
+    },
+    {
+     "left": "USD fällt",
+     "right": "Gold oft stärker",
+     "hot": true
+    }
+   ],
+   "say": "Schritt eins: Steigt der Dollar, fällt Gold oft."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 02 · Die Zinsen",
+   "items": [
+    {
+     "left": "Rendite",
+     "right": "Gold zahlt keine"
+    },
+    {
+     "left": "Zins hoch",
+     "right": "Anleihen attraktiver"
+    },
+    {
+     "left": "Zins tief",
+     "right": "Gold attraktiver",
+     "hot": true
+    }
+   ],
+   "say": "Schritt zwei: Gold zahlt keine Zinsen. Sinken sie, gewinnt Gold."
+  },
+  {
+   "type": "cards",
+   "dur": 4.0,
+   "title": "SCHRITT 03 · Unsicherheit",
+   "items": [
+    {
+     "left": "Krise",
+     "right": "Flucht in Gold"
+    },
+    {
+     "left": "Ruhe",
+     "right": "Geld in Aktien"
+    },
+    {
+     "left": "Gold",
+     "right": "sicherer Hafen",
+     "hot": true
+    }
+   ],
+   "say": "Schritt drei: In Krisen fliehen Anleger in Gold."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "TYPISCHER FEHLER",
+   "text": "Nur den Chart lesen und die News ignorieren. Beides gehört zusammen.",
+   "say": "Typischer Fehler: nur Chart, keine News. Beides gehört zusammen."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Heute 14:30: US-Daten",
+     "color": "gold"
+    },
+    {
+     "text": "Dollar schwächer – Gold steigt",
+     "color": "green"
+    },
+    {
+     "text": "Neue Gold-Idee: XAUUSD",
+     "color": "green"
+    }
+   ],
+   "say": "Keine Zeit, das alles selbst zu verfolgen?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Erst verstehen. Dann traden.",
+   "button": "Kommentiere GOLD",
+   "say": "Das erkläre ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}
