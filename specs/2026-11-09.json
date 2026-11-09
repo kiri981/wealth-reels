@@ -1,0 +1,21 @@
+{
+ "cover": {"kicker": "MARKT", "title": "Gold-Woche: *Dienstag* zählt", "chart": "up"},
+ "music": "drive",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 3.0, "text": "Gold steht wieder über 4.000 $.", "accent": "Doch ein Termin zählt mehr als jeder Chart.", "icon": "clock"},
+  {"type": "counter", "dur": 3.6, "label": "Gold seit Monatsanfang", "from": 0, "to": 5.9, "decimals": 1, "prefix": "+", "suffix": " %", "color": "green", "sub": "COMEX-Future, Stand 9. Nov."},
+  {"type": "cards", "dur": 4.6, "title": "Die Gold-Termine der Woche", "items": [
+    {"left": "Di 14:30", "right": "US-Inflation (CPI)", "hot": true},
+    {"left": "Mi", "right": "US-Anleihemarkt zu (Feiertag)"},
+    {"left": "Fr 14:30", "right": "US-Erzeugerpreise (PPI)"}
+  ]},
+  {"type": "words", "dur": 4.0, "kicker": "ZWEI SZENARIEN", "text": "Inflation heiß: mehr Zinsdruck. Inflation kühl: mehr Luft für Gold."},
+  {"type": "notify", "dur": 4.0, "title": "Keine Zeit, den Markt *selbst* zu analysieren?", "items": [
+    {"text": "Wochenausblick: 3 Termine", "time": "jetzt"},
+    {"text": "CPI-Check: Di 14:30", "time": "1 Min.", "color": "gold"},
+    {"text": "Live-Updates in der Gruppe", "time": "2 Min."}
+  ]},
+  {"type": "cta", "dur": 3.0, "title": "Termin kennen. Ruhe bewahren.", "button": "Kommentiere GOLD"}
+ ]
+}
