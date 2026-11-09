@@ -13,7 +13,8 @@ W, H, FPS = 1080, 1920, 30
 LANG = os.environ.get("AD_LANG", "de")
 from ad_texts import TXT
 T = TXT[LANG]
-VW = os.path.join(WK, LANG)   # Sprecher-Dateien je Sprache
+VAR = os.environ.get("AD_VAR", "")   # Variante: eigener Sprecher-Ordner work/<lang>_<var> (Hook neu gesprochen), andere Überschrift + Musik
+VW = os.path.join(WK, f"{LANG}_{VAR}" if VAR else LANG)   # Sprecher-Dateien je Sprache
 VO = json.load(open(os.path.join(VW, "vo.json")))
 DUR = [round(v + 0.7, 2) for v in VO]; DUR[-1] = max(DUR[-1], 5.2)
 BC = "bc_clip.webm" if LANG == "de" else f"bc_clip_{LANG}.webm"
@@ -22,6 +23,7 @@ BC = "bc_clip.webm" if LANG == "de" else f"bc_clip_{LANG}.webm"
 _IT = [[("c_signal.jpg", .34), ("c_ladder.jpg", .33), ("c_brief.jpg", .33)], [("c_signal.jpg", .5), ("c_ladder.jpg", .5)], [("c_brief.jpg", 1)],
        [("c_sl1.jpg", .45), ("c_sl2.jpg", .55)], [(BC, 1)], [("c_tp.jpg", .5), ("c_mt5.jpg", .5)]]
 SEG = [(k, h, it) for (k, h), it in zip(T["seg"], _IT)]
+if os.environ.get("AD_SEG0"): SEG[0] = (SEG[0][0], os.environ["AD_SEG0"], SEG[0][2])
 CARD_Y0, CARD_Y1, CARD_W = 560, 1700, 900
 
 
@@ -172,7 +174,7 @@ def main(out):
     starts, acc = [], 0
     for d_ in DUR: starts.append(acc + 0.15); acc += d_
     mus = os.path.join(WK, "music.wav")
-    subprocess.run([sys.executable, os.path.join(HERE, "..", "factory", "music.py"), "drive", f"{total + 1:.2f}", mus, "4242"], check=True, capture_output=True)
+    subprocess.run([sys.executable, os.path.join(HERE, "..", "factory", "music.py"), os.environ.get("AD_MUSIC", "drive"), f"{total + 1:.2f}", mus, os.environ.get("AD_SEED", "4242")], check=True, capture_output=True)
     ins, flt = [], []
     for i, s in enumerate(starts):
         ins += ["-i", os.path.join(VW, f"vo{i}.wav")]; flt.append(f"[{i + 1}:a]adelay={int(s * 1000)}|{int(s * 1000)},aresample=44100[v{i}]")
