@@ -1,0 +1,37 @@
+{
+ "date": "Montag, 9. November",
+ "headline": "Starke US-Jobs drücken Gold",
+ "price": "4.050 $",
+ "points": [
+  "US-Jobs: 165k statt 65k erwartet",
+  "Höhere Renditen, festerer Dollar"
+ ],
+ "termine_label": "DIESE WOCHE (Bukarest)",
+ "termine": [
+  {
+   "zeit": "15:30",
+   "text": "Di: US-Inflation (CPI)",
+   "hot": true,
+   "say": "am Dienstag die US-Inflation"
+  },
+  {
+   "zeit": "Mi",
+   "text": "Veterans Day – Anleihemarkt zu",
+   "say": "am Mittwoch ist der US-Anleihemarkt zu"
+  },
+  {
+   "zeit": "15:30",
+   "text": "Fr: US-Erzeugerpreise (PPI)",
+   "say": "am Freitag die US-Erzeugerpreise"
+  }
+ ],
+ "levels": {
+  "oben": "4.100",
+  "unten": "4.000"
+ },
+ "termine_intro": "Diese Woche wichtig:",
+ "points_say": [
+  "Die US-Jobs lagen bei 165 Tausend statt 65 Tausend erwartet",
+  "Höhere Renditen, festerer Dollar – eine Fed-Zinserhöhung im Dezember ist wieder Thema"
+ ]
+}

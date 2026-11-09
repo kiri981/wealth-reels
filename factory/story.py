@@ -9,7 +9,8 @@ story.json:
   "change": "+0,4 %",                              # optional
   "points": ["Dollar schwächer nach ...", "..."],  # 2–3 kurze Punkte
   "termine": [{"zeit": "14:30", "text": "US-Arbeitsmarkt (ADP)", "hot": true}],   # Bukarest-Zeit
-  "levels": {"oben": "4.075", "unten": "4.028"}    # optional
+  "levels": {"oben": "4.075", "unten": "4.028"},   # optional
+  "termine_label": "DIESE WOCHE (Bukarest)"        # optional, Standard "TERMINE HEUTE (Bukarest)"
 }
 """
 import json, sys
@@ -76,7 +77,7 @@ def make(spec, out):
     # Termine
     tm = spec.get("termine", [])[:4]
     if tm:
-        d.text((80, y), "TERMINE HEUTE (Bukarest)", font=SB(30), fill=MUTED); y += 55
+        d.text((80, y), spec.get("termine_label", "TERMINE HEUTE (Bukarest)"), font=SB(30), fill=MUTED); y += 55
         for t in tm:
             hot = t.get("hot")
             d.rounded_rectangle((80, y, 1000, y + 96), radius=26, fill=CARD, outline=GOLD if hot else LINE, width=2)
