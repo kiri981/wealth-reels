@@ -1,0 +1,13 @@
+{
+ "caption": "5 Fragen, bevor du auf Kaufen oder Verkaufen klickst ✅\n\nDie meisten schlechten Trades entstehen nicht im Chart, sondern im Kopf. Diese Checkliste dauert 5 Minuten – und schützt dein Konto.\n\n📌 Speicher dir das\n\n💬 Kommentiere GOLD und ich schick dir den Link zur kostenlosen Gold-Community.\n\nKeine Anlageberatung.\n\n#gold #xauusd #trading #risikomanagement #tradingdeutsch",
+ "slides": [
+  {"type": "cover", "pill": "CHECKLISTE · VOR DEM TRADE", "title": "5 Fragen *vor* jedem Gold-Trade", "sub": "5 Minuten, die dein Konto schützen.", "chart": "trend", "tag": "Erst prüfen"},
+  {"type": "text", "title": "Warum eine *Checkliste*?", "body": "Piloten nutzen sie vor jedem Start – nicht weil sie es nicht können, sondern weil Stress Fehler macht. Beim Trading ist es genauso: Regeln vorher, Klick danach."},
+  {"type": "step", "n": 1, "title": "Kommt gleich ein *Termin*?", "body": "Schau in den Wirtschaftskalender. NFP, CPI oder Fed können Gold in Minuten stark bewegen.", "chart": "spike", "tag": "News"},
+  {"type": "step", "n": 2, "title": "Wohin zeigt der *Trend*?", "body": "Prüfe zuerst den höheren Zeitrahmen, z. B. H4. Gegen die große Richtung zu handeln ist schwerer.", "chart": "trend", "tag": "H4"},
+  {"type": "step", "n": 3, "title": "Wo liegt mein *Stop*?", "body": "Der Stop gehört an eine Stelle, an der deine Idee falsch wäre – nicht dorthin, wo es sich bequem anfühlt.", "quote": "Kein Stop, kein Trade."},
+  {"type": "step", "n": 4, "title": "Wie viel *riskiere* ich?", "body": "Viele Trader riskieren pro Trade nur 0,5–1 % ihres Kontos. So übersteht man auch eine Verlustserie.", "quote": "Erst überleben, dann verdienen."},
+  {"type": "step", "n": 5, "title": "Bin ich *ruhig*?", "body": "Gerade verloren, gelangweilt oder Angst, etwas zu verpassen? Dann ist jetzt kein guter Moment.", "quote": "Kein Trade ist auch ein Trade."},
+  {"type": "cta", "title": "Willst du meine *Gold-Setups* live?", "body": "Jeden Tag Briefing, Lern-Reels und Trade-Ideen mit Entry, Stop und Ziel.", "button": "Kommentiere GOLD"}
+ ]
+}
