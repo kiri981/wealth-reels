@@ -1,0 +1,645 @@
+{
+ "id": "ac02",
+ "title": "Marktstruktur *komplett*",
+ "yt_title": "Marktstruktur komplett erklärt – HH/HL, BOS, CHoCH & Multi-Timeframe (H4 → M5) bei Gold",
+ "thumb": [
+  "MARKTSTRUKTUR",
+  "komplett erklärt"
+ ],
+ "thumb_clip": "choch",
+ "tags": [
+  "Gold Trading",
+  "XAUUSD",
+  "Marktstruktur",
+  "Break of Structure",
+  "Change of Character",
+  "Multi Timeframe",
+  "Trading lernen",
+  "Smart Money",
+  "Trend erkennen",
+  "Price Action"
+ ],
+ "chapters": [
+  {
+   "kind": "intro",
+   "title": "Marktstruktur komplett",
+   "segs": [
+    {
+     "say": "Wenn du nicht weißt, in welche Richtung der Markt läuft, ist jeder Einstieg ein Münzwurf. Die Marktstruktur ist deshalb das Fundament von allem, was wir am Goldchart machen."
+    },
+    {
+     "say": "In diesem Video gehen wir sie komplett durch: Hochs und Tiefs im Trend, den Break of Structure, den Change of Character – und wie du mehrere Zeitebenen vom Vier-Stunden- bis zum Fünf-Minuten-Chart verbindest.",
+     "agenda": [
+      "Hochs & Tiefs",
+      "Break of Structure",
+      "Change of Character",
+      "H4 → M5"
+     ]
+    },
+    {
+     "say": "Wichtig vorab: Das ist Bildungsinhalt, keine Anlageberatung. Trading birgt Verlustrisiken. Übe neue Strategien zuerst auf einem Demokonto.",
+     "disclaimer": true
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Der *Aufwärtstrend*",
+   "clip": "bos",
+   "hook": "So liest du einen Aufwärtstrend richtig",
+   "segs": [
+    {
+     "say": "Fangen wir mit dem Aufwärtstrend an. Ein Trend ist keine Meinung, sondern eine Abfolge von Hochs und Tiefs, die du im Chart klar ablesen kannst.",
+     "step": -1
+    },
+    {
+     "say": "Der Markt steigt und bildet ein Hoch. Wird es später übertroffen, sprechen wir von einem höheren Hoch, kurz H H.",
+     "step": 0,
+     "point": "Höheres Hoch *(HH)*"
+    },
+    {
+     "say": "Danach kommt ein Rücksetzer. Entscheidend ist, wo er endet: Bleibt das neue Tief über dem vorherigen, ist es ein höheres Tief, kurz H L.",
+     "step": 1,
+     "point": "Höheres Tief *(HL)*"
+    },
+    {
+     "say": "Jetzt markierst du das letzte Hoch. Diese Linie zeigt dir, wo der Trend seine Fortsetzung beweisen muss.",
+     "step": 2
+    },
+    {
+     "say": "Schließt eine Kerze über dieser Linie, haben wir einen Break of Structure nach oben. Der Trend ist bestätigt.",
+     "step": 3,
+     "point": "Schluss über dem Hoch = *BOS*"
+    },
+    {
+     "say": "Und so geht es weiter: neues höheres Tief, neuer Break of Structure. Solange diese Kette hält, suchst du Trade-Ideen nur auf der Käuferseite.",
+     "step": 4,
+     "point": "Kette intakt: nur *Käufe*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Der *Abwärtstrend*",
+   "clip": "struktur-abwaerts",
+   "hook": "Abwärtstrend: Diese zwei Punkte zählen",
+   "clip_data": {
+    "c": [
+     [
+      55,
+      55.97,
+      50.69,
+      51
+     ],
+     [
+      51,
+      52.11,
+      46.3,
+      47
+     ],
+     [
+      47,
+      47.28,
+      43.95,
+      44
+     ],
+     [
+      44,
+      46.63,
+      43.24,
+      46
+     ],
+     [
+      46,
+      49.1,
+      45.35,
+      49
+     ],
+     [
+      49,
+      49.61,
+      47.43,
+      48
+     ],
+     [
+      48,
+      49.14,
+      44.76,
+      45
+     ],
+     [
+      45,
+      46.14,
+      40.88,
+      42
+     ],
+     [
+      42,
+      42.29,
+      38.94,
+      39
+     ],
+     [
+      39,
+      41.89,
+      38.28,
+      41
+     ],
+     [
+      41,
+      44.05,
+      40.18,
+      43
+     ],
+     [
+      43,
+      43.75,
+      41.66,
+      42
+     ],
+     [
+      42,
+      42.26,
+      37.79,
+      38
+     ],
+     [
+      38,
+      38.48,
+      33.35,
+      34
+     ],
+     [
+      34,
+      34.95,
+      29.98,
+      31
+     ]
+    ],
+    "steps": [
+     {
+      "to": 4,
+      "add": {
+       "a": [
+        [
+         3,
+         41.8,
+         "LL"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 6,
+      "add": {
+       "a": [
+        [
+         5,
+         51,
+         "LH"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 7,
+      "add": {
+       "l": [
+        [
+         43.24,
+         "letztes Tief",
+         "red"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         7,
+         39.4,
+         "BOS ↓"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 15,
+      "add": {
+       "a": [
+        [
+         10,
+         45.5,
+         "LH"
+        ],
+        [
+         12,
+         36.3,
+         "BOS ↓"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "Der Abwärtstrend funktioniert genau spiegelverkehrt. Hier achtest du auf tiefere Tiefs und tiefere Hochs.",
+     "step": -1
+    },
+    {
+     "say": "Der Markt fällt und bildet ein Tief. Wird es unterboten, ist es ein tieferes Tief, kurz L L.",
+     "step": 0,
+     "point": "Tieferes Tief *(LL)*"
+    },
+    {
+     "say": "Die Erholung danach bleibt unter dem vorherigen Hoch. Das ist ein tieferes Hoch, kurz L H. Die Käufer schaffen es nicht mehr, neue Hochs zu bilden.",
+     "step": 1,
+     "point": "Tieferes Hoch *(LH)*"
+    },
+    {
+     "say": "Das letzte Tief ist jetzt die Linie, auf die du achtest.",
+     "step": 2
+    },
+    {
+     "say": "Schließt eine Kerze darunter, ist das ein Break of Structure nach unten. Der Abwärtstrend setzt sich fort.",
+     "step": 3,
+     "point": "Schluss unter dem Tief = *BOS ↓*"
+    },
+    {
+     "say": "Auch hier wiederholt sich das Muster. Solange tiefere Hochs und tiefere Tiefs entstehen, kommen für dich nur Verkäufe infrage.",
+     "step": 4,
+     "point": "LH & LL: nur *Verkäufe*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Docht oder *Schluss*?",
+   "clip": "docht-vs-schluss",
+   "hook": "Der häufigste Fehler beim Break of Structure",
+   "clip_data": {
+    "c": [
+     [
+      40,
+      42.5,
+      39.5,
+      42
+     ],
+     [
+      42,
+      45,
+      41.6,
+      44.5
+     ],
+     [
+      44.5,
+      48,
+      44,
+      47.5
+     ],
+     [
+      47.5,
+      50,
+      47,
+      49.5
+     ],
+     [
+      49.5,
+      49.8,
+      46.5,
+      47
+     ],
+     [
+      47,
+      47.4,
+      44.5,
+      45
+     ],
+     [
+      45,
+      47.8,
+      44.6,
+      47.5
+     ],
+     [
+      47.5,
+      49.6,
+      47.2,
+      49.2
+     ],
+     [
+      49.2,
+      52.4,
+      48.8,
+      49.4
+     ],
+     [
+      49.4,
+      49.6,
+      46.8,
+      47.2
+     ],
+     [
+      47.2,
+      48.6,
+      46.4,
+      48.3
+     ],
+     [
+      48.3,
+      49.9,
+      47.9,
+      49.6
+     ],
+     [
+      49.6,
+      53.6,
+      49.4,
+      53.2
+     ],
+     [
+      53.2,
+      55.8,
+      52.8,
+      55.4
+     ],
+     [
+      55.4,
+      56,
+      53.9,
+      54.3
+     ],
+     [
+      54.3,
+      58.4,
+      54,
+      58
+     ]
+    ],
+    "steps": [
+     {
+      "to": 4,
+      "add": {
+       "a": [
+        [
+         3,
+         51.4,
+         "L_HIGH"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         5,
+         43.2,
+         "HL"
+        ]
+       ],
+       "l": [
+        [
+         50,
+         "L_LASTHIGH",
+         "gold"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "a": [
+        [
+         8,
+         53.9,
+         "L_ONLYWICK"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 11,
+      "add": {
+       "a": [
+        [
+         9,
+         45.4,
+         "kein BOS"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 13,
+      "add": {
+       "a": [
+        [
+         12,
+         55.2,
+         "BOS ↑"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 16,
+      "add": {
+       "a": [
+        [
+         15,
+         59.8,
+         "Trend intakt"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "Jetzt kommt ein Punkt, an dem viele Trader scheitern: die Frage, wann ein Hoch wirklich gebrochen ist.",
+     "step": -1
+    },
+    {
+     "say": "Wir haben einen Aufwärtstrend mit einem klaren Hoch.",
+     "step": 0
+    },
+    {
+     "say": "Nach dem Rücksetzer entsteht ein höheres Tief. Die Linie am letzten Hoch ist gezogen.",
+     "step": 1,
+     "point": "Linie am *letzten Hoch*"
+    },
+    {
+     "say": "Dann sticht ein Docht über das Hoch – aber die Kerze schließt wieder darunter. Wer hier schon kauft, steigt oft genau in eine Falle.",
+     "step": 2,
+     "point": "Nur Docht = *kein* Bruch"
+    },
+    {
+     "say": "Der Preis fällt zurück. Das war kein Break of Structure, sondern eher ein Griff nach der Liquidität über dem Hoch.",
+     "step": 3
+    },
+    {
+     "say": "Erst diese Kerze schließt klar über dem Hoch. Jetzt ist der Break of Structure bestätigt.",
+     "step": 4,
+     "point": "Kerzen*schluss* entscheidet"
+    },
+    {
+     "say": "Die Regel ist einfach: Es zählt der Schlusskurs, nicht der Docht. Das schützt dich vor vielen voreiligen Einstiegen.",
+     "step": 5
+    }
+   ]
+  },
+  {
+   "kind": "remember",
+   "title": "Merke *dir*",
+   "cards": [
+    [
+     "Docht",
+     "zählt *nicht* als Bruch"
+    ],
+    [
+     "Schluss",
+     "bestätigt den *Bruch*"
+    ]
+   ],
+   "segs": [
+    {
+     "say": "Merke dir also:",
+     "card": -1
+    },
+    {
+     "say": "Ein Docht über dem Hoch zählt nicht als Bruch.",
+     "card": 0
+    },
+    {
+     "say": "Erst der Kerzenschluss bestätigt ihn.",
+     "card": 1
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Change of *Character*",
+   "clip": "choch",
+   "hook": "So erkennst du eine Trendwende früh",
+   "segs": [
+    {
+     "say": "Kein Trend läuft ewig. Der Change of Character ist der erste Hinweis darauf, dass sich die Struktur dreht.",
+     "step": -1
+    },
+    {
+     "say": "Hier sehen wir einen Abwärtstrend mit tieferen Hochs und tieferen Tiefs.",
+     "step": 0,
+     "point": "LH & LL = *Abwärtstrend*"
+    },
+    {
+     "say": "Das letzte tiefere Hoch markierst du. Es ist die Grenze, die die Verkäufer verteidigen müssen.",
+     "step": 1,
+     "point": "Letztes LH = *Schlüssellinie*"
+    },
+    {
+     "say": "Der Markt macht noch ein tieferes Tief, aber der Abverkauf verliert an Kraft.",
+     "step": 2
+    },
+    {
+     "say": "Dann schließt eine Kerze über dem letzten tieferen Hoch. Das ist der Change of Character. Der Abwärtstrend ist damit gebrochen – aber der neue Trend ist noch nicht bestätigt.",
+     "step": 3,
+     "point": "Schluss darüber = *CHoCH*"
+    },
+    {
+     "say": "Bestätigt wird die Wende erst durch ein höheres Tief und einen Break of Structure nach oben. Kurz gesagt: Der CHoCH warnt, der BOS bestätigt.",
+     "step": 4,
+     "point": "HL + BOS = *neuer Trend*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Von *H4* bis *M5*",
+   "clip": "praxis-mtf",
+   "hook": "H4 für die Richtung, M5 für den Einstieg",
+   "segs": [
+    {
+     "say": "Zum Schluss verbinden wir die Zeitebenen. Der größere Chart gibt die Richtung vor, der kleinere liefert den genauen Einstieg.",
+     "step": -1
+    },
+    {
+     "say": "Auf dem Vier-Stunden-Chart läuft ein Aufwärtstrend, und der Preis kommt in eine Zone, aus der er zuvor gestiegen ist. Auf dem Fünf-Minuten-Chart sehen wir dabei noch eine Korrektur nach unten.",
+     "step": 0,
+     "point": "H4: Richtung & *Zone*"
+    },
+    {
+     "say": "In der Zone holt ein Docht die Stops unter dem letzten Tief. Das ist ein Sweep.",
+     "step": 1,
+     "point": "M5: *Sweep* in der Zone"
+    },
+    {
+     "say": "Danach schließt der Fünf-Minuten-Chart über dem letzten tieferen Hoch. Der Change of Character zeigt: Die kleine Struktur dreht in Richtung des großen Trends.",
+     "step": 2,
+     "point": "M5: *CHoCH* nach oben"
+    },
+    {
+     "say": "Der Einstieg erfolgt beim Rücklauf, der Stop liegt unter dem Sweep-Tief. So bleibt das Risiko klein und klar definiert.",
+     "step": 3,
+     "point": "Stop unter dem *Sweep*",
+     "arrow": [
+      9,
+      44.5,
+      12,
+      53.5
+     ]
+    },
+    {
+     "say": "Wenn der Plan aufgeht, läuft der Preis in Richtung des nächsten Hochs. Aber auch das beste Setup kann scheitern – deshalb gehört der Stop immer dazu.",
+     "step": 4
+    }
+   ]
+  },
+  {
+   "kind": "summary",
+   "title": "Die *Zusammenfassung*",
+   "hook": "Marktstruktur in 5 Regeln",
+   "segs": [
+    {
+     "say": "Fassen wir zusammen.",
+     "bullet": null
+    },
+    {
+     "say": "Höhere Hochs und höhere Tiefs bedeuten Aufwärtstrend, tiefere Hochs und tiefere Tiefs bedeuten Abwärtstrend.",
+     "bullet": "HH/HL = aufwärts · LH/LL = abwärts"
+    },
+    {
+     "say": "Ein Break of Structure bestätigt den Trend – aber nur mit einem Kerzenschluss, nicht mit einem Docht.",
+     "bullet": "BOS nur mit Kerzenschluss"
+    },
+    {
+     "say": "Der Change of Character ist eine Warnung. Bestätigt ist die Wende erst mit höherem Tief und neuem Break of Structure.",
+     "bullet": "CHoCH warnt, BOS bestätigt"
+    },
+    {
+     "say": "Die Richtung kommt vom Vier-Stunden-Chart, der Einstieg vom Fünf-Minuten-Chart.",
+     "bullet": "H4 = Richtung · M5 = Einstieg"
+    },
+    {
+     "say": "Und egal wie klar die Struktur aussieht: Riskiere pro Trade nur einen kleinen Teil deines Kontos, etwa ein bis zwei Prozent.",
+     "bullet": "Max. 1–2 % Risiko pro Trade"
+    }
+   ]
+  },
+  {
+   "kind": "outro",
+   "title": "Wealth Club",
+   "segs": [
+    {
+     "say": "Wenn du die Marktstruktur jeden Tag mit uns am Goldchart üben willst: Komm in unsere kostenlose Gold-Gruppe auf Telegram. Den Link findest du in der Beschreibung. Dort warten auch unser Bootcamp mit fünfundfünfzig Lektionen und tägliche Trade-Ideen auf dich. Bis zum nächsten Video!"
+    }
+   ]
+  }
+ ]
+}
