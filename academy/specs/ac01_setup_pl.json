@@ -1,0 +1,358 @@
+{
+ "id": "ac01_pl",
+ "title": "Kompletny setup na złocie w *4 krokach*",
+ "yt_title": "Kompletny setup na złocie w 4 krokach – Sweep, CHoCH, FVG i wejście wyjaśnione",
+ "thumb": [
+  "SETUP NA ZŁOCIE",
+  "w 4 krokach"
+ ],
+ "tags": [
+  "Trading złota",
+  "XAUUSD",
+  "Smart Money",
+  "Nauka tradingu",
+  "Struktura rynku",
+  "Fair Value Gap",
+  "Order Block",
+  "Liquidity Sweep"
+ ],
+ "chapters": [
+  {
+   "kind": "intro",
+   "title": "Kompletny setup na złocie",
+   "segs": [
+    {
+     "say": "Większość traderów nie traci pieniędzy na złocie dlatego, że złoto jest nieprzewidywalne – tylko dlatego, że wchodzą w złym momencie."
+    },
+    {
+     "say": "W tym filmie pokażę ci setup w czterech krokach: struktura rynku, płynność, order blocki i fair value gapy. A na końcu złożymy wszystko w jeden przykład.",
+     "agenda": [
+      "Struktura rynku",
+      "Płynność",
+      "Order Blocks",
+      "Fair Value Gaps"
+     ]
+    },
+    {
+     "say": "Ważne na początek: to treści edukacyjne, nie porada inwestycyjna. Trading wiąże się z ryzykiem strat – nowe strategie najpierw ćwicz na koncie demo.",
+     "disclaimer": true
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Struktura *rynku*",
+   "clip": "bos",
+   "hook": "Kiedy trend jest naprawdę trendem?",
+   "segs": [
+    {
+     "say": "Wszystko zaczyna się od struktury rynku. Zanim pomyślisz o wejściu, musisz wiedzieć, w którą stronę idzie rynek.",
+     "step": -1
+    },
+    {
+     "say": "Rynek rośnie i robi wyższy szczyt – na wykresie oznaczony jako H H.",
+     "step": 0,
+     "point": "Wyższy szczyt *(HH)*"
+    },
+    {
+     "say": "Potem przychodzi korekta. Nowy dołek zostaje powyżej poprzedniego. To wyższy dołek, H L.",
+     "step": 1,
+     "point": "Wyższy dołek *(HL)*"
+    },
+    {
+     "say": "Teraz zaznaczasz ostatni szczyt. Dokładnie ta linia musi zostać przebita, żeby trend był potwierdzony.",
+     "step": 2
+    },
+    {
+     "say": "Świeca zamyka się nad szczytem: to break of structure, w skrócie BOS. Uważaj: sam knot nie wystarczy – liczy się zamknięcie świecy.",
+     "step": 3,
+     "point": "*Zamknięcie* świecy nad szczytem = *BOS*"
+    },
+    {
+     "say": "Schemat się powtarza: nowy wyższy dołek, nowy break of structure. Dopóki tak jest, szukasz tylko kupna.",
+     "step": 4,
+     "point": "Dopóki BOS: tylko *kupno*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Change of *Character*",
+   "clip": "choch",
+   "hook": "Jak wcześnie rozpoznać zmianę trendu",
+   "segs": [
+    {
+     "say": "Ale żaden trend nie trwa wiecznie. Change of character pokazuje ci, kiedy kierunek się odwraca.",
+     "step": -1
+    },
+    {
+     "say": "Tutaj widzimy trend spadkowy: niższe szczyty i niższe dołki.",
+     "step": 0,
+     "point": "Niższe szczyty i *dołki*"
+    },
+    {
+     "say": "Ostatni niższy szczyt to kluczowa linia.",
+     "step": 1,
+     "point": "Ostatni LH = *kluczowa linia*"
+    },
+    {
+     "say": "Rynek robi jeszcze jeden niższy dołek – ale wyprzedaż słabnie.",
+     "step": 2
+    },
+    {
+     "say": "Potem świeca zamyka się nad ostatnim niższym szczytem. To change of character – pierwsza wskazówka odwrócenia.",
+     "step": 3,
+     "point": "Zamknięcie powyżej = *CHoCH*"
+    },
+    {
+     "say": "Odwrócenie potwierdza wyższy dołek i break of structure w górę. Teraz mamy nowy trend.",
+     "step": 4,
+     "point": "HL + BOS = *nowy trend*"
+    }
+   ]
+  },
+  {
+   "kind": "remember",
+   "title": "Zapamiętaj *to*",
+   "cards": [
+    [
+     "BOS",
+     "potwierdza *trend*"
+    ],
+    [
+     "CHoCH",
+     "ostrzega przed *zmianą*"
+    ]
+   ],
+   "segs": [
+    {
+     "say": "Zapamiętaj więc:",
+     "card": -1
+    },
+    {
+     "say": "Break of structure potwierdza trend.",
+     "card": 0
+    },
+    {
+     "say": "Change of character ostrzega przed zmianą.",
+     "card": 1
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Płynność i *sweep*",
+   "clip": "liquiditaet-sweep",
+   "hook": "Dlaczego twój stop loss zawsze zostaje trafiony",
+   "segs": [
+    {
+     "say": "Krok drugi: płynność. Duzi gracze potrzebują drugiej strony dla swoich zleceń – a znajdują ją tam, gdzie leży dużo stop lossów.",
+     "step": -1
+    },
+    {
+     "say": "Tu mamy wyraźny dołek. Tuż pod nim leżą stop lossy kupujących.",
+     "step": 0,
+     "point": "Pod dołkami leżą *stopy*"
+    },
+    {
+     "say": "Potem drugi, prawie taki sam dołek. Równe dołki przyciągają płynność jak magnes.",
+     "step": 1,
+     "point": "Równe dołki = *magnes*"
+    },
+    {
+     "say": "Knot przebija w dół. Stopy zostają uruchomione – a duzi gracze kupują dokładnie te sprzedaże.",
+     "step": 2
+    },
+    {
+     "say": "Świeca szybko zamyka się z powrotem nad dołkiem. To był sweep, a nie prawdziwe wybicie.",
+     "step": 3,
+     "point": "Szybki powrót = *sweep*",
+     "arrow": [
+      12,
+      53.5,
+      15,
+      63.5
+     ]
+    },
+    {
+     "say": "Potem przychodzi impuls w górę. Kto sprzedał przy rzekomym wybiciu, staje się teraz paliwem dla ruchu.",
+     "step": 4,
+     "point": "Sprzedający stają się *paliwem*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "*Order block*",
+   "clip": "order-block",
+   "hook": "Tu kupowali duzi gracze",
+   "segs": [
+    {
+     "say": "Krok trzeci: order block. Pokazuje ci, gdzie złożono duże zlecenia – i gdzie cena często znowu reaguje.",
+     "step": -1
+    },
+    {
+     "say": "Najpierw ruch w dół. Nic szczególnego.",
+     "step": 0
+    },
+    {
+     "say": "Nagle silny impuls w górę. Tu w grze były duże zlecenia.",
+     "step": 1,
+     "point": "Silny *impuls*"
+    },
+    {
+     "say": "Ostatnia czerwona świeca przed impulsem to order block. Strefa sięga od dołka do szczytu tej świecy.",
+     "step": 2,
+     "point": "Ostatnia przeciwna świeca = *order block*",
+     "arrow": [
+      8,
+      69,
+      12,
+      56.5
+     ]
+    },
+    {
+     "say": "Później cena wraca i testuje strefę.",
+     "step": 3
+    },
+    {
+     "say": "Z order blocku przychodzi reakcja. Wejście następuje ze stopem pod strefą.",
+     "step": 4,
+     "point": "Powrót → *reakcja*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "*Fair value gap*",
+   "clip": "fvg",
+   "hook": "Ta luka działa na złocie jak magnes",
+   "segs": [
+    {
+     "say": "Krok czwarty: fair value gap. Powstaje, gdy rynek porusza się tak szybko, że przeskakuje ceny.",
+     "step": -1
+    },
+    {
+     "say": "Najpierw spokojny rynek.",
+     "step": 0
+    },
+    {
+     "say": "Potem ogromna świeca – rynek przeskakuje kilka cen.",
+     "step": 1,
+     "point": "3 świece, duża *środkowa*"
+    },
+    {
+     "say": "Między szczytem pierwszej świecy a dołkiem trzeciej zostaje luka. To fair value gap.",
+     "step": 2,
+     "point": "Knoty 1 i 3 *nie* nachodzą na siebie",
+     "arrow": [
+      6,
+      60,
+      10,
+      53.5
+     ]
+    },
+    {
+     "say": "Złoto często wraca, żeby wypełnić tę lukę.",
+     "step": 3,
+     "point": "Luka często zostaje *wypełniona*"
+    },
+    {
+     "say": "A z fair value gapu cena idzie dalej w kierunku trendu.",
+     "step": 4
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "*Kompletny setup*",
+   "clip": "setup-kombi",
+   "hook": "Wszystkie 4 kroki na jednym wykresie złota",
+   "segs": [
+    {
+     "say": "Teraz składamy wszystko razem – na setupie kupna.",
+     "step": -1
+    },
+    {
+     "say": "Na wykresie godzinowym trwa trend wzrostowy. Na wykresie pięciominutowym widzimy korektę w dół.",
+     "step": 0
+    },
+    {
+     "say": "Pierwszy element: sweep. Knot zbiera stopy pod dołkiem.",
+     "step": 1,
+     "hl": 0
+    },
+    {
+     "say": "Drugi element: change of character na wykresie pięciominutowym – zamknięcie nad ostatnim niższym szczytem.",
+     "step": 2,
+     "hl": 1
+    },
+    {
+     "say": "Impuls zostawia fair value gap w strefie discount. To twoja strefa wejścia.",
+     "step": 3,
+     "hl": 2,
+     "arrow": [
+      11,
+      61,
+      14,
+      55
+     ]
+    },
+    {
+     "say": "Wejście następuje przy powrocie do fair value gapu. Stop leży pod knotem sweepu.",
+     "step": 4,
+     "hl": 3
+    },
+    {
+     "say": "Celem jest następny szczyt. Ważne: stosunek zysku do ryzyka liczysz, zanim wejdziesz.",
+     "step": 5,
+     "hl": 3
+    }
+   ],
+   "side": "steps",
+   "side_items": [
+    "Liquidity *Sweep*",
+    "Change of *Character*",
+    "Powrót do *FVG*",
+    "Wejście · *SL* · *TP*"
+   ]
+  },
+  {
+   "kind": "summary",
+   "title": "Ryzyko i *podsumowanie*",
+   "hook": "Bez tego żaden setup nie działa",
+   "segs": [
+    {
+     "say": "Setup jest tak dobry, jak twoje zarządzanie ryzykiem.",
+     "bullet": null
+    },
+    {
+     "say": "Ryzykuj maksymalnie jeden do dwóch procent konta na transakcję.",
+     "bullet": "Maks. 1–2 % ryzyka na transakcję"
+    },
+    {
+     "say": "Ustal stop loss, zanim wejdziesz – i nie przesuwaj go przeciwko sobie.",
+     "bullet": "Stop loss ustal przed wejściem"
+    },
+    {
+     "say": "Bierz tylko transakcje ze stosunkiem zysku do ryzyka co najmniej jeden do dwóch.",
+     "bullet": "Zysk do ryzyka min. 1 : 2"
+    },
+    {
+     "say": "I żaden setup nie działa zawsze. Straty są częścią gry – liczy się to, żeby twoje zyskowne transakcje były większe niż stratne.",
+     "bullet": "Straty są częścią gry"
+    }
+   ]
+  },
+  {
+   "kind": "outro",
+   "title": "Wealth Club",
+   "segs": [
+    {
+     "say": "Jeśli chcesz codziennie ćwiczyć takie setupy z nami na wykresie złota: dołącz do naszej darmowej grupy o złocie na Telegramie. Link znajdziesz w opisie. Czeka tam na ciebie też nasz bootcamp z pięćdziesięcioma pięcioma lekcjami. Do zobaczenia w następnym filmie!"
+    }
+   ]
+  }
+ ],
+ "lang": "pl"
+}

@@ -1,0 +1,10 @@
+Länge 5:15
+ok out/ac01_en.mp4
+Länge 5:25
+ok out/ac01_pl.mp4
+Länge 5:25
+ok out/ac02_en.mp4
+Traceback (most recent call last):
+    if m == "premium": raise RuntimeError("ElevenLabs nicht verfügbar – Reel ohne Stimme")
+RuntimeError: ElevenLabs nicht verfügbar – Reel ohne Stimme
+ALLDONE

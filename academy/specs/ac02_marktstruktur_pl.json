@@ -1,0 +1,646 @@
+{
+ "id": "ac02_pl",
+ "title": "Struktura rynku *od A do Z*",
+ "yt_title": "Struktura rynku od A do Z – HH/HL, BOS, CHoCH i multi-timeframe (H4 → M5) na złocie",
+ "thumb": [
+  "STRUKTURA RYNKU",
+  "od A do Z"
+ ],
+ "thumb_clip": "choch",
+ "tags": [
+  "Trading złota",
+  "XAUUSD",
+  "Struktura rynku",
+  "Break of Structure",
+  "Change of Character",
+  "Multi Timeframe",
+  "Nauka tradingu",
+  "Smart Money",
+  "Rozpoznawanie trendu",
+  "Price Action"
+ ],
+ "chapters": [
+  {
+   "kind": "intro",
+   "title": "Struktura rynku od A do Z",
+   "segs": [
+    {
+     "say": "Jeśli nie wiesz, w którą stronę idzie rynek, każde wejście to rzut monetą. Dlatego struktura rynku jest fundamentem wszystkiego, co robimy na wykresie złota."
+    },
+    {
+     "say": "W tym filmie przejdziemy przez nią całą: szczyty i dołki w trendzie, break of structure, change of character – i jak połączyć kilka interwałów, od wykresu czterogodzinnego do pięciominutowego.",
+     "agenda": [
+      "Szczyty i dołki",
+      "Break of Structure",
+      "Change of Character",
+      "H4 → M5"
+     ]
+    },
+    {
+     "say": "Ważne na początek: to treści edukacyjne, nie porada inwestycyjna. Trading wiąże się z ryzykiem strat. Nowe strategie najpierw ćwicz na koncie demo.",
+     "disclaimer": true
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Trend *wzrostowy*",
+   "clip": "bos",
+   "hook": "Jak poprawnie czytać trend wzrostowy",
+   "segs": [
+    {
+     "say": "Zacznijmy od trendu wzrostowego. Trend to nie opinia, tylko ciąg szczytów i dołków, który możesz wyraźnie odczytać na wykresie.",
+     "step": -1
+    },
+    {
+     "say": "Rynek rośnie i robi szczyt. Jeśli później zostanie przebity, mówimy o wyższym szczycie, w skrócie H H.",
+     "step": 0,
+     "point": "Wyższy szczyt *(HH)*"
+    },
+    {
+     "say": "Potem przychodzi korekta. Liczy się, gdzie się kończy: jeśli nowy dołek zostaje nad poprzednim, to wyższy dołek, w skrócie H L.",
+     "step": 1,
+     "point": "Wyższy dołek *(HL)*"
+    },
+    {
+     "say": "Teraz zaznaczasz ostatni szczyt. Ta linia pokazuje, gdzie trend musi udowodnić swoją kontynuację.",
+     "step": 2
+    },
+    {
+     "say": "Jeśli świeca zamknie się nad tą linią, mamy break of structure w górę. Trend jest potwierdzony.",
+     "step": 3,
+     "point": "Zamknięcie nad szczytem = *BOS*"
+    },
+    {
+     "say": "I tak to idzie dalej: nowy wyższy dołek, nowy break of structure. Dopóki ten łańcuch się trzyma, szukasz pomysłów tradingowych tylko po stronie kupna.",
+     "step": 4,
+     "point": "Łańcuch cały: tylko *kupno*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Trend *spadkowy*",
+   "clip": "struktur-abwaerts",
+   "hook": "Trend spadkowy: te dwa punkty się liczą",
+   "clip_data": {
+    "c": [
+     [
+      55,
+      55.97,
+      50.69,
+      51
+     ],
+     [
+      51,
+      52.11,
+      46.3,
+      47
+     ],
+     [
+      47,
+      47.28,
+      43.95,
+      44
+     ],
+     [
+      44,
+      46.63,
+      43.24,
+      46
+     ],
+     [
+      46,
+      49.1,
+      45.35,
+      49
+     ],
+     [
+      49,
+      49.61,
+      47.43,
+      48
+     ],
+     [
+      48,
+      49.14,
+      44.76,
+      45
+     ],
+     [
+      45,
+      46.14,
+      40.88,
+      42
+     ],
+     [
+      42,
+      42.29,
+      38.94,
+      39
+     ],
+     [
+      39,
+      41.89,
+      38.28,
+      41
+     ],
+     [
+      41,
+      44.05,
+      40.18,
+      43
+     ],
+     [
+      43,
+      43.75,
+      41.66,
+      42
+     ],
+     [
+      42,
+      42.26,
+      37.79,
+      38
+     ],
+     [
+      38,
+      38.48,
+      33.35,
+      34
+     ],
+     [
+      34,
+      34.95,
+      29.98,
+      31
+     ]
+    ],
+    "steps": [
+     {
+      "to": 4,
+      "add": {
+       "a": [
+        [
+         3,
+         41.8,
+         "LL"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 6,
+      "add": {
+       "a": [
+        [
+         5,
+         51,
+         "LH"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 7,
+      "add": {
+       "l": [
+        [
+         43.24,
+         "ostatni dołek",
+         "red"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         7,
+         39.4,
+         "BOS ↓"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 15,
+      "add": {
+       "a": [
+        [
+         10,
+         45.5,
+         "LH"
+        ],
+        [
+         12,
+         36.3,
+         "BOS ↓"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "Trend spadkowy działa dokładnie odwrotnie. Tutaj patrzysz na niższe dołki i niższe szczyty.",
+     "step": -1
+    },
+    {
+     "say": "Rynek spada i robi dołek. Jeśli zostanie przebity w dół, to niższy dołek, w skrócie L L.",
+     "step": 0,
+     "point": "Niższy dołek *(LL)*"
+    },
+    {
+     "say": "Odbicie potem zostaje pod poprzednim szczytem. To niższy szczyt, w skrócie L H. Kupującym nie udaje się już robić nowych szczytów.",
+     "step": 1,
+     "point": "Niższy szczyt *(LH)*"
+    },
+    {
+     "say": "Ostatni dołek to teraz linia, na którą patrzysz.",
+     "step": 2
+    },
+    {
+     "say": "Jeśli świeca zamknie się pod nim, to break of structure w dół. Trend spadkowy trwa dalej.",
+     "step": 3,
+     "point": "Zamknięcie pod dołkiem = *BOS ↓*"
+    },
+    {
+     "say": "Tu też schemat się powtarza. Dopóki powstają niższe szczyty i niższe dołki, w grę wchodzi dla ciebie tylko sprzedaż.",
+     "step": 4,
+     "point": "LH i LL: tylko *sprzedaż*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Knot czy *zamknięcie*?",
+   "clip": "docht-vs-schluss",
+   "hook": "Najczęstszy błąd przy break of structure",
+   "clip_data": {
+    "c": [
+     [
+      40,
+      42.5,
+      39.5,
+      42
+     ],
+     [
+      42,
+      45,
+      41.6,
+      44.5
+     ],
+     [
+      44.5,
+      48,
+      44,
+      47.5
+     ],
+     [
+      47.5,
+      50,
+      47,
+      49.5
+     ],
+     [
+      49.5,
+      49.8,
+      46.5,
+      47
+     ],
+     [
+      47,
+      47.4,
+      44.5,
+      45
+     ],
+     [
+      45,
+      47.8,
+      44.6,
+      47.5
+     ],
+     [
+      47.5,
+      49.6,
+      47.2,
+      49.2
+     ],
+     [
+      49.2,
+      52.4,
+      48.8,
+      49.4
+     ],
+     [
+      49.4,
+      49.6,
+      46.8,
+      47.2
+     ],
+     [
+      47.2,
+      48.6,
+      46.4,
+      48.3
+     ],
+     [
+      48.3,
+      49.9,
+      47.9,
+      49.6
+     ],
+     [
+      49.6,
+      53.6,
+      49.4,
+      53.2
+     ],
+     [
+      53.2,
+      55.8,
+      52.8,
+      55.4
+     ],
+     [
+      55.4,
+      56,
+      53.9,
+      54.3
+     ],
+     [
+      54.3,
+      58.4,
+      54,
+      58
+     ]
+    ],
+    "steps": [
+     {
+      "to": 4,
+      "add": {
+       "a": [
+        [
+         3,
+         51.4,
+         "L_HIGH"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         5,
+         43.2,
+         "HL"
+        ]
+       ],
+       "l": [
+        [
+         50,
+         "L_LASTHIGH",
+         "gold"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "a": [
+        [
+         8,
+         53.9,
+         "L_ONLYWICK"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 11,
+      "add": {
+       "a": [
+        [
+         9,
+         45.4,
+         "brak BOS"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 13,
+      "add": {
+       "a": [
+        [
+         12,
+         55.2,
+         "BOS ↑"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 16,
+      "add": {
+       "a": [
+        [
+         15,
+         59.8,
+         "trend cały"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "Teraz punkt, na którym wielu traderów się wykłada: kiedy szczyt jest naprawdę przebity.",
+     "step": -1
+    },
+    {
+     "say": "Mamy trend wzrostowy z wyraźnym szczytem.",
+     "step": 0
+    },
+    {
+     "say": "Po korekcie powstaje wyższy dołek. Linia przy ostatnim szczycie jest narysowana.",
+     "step": 1,
+     "point": "Linia przy *ostatnim szczycie*"
+    },
+    {
+     "say": "Potem knot wybija nad szczyt – ale świeca zamyka się z powrotem pod nim. Kto tu już kupuje, często wpada prosto w pułapkę.",
+     "step": 2,
+     "point": "Sam knot = *brak* przebicia"
+    },
+    {
+     "say": "Cena spada z powrotem. To nie był break of structure, tylko raczej sięgnięcie po płynność nad szczytem.",
+     "step": 3
+    },
+    {
+     "say": "Dopiero ta świeca zamyka się wyraźnie nad szczytem. Teraz break of structure jest potwierdzony.",
+     "step": 4,
+     "point": "Decyduje *zamknięcie* świecy"
+    },
+    {
+     "say": "Zasada jest prosta: liczy się cena zamknięcia, nie knot. To chroni cię przed wieloma pochopnymi wejściami.",
+     "step": 5
+    }
+   ]
+  },
+  {
+   "kind": "remember",
+   "title": "Zapamiętaj *to*",
+   "cards": [
+    [
+     "Knot",
+     "*nie* liczy się jako przebicie"
+    ],
+    [
+     "Zamknięcie",
+     "potwierdza *przebicie*"
+    ]
+   ],
+   "segs": [
+    {
+     "say": "Zapamiętaj więc:",
+     "card": -1
+    },
+    {
+     "say": "Knot nad szczytem nie liczy się jako przebicie.",
+     "card": 0
+    },
+    {
+     "say": "Dopiero zamknięcie świecy je potwierdza.",
+     "card": 1
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Change of *Character*",
+   "clip": "choch",
+   "hook": "Jak wcześnie rozpoznać zmianę trendu",
+   "segs": [
+    {
+     "say": "Żaden trend nie trwa wiecznie. Change of character to pierwsza wskazówka, że struktura się odwraca.",
+     "step": -1
+    },
+    {
+     "say": "Tutaj widzimy trend spadkowy z niższymi szczytami i niższymi dołkami.",
+     "step": 0,
+     "point": "LH i LL = *trend spadkowy*"
+    },
+    {
+     "say": "Zaznaczasz ostatni niższy szczyt. To granica, której muszą bronić sprzedający.",
+     "step": 1,
+     "point": "Ostatni LH = *kluczowa linia*"
+    },
+    {
+     "say": "Rynek robi jeszcze jeden niższy dołek, ale wyprzedaż traci siłę.",
+     "step": 2
+    },
+    {
+     "say": "Potem świeca zamyka się nad ostatnim niższym szczytem. To change of character. Trend spadkowy jest przełamany – ale nowy trend nie jest jeszcze potwierdzony.",
+     "step": 3,
+     "point": "Zamknięcie powyżej = *CHoCH*"
+    },
+    {
+     "say": "Odwrócenie potwierdza dopiero wyższy dołek i break of structure w górę. W skrócie: CHoCH ostrzega, BOS potwierdza.",
+     "step": 4,
+     "point": "HL + BOS = *nowy trend*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Od *H4* do *M5*",
+   "clip": "praxis-mtf",
+   "hook": "H4 dla kierunku, M5 dla wejścia",
+   "segs": [
+    {
+     "say": "Na koniec łączymy interwały. Większy wykres wyznacza kierunek, mniejszy daje dokładne wejście.",
+     "step": -1
+    },
+    {
+     "say": "Na wykresie czterogodzinnym trwa trend wzrostowy, a cena wchodzi w strefę, z której wcześniej wzrosła. Na wykresie pięciominutowym widzimy jeszcze korektę w dół.",
+     "step": 0,
+     "point": "H4: kierunek i *strefa*"
+    },
+    {
+     "say": "W strefie knot zbiera stopy pod ostatnim dołkiem. To sweep.",
+     "step": 1,
+     "point": "M5: *sweep* w strefie"
+    },
+    {
+     "say": "Potem wykres pięciominutowy zamyka się nad ostatnim niższym szczytem. Change of character pokazuje: mała struktura odwraca się w kierunku dużego trendu.",
+     "step": 2,
+     "point": "M5: *CHoCH* w górę"
+    },
+    {
+     "say": "Wejście następuje przy cofnięciu, stop leży pod dołkiem sweepu. Dzięki temu ryzyko jest małe i jasno określone.",
+     "step": 3,
+     "point": "Stop pod *sweepem*",
+     "arrow": [
+      9,
+      44.5,
+      12,
+      53.5
+     ]
+    },
+    {
+     "say": "Jeśli plan się sprawdzi, cena idzie w stronę następnego szczytu. Ale nawet najlepszy setup może zawieść – dlatego stop zawsze jest częścią transakcji.",
+     "step": 4
+    }
+   ]
+  },
+  {
+   "kind": "summary",
+   "title": "*Podsumowanie*",
+   "hook": "Struktura rynku w 5 zasadach",
+   "segs": [
+    {
+     "say": "Podsumujmy.",
+     "bullet": null
+    },
+    {
+     "say": "Wyższe szczyty i wyższe dołki oznaczają trend wzrostowy, niższe szczyty i niższe dołki oznaczają trend spadkowy.",
+     "bullet": "HH/HL = w górę · LH/LL = w dół"
+    },
+    {
+     "say": "Break of structure potwierdza trend – ale tylko zamknięciem świecy, nie knotem.",
+     "bullet": "BOS tylko z zamknięciem świecy"
+    },
+    {
+     "say": "Change of character to ostrzeżenie. Odwrócenie jest potwierdzone dopiero wyższym dołkiem i nowym break of structure.",
+     "bullet": "CHoCH ostrzega, BOS potwierdza"
+    },
+    {
+     "say": "Kierunek daje wykres czterogodzinny, wejście wykres pięciominutowy.",
+     "bullet": "H4 = kierunek · M5 = wejście"
+    },
+    {
+     "say": "I bez względu na to, jak wyraźna wydaje się struktura: ryzykuj na transakcję tylko małą część konta, mniej więcej jeden do dwóch procent.",
+     "bullet": "Maks. 1–2 % ryzyka na transakcję"
+    }
+   ]
+  },
+  {
+   "kind": "outro",
+   "title": "Wealth Club",
+   "segs": [
+    {
+     "say": "Jeśli chcesz codziennie ćwiczyć z nami strukturę rynku na wykresie złota: dołącz do naszej darmowej grupy o złocie na Telegramie. Link znajdziesz w opisie. Czekają tam na ciebie też nasz bootcamp z pięćdziesięcioma pięcioma lekcjami i codzienne pomysły tradingowe. Do zobaczenia w następnym filmie!"
+    }
+   ]
+  }
+ ],
+ "lang": "pl"
+}

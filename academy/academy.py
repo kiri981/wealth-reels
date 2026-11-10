@@ -24,6 +24,26 @@ GREEN = (52, 199, 123); RED = (229, 83, 75)
 COL = {"gold": GOLD, "red": RED, "green": GREEN, "blue": (90, 160, 255), "white": WHITE}
 CLIPS = json.load(open(os.path.join(HERE, "clips.json")))
 LBL = CLIPS["LABELS"]["de"]
+# Bildschirmtexte je Sprache (spec "lang": de | en | pl | fr) – für die Partner-Fassungen
+UI = {
+ "de": dict(kap="KAPITEL", learn="Das lernst du heute", disc=["Bildungsinhalt – *keine Anlageberatung*.", "Trading birgt Verlustrisiken.", "Neue Strategien zuerst im *Demokonto* üben."],
+            grp="Kostenlose *Gold-Gruppe*", perks=["Täglich *Trade-Ideen* auf Gold", "Jeden Morgen das *Gold-Briefing*", "*Bootcamp* mit 55 Lektionen"], link="Link in der Beschreibung  →",
+            rem="Merke dir", whole="Das ganze Video:", yt="auf YouTube – Link in Bio", intro="Einleitung", chap="Kapitel", dgrp="🔗 Kostenlose Gold-Gruppe auf Telegram (Trade-Ideen, Gold-Briefing, Bootcamp mit 55 Lektionen):",
+            ddisc="⚠️ Bildungsinhalt, keine Anlageberatung. Trading birgt Verlustrisiken."),
+ "en": dict(kap="CHAPTER", learn="What you'll learn today", disc=["Educational content – *not investment advice*.", "Trading involves risk of loss.", "Practise new strategies on a *demo account* first."],
+            grp="Free *Gold Group*", perks=["Daily *trade ideas* on gold", "*Gold briefing* every morning", "*Bootcamp* with 55 lessons"], link="Link in the description  →",
+            rem="Remember", whole="Full video:", yt="on YouTube – link in bio", intro="Intro", chap="Chapters", dgrp="🔗 Free gold group on Telegram (trade ideas, gold briefing, bootcamp with 55 lessons):",
+            ddisc="⚠️ Educational content, not investment advice. Trading involves risk of loss."),
+ "pl": dict(kap="ROZDZIAŁ", learn="Czego się dziś nauczysz", disc=["Treści edukacyjne – *nie porada inwestycyjna*.", "Trading wiąże się z ryzykiem strat.", "Nowe strategie najpierw ćwicz na *koncie demo*."],
+            grp="Darmowa *grupa o złocie*", perks=["Codziennie *pomysły tradingowe*", "Co rano *briefing złota*", "*Bootcamp* z 55 lekcjami"], link="Link w opisie  →",
+            rem="Zapamiętaj", whole="Cały film:", yt="na YouTube – link w bio", intro="Wstęp", chap="Rozdziały", dgrp="🔗 Darmowa grupa o złocie na Telegramie (pomysły tradingowe, briefing złota, bootcamp z 55 lekcjami):",
+            ddisc="⚠️ Treści edukacyjne, nie porada inwestycyjna. Trading wiąże się z ryzykiem strat."),
+ "fr": dict(kap="CHAPITRE", learn="Ce que tu vas apprendre", disc=["Contenu éducatif – *pas un conseil en investissement*.", "Le trading comporte un risque de perte.", "Teste d'abord les stratégies sur un *compte démo*."],
+            grp="*Groupe Or* gratuit", perks=["Des *idées de trading* sur l'or chaque jour", "Le *briefing or* chaque matin", "*Bootcamp* de 55 leçons"], link="Lien dans la description  →",
+            rem="À retenir", whole="La vidéo complète :", yt="sur YouTube – lien en bio", intro="Introduction", chap="Chapitres", dgrp="🔗 Groupe or gratuit sur Telegram (idées de trading, briefing or, bootcamp de 55 leçons) :",
+            ddisc="⚠️ Contenu éducatif, pas un conseil en investissement. Le trading comporte un risque de perte."),
+}
+T_ = UI["de"]
 LOGO = os.path.join(HERE, "..", "factory", "brand", "logo.png")
 GROUP = "https://t.me/+EY-ONXT6pq80OGJi"
 VO_DELAY = 0.15
@@ -263,12 +283,12 @@ def draw_chart(cv, im, box, ch, seg, t, bpad=40):
 def header(cv, im, num, title, a=1.0):
     d = ImageDraw.Draw(im, "RGBA")
     if not cv.v:
-        d.text((80, 78), f"KAPITEL {num:02d}", font=F(BOLD, 26), fill=GOLD + (int(255 * a),), anchor="ls")
+        d.text((80, 78), f"{T_['kap']} {num:02d}", font=F(BOLD, 26), fill=GOLD + (int(255 * a),), anchor="ls")
         rich(d, 80, 140, title, F(BLACK, 54), a)
         cv.logo_at(im, cv.W - 150, 92, 170, .95 * a)
     else:
         cv.logo_at(im, cv.W / 2, 140, 250, a)
-        d.text((cv.W / 2, 300), f"KAPITEL {num:02d}", font=F(BOLD, 34), fill=GOLD + (int(255 * a),), anchor="ms")
+        d.text((cv.W / 2, 300), f"{T_['kap']} {num:02d}", font=F(BOLD, 34), fill=GOLD + (int(255 * a),), anchor="ms")
         rich(d, cv.W / 2, 395, title, fitf(d, title, BLACK, 86, cv.W - 100), a, anchor="m")
 
 
@@ -337,7 +357,7 @@ def progress(cv, im, spec, t):
 def title_card(cv, im, ch, num, lt, dur):
     d = ImageDraw.Draw(im, "RGBA"); W, H = cv.W, cv.H
     a = ease(lt / .5) * (1 - ease((lt - dur + .45) / .45))
-    d.text((W / 2, H / 2 - 70), f"KAPITEL {num:02d}", font=F(BOLD, 40), fill=GOLD + (int(255 * a),), anchor="ms")
+    d.text((W / 2, H / 2 - 70), f"{T_['kap']} {num:02d}", font=F(BOLD, 40), fill=GOLD + (int(255 * a),), anchor="ms")
     f = fitf(d, ch["title"], BLACK, 120 if not cv.v else 104, W - 140); y = H / 2 + 60 + (1 - ease(lt / .6)) * 40
     rich(d, W / 2, y, ch["title"], f, a, anchor="m")
     g = ease((lt - .3) / .8); wl = 260 * g
@@ -348,7 +368,7 @@ def title_card(cv, im, ch, num, lt, dur):
 
 def agenda(cv, im, items, t0, t, cy):
     d = ImageDraw.Draw(im, "RGBA"); W = cv.W; bw = 760 if not cv.v else 900; h = 92
-    d.text((W / 2, cy - 70), "Das lernst du heute", font=F(BLACK, 58 if not cv.v else 64), fill=WHITE + (int(255 * ease((t - t0) / .4)),), anchor="ms")
+    d.text((W / 2, cy - 70), T_["learn"], font=F(BLACK, 58 if not cv.v else 64), fill=WHITE + (int(255 * ease((t - t0) / .4)),), anchor="ms")
     for i, it in enumerate(items):
         e = ease((t - t0 - .4 - i * .45) / .45)
         if e <= 0: continue
@@ -362,7 +382,7 @@ def disclaimer_box(cv, im, a, cy):
     d = ImageDraw.Draw(im, "RGBA"); W = cv.W; bw, bh = (1060, 250) if not cv.v else (940, 300); x0 = (W - bw) / 2; y0 = cy
     d.rounded_rectangle((x0, y0, x0 + bw, y0 + bh), radius=24, fill=(20, 17, 11, int(240 * a)), outline=GOLD + (int(220 * a),), width=3)
     d.text((W / 2, y0 + 66), "⚠  Wichtig", font=F(BLACK, 46), fill=GOLD + (int(255 * a),), anchor="ms")
-    for i, l in enumerate(["Bildungsinhalt – *keine Anlageberatung*.", "Trading birgt Verlustrisiken.", "Neue Strategien zuerst im *Demokonto* üben."]):
+    for i, l in enumerate(T_["disc"]):
         rich(d, W / 2, y0 + 128 + i * 44, l, F(SEMI, 32), a, anchor="m", base=(215, 215, 220))
 
 
@@ -392,11 +412,11 @@ def frame(cv, spec, scenes, t):
                 disclaimer_box(cv, layer, ease((t - s2["t0"]) / .5), H * (.53 if not V else .52))
         else:
             cv.logo_at(layer, W / 2, H * .28, 420 if not V else 520, ease(lt / .8))
-            rich(d, W / 2, H * .5, "Kostenlose *Gold-Gruppe*", fitf(d, "Kostenlose *Gold-Gruppe*", BLACK, 84, W - 140), ease((lt - .3) / .5), anchor="m")
-            for i, l in enumerate(["Täglich *Trade-Ideen* auf Gold", "Jeden Morgen das *Gold-Briefing*", "*Bootcamp* mit 55 Lektionen"]):
+            rich(d, W / 2, H * .5, T_["grp"], fitf(d, T_["grp"], BLACK, 84, W - 140), ease((lt - .3) / .5), anchor="m")
+            for i, l in enumerate(T_["perks"]):
                 e = ease((lt - .8 - i * .35) / .4); y = H * .58 + i * 64
                 check_icon(d, W / 2 - 330, y - 4, 40, e); rich(d, W / 2 - 270, y + 28, l, F(BOLD, 36), e)
-            pill(cv, layer, W / 2, H * .85, "Link in der Beschreibung  →", "gold", ease((lt - 2) / .4), size=34)
+            pill(cv, layer, W / 2, H * .85, T_["link"], "gold", ease((lt - 2) / .4), size=34)
         karaoke(cv, layer, seg, t, (W * .1, 0, W * .9, H - 40) if not V else (60, 0, W - 60, H - 120))
     elif sc["kind"] == "chart":
         header(cv, layer, num, ch["title"])
@@ -412,7 +432,7 @@ def frame(cv, spec, scenes, t):
             if side == "steps": side_steps(cv, layer, ch, seg, t, (60, 1290, W - 60, 1700)) if False else None
             karaoke(cv, layer, seg, t, (60, 0, W - 60, 1560))
     elif sc["kind"] == "remember":
-        header(cv, layer, num, ch["title"]) if V else d.text((W / 2, H * .24), "Merke dir", font=F(BLACK, 64), fill=WHITE + (int(255 * ease(lt / .4)),), anchor="ms")
+        header(cv, layer, num, ch["title"]) if V else d.text((W / 2, H * .24), T_["rem"], font=F(BLACK, 64), fill=WHITE + (int(255 * ease(lt / .4)),), anchor="ms")
         hl = seg.get("card", 1) if seg else 1
         for i, (big, small) in enumerate(ch["cards"]):
             e = ease((lt - .2 - i * .3) / .45); on = hl == i or hl < 0
@@ -506,16 +526,18 @@ def vertical_extra(hook, title):
             for i, l in enumerate(lines): d.text((W / 2, H / 2 - 40 + i * ff.size * 1.15), l, font=ff, fill=(GOLD if i == 0 else WHITE) + (int(255 * a),), anchor="ms")
         if t > dur - 2.4:
             a = ease((t - (dur - 2.4)) / .4); d.rectangle((0, 0, W, H), fill=(8, 8, 10, int(228 * a)))
-            d.text((W / 2, H / 2 - 40), "Das ganze Video:", font=F(BOLD, 52), fill=WHITE + (int(255 * a),), anchor="ms")
+            d.text((W / 2, H / 2 - 40), T_["whole"], font=F(BOLD, 52), fill=WHITE + (int(255 * a),), anchor="ms")
             tt = title.replace("*", ""); ff = fitf(d, tt, BLACK, 72, W - 120)
             d.text((W / 2, H / 2 + 60), tt, font=ff, fill=GOLD + (int(255 * a),), anchor="ms")
-            d.text((W / 2, H / 2 + 160), "auf YouTube – Link in Bio", font=F(SEMI, 46), fill=WHITE + (int(255 * a),), anchor="ms")
+            d.text((W / 2, H / 2 + 160), T_["yt"], font=F(SEMI, 46), fill=WHITE + (int(255 * a),), anchor="ms")
         return im
     return f
 
 
 def main():
     spec = wording.clean(json.load(open(sys.argv[1], encoding="utf-8"))); out = sys.argv[2]
+    global LBL, T_
+    lang = spec.get("lang", "de"); LBL = CLIPS["LABELS"].get(lang, CLIPS["LABELS"]["de"]); T_ = UI.get(lang, UI["en"])
     for ch in spec["chapters"]:   # eigene Charts im Spec: {"clip": "name", "clip_data": {"c": [[o,h,l,c],…], "steps": [{"to": n, "add": {"a": [[i,p,"Text"]], "l": [[p,"Text","gold"]], "z": [[i0,i1,lo,hi,"Text","gold"]]}}]}}
         if ch.get("clip_data"): CLIPS["CLIPS"][ch["clip"]] = ch["clip_data"]
     only = sys.argv[3] if len(sys.argv) > 3 else "all"
@@ -526,9 +548,9 @@ def main():
     else: tts_all(spec, work)
     scenes, T = timeline(spec); spec["_T"] = T; print(f"Länge {ts(T)}", flush=True)
     if only == "preview": return spec, scenes
-    marks = ["0:00 Einleitung"] + [f"{ts(c['t0'])} {c['title'].replace('*', '')}" for c in spec["chapters"] if c["kind"] in ("chart", "summary", "remember")]
-    desc = (spec.get("desc", spec["yt_title"]) + "\n\n🔗 Kostenlose Gold-Gruppe auf Telegram (Trade-Ideen, Gold-Briefing, Bootcamp mit 55 Lektionen):\n" + GROUP +
-            "\n\nKapitel:\n" + "\n".join(marks) + "\n\n⚠️ Bildungsinhalt, keine Anlageberatung. Trading birgt Verlustrisiken.\n\n" + " ".join("#" + re.sub(r"\W", "", x) for x in spec.get("tags", [])[:6]))
+    marks = ["0:00 " + T_["intro"]] + [f"{ts(c['t0'])} {c['title'].replace('*', '')}" for c in spec["chapters"] if c["kind"] in ("chart", "summary", "remember")]
+    desc = (spec.get("desc", spec["yt_title"]) + "\n\n" + T_["dgrp"] + "\n" + GROUP +
+            "\n\n" + T_["chap"] + ":\n" + "\n".join(marks) + "\n\n" + T_["ddisc"] + "\n\n" + " ".join("#" + re.sub(r"\W", "", x) for x in spec.get("tags", [])[:6]))
     open(out + "_desc.txt", "w").write(wording.text(desc)); vtt(spec, out + ".vtt")
     if only in ("all", "thumb", "long"): thumb(spec, out + "_thumb.jpg")
     if only in ("all", "long"):

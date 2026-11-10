@@ -1,0 +1,646 @@
+{
+ "id": "ac02_en",
+ "title": "Market structure *complete*",
+ "yt_title": "Market Structure Fully Explained – HH/HL, BOS, CHoCH & Multi-Timeframe (H4 → M5) on Gold",
+ "thumb": [
+  "MARKET STRUCTURE",
+  "fully explained"
+ ],
+ "thumb_clip": "choch",
+ "tags": [
+  "Gold Trading",
+  "XAUUSD",
+  "Market Structure",
+  "Break of Structure",
+  "Change of Character",
+  "Multi Timeframe",
+  "Learn Trading",
+  "Smart Money",
+  "Trend Trading",
+  "Price Action"
+ ],
+ "chapters": [
+  {
+   "kind": "intro",
+   "title": "Market structure complete",
+   "segs": [
+    {
+     "say": "If you don't know which way the market is moving, every entry is a coin flip. That's why market structure is the foundation of everything we do on the gold chart."
+    },
+    {
+     "say": "In this video we'll go through it completely: highs and lows in a trend, the break of structure, the change of character – and how to connect several timeframes, from the four-hour to the five-minute chart.",
+     "agenda": [
+      "Highs & lows",
+      "Break of Structure",
+      "Change of Character",
+      "H4 → M5"
+     ]
+    },
+    {
+     "say": "Important up front: this is educational content, not investment advice. Trading involves risk of loss. Practise new strategies on a demo account first.",
+     "disclaimer": true
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "The *uptrend*",
+   "clip": "bos",
+   "hook": "How to read an uptrend correctly",
+   "segs": [
+    {
+     "say": "Let's start with the uptrend. A trend isn't an opinion – it's a sequence of highs and lows that you can clearly read on the chart.",
+     "step": -1
+    },
+    {
+     "say": "The market rises and forms a high. If it's exceeded later, we call it a higher high, or H H.",
+     "step": 0,
+     "point": "Higher high *(HH)*"
+    },
+    {
+     "say": "Then comes a pullback. What matters is where it ends: if the new low stays above the previous one, it's a higher low, or H L.",
+     "step": 1,
+     "point": "Higher low *(HL)*"
+    },
+    {
+     "say": "Now you mark the last high. This line shows you where the trend has to prove it's continuing.",
+     "step": 2
+    },
+    {
+     "say": "If a candle closes above this line, we have a break of structure to the upside. The trend is confirmed.",
+     "step": 3,
+     "point": "Close above the high = *BOS*"
+    },
+    {
+     "say": "And it continues like this: a new higher low, a new break of structure. As long as this chain holds, you only look for trade ideas on the buy side.",
+     "step": 4,
+     "point": "Chain intact: only *buys*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "The *downtrend*",
+   "clip": "struktur-abwaerts",
+   "hook": "Downtrend: these two points matter",
+   "clip_data": {
+    "c": [
+     [
+      55,
+      55.97,
+      50.69,
+      51
+     ],
+     [
+      51,
+      52.11,
+      46.3,
+      47
+     ],
+     [
+      47,
+      47.28,
+      43.95,
+      44
+     ],
+     [
+      44,
+      46.63,
+      43.24,
+      46
+     ],
+     [
+      46,
+      49.1,
+      45.35,
+      49
+     ],
+     [
+      49,
+      49.61,
+      47.43,
+      48
+     ],
+     [
+      48,
+      49.14,
+      44.76,
+      45
+     ],
+     [
+      45,
+      46.14,
+      40.88,
+      42
+     ],
+     [
+      42,
+      42.29,
+      38.94,
+      39
+     ],
+     [
+      39,
+      41.89,
+      38.28,
+      41
+     ],
+     [
+      41,
+      44.05,
+      40.18,
+      43
+     ],
+     [
+      43,
+      43.75,
+      41.66,
+      42
+     ],
+     [
+      42,
+      42.26,
+      37.79,
+      38
+     ],
+     [
+      38,
+      38.48,
+      33.35,
+      34
+     ],
+     [
+      34,
+      34.95,
+      29.98,
+      31
+     ]
+    ],
+    "steps": [
+     {
+      "to": 4,
+      "add": {
+       "a": [
+        [
+         3,
+         41.8,
+         "LL"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 6,
+      "add": {
+       "a": [
+        [
+         5,
+         51,
+         "LH"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 7,
+      "add": {
+       "l": [
+        [
+         43.24,
+         "last low",
+         "red"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         7,
+         39.4,
+         "BOS ↓"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 15,
+      "add": {
+       "a": [
+        [
+         10,
+         45.5,
+         "LH"
+        ],
+        [
+         12,
+         36.3,
+         "BOS ↓"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "The downtrend works exactly the other way round. Here you look for lower lows and lower highs.",
+     "step": -1
+    },
+    {
+     "say": "The market falls and forms a low. If it's undercut, it's a lower low, or L L.",
+     "step": 0,
+     "point": "Lower low *(LL)*"
+    },
+    {
+     "say": "The recovery afterwards stays below the previous high. That's a lower high, or L H. The buyers no longer manage to make new highs.",
+     "step": 1,
+     "point": "Lower high *(LH)*"
+    },
+    {
+     "say": "The last low is now the line you watch.",
+     "step": 2
+    },
+    {
+     "say": "If a candle closes below it, that's a break of structure to the downside. The downtrend continues.",
+     "step": 3,
+     "point": "Close below the low = *BOS ↓*"
+    },
+    {
+     "say": "Here too the pattern repeats. As long as lower highs and lower lows form, only sells are an option for you.",
+     "step": 4,
+     "point": "LH & LL: only *sells*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Wick or *close*?",
+   "clip": "docht-vs-schluss",
+   "hook": "The most common break-of-structure mistake",
+   "clip_data": {
+    "c": [
+     [
+      40,
+      42.5,
+      39.5,
+      42
+     ],
+     [
+      42,
+      45,
+      41.6,
+      44.5
+     ],
+     [
+      44.5,
+      48,
+      44,
+      47.5
+     ],
+     [
+      47.5,
+      50,
+      47,
+      49.5
+     ],
+     [
+      49.5,
+      49.8,
+      46.5,
+      47
+     ],
+     [
+      47,
+      47.4,
+      44.5,
+      45
+     ],
+     [
+      45,
+      47.8,
+      44.6,
+      47.5
+     ],
+     [
+      47.5,
+      49.6,
+      47.2,
+      49.2
+     ],
+     [
+      49.2,
+      52.4,
+      48.8,
+      49.4
+     ],
+     [
+      49.4,
+      49.6,
+      46.8,
+      47.2
+     ],
+     [
+      47.2,
+      48.6,
+      46.4,
+      48.3
+     ],
+     [
+      48.3,
+      49.9,
+      47.9,
+      49.6
+     ],
+     [
+      49.6,
+      53.6,
+      49.4,
+      53.2
+     ],
+     [
+      53.2,
+      55.8,
+      52.8,
+      55.4
+     ],
+     [
+      55.4,
+      56,
+      53.9,
+      54.3
+     ],
+     [
+      54.3,
+      58.4,
+      54,
+      58
+     ]
+    ],
+    "steps": [
+     {
+      "to": 4,
+      "add": {
+       "a": [
+        [
+         3,
+         51.4,
+         "L_HIGH"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         5,
+         43.2,
+         "HL"
+        ]
+       ],
+       "l": [
+        [
+         50,
+         "L_LASTHIGH",
+         "gold"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "a": [
+        [
+         8,
+         53.9,
+         "L_ONLYWICK"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 11,
+      "add": {
+       "a": [
+        [
+         9,
+         45.4,
+         "no BOS"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 13,
+      "add": {
+       "a": [
+        [
+         12,
+         55.2,
+         "BOS ↑"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 16,
+      "add": {
+       "a": [
+        [
+         15,
+         59.8,
+         "trend intact"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "Now comes a point where many traders fail: the question of when a high is really broken.",
+     "step": -1
+    },
+    {
+     "say": "We have an uptrend with a clear high.",
+     "step": 0
+    },
+    {
+     "say": "After the pullback a higher low forms. The line at the last high is drawn.",
+     "step": 1,
+     "point": "Line at the *last high*"
+    },
+    {
+     "say": "Then a wick pokes above the high – but the candle closes back below it. Anyone who buys here often walks straight into a trap.",
+     "step": 2,
+     "point": "Only a wick = *no* break"
+    },
+    {
+     "say": "Price falls back. That wasn't a break of structure – more of a grab for the liquidity above the high.",
+     "step": 3
+    },
+    {
+     "say": "Only this candle closes clearly above the high. Now the break of structure is confirmed.",
+     "step": 4,
+     "point": "The candle *close* decides"
+    },
+    {
+     "say": "The rule is simple: the closing price counts, not the wick. That protects you from many premature entries.",
+     "step": 5
+    }
+   ]
+  },
+  {
+   "kind": "remember",
+   "title": "Remember *this*",
+   "cards": [
+    [
+     "Wick",
+     "does *not* count as a break"
+    ],
+    [
+     "Close",
+     "confirms the *break*"
+    ]
+   ],
+   "segs": [
+    {
+     "say": "So remember:",
+     "card": -1
+    },
+    {
+     "say": "A wick above the high doesn't count as a break.",
+     "card": 0
+    },
+    {
+     "say": "Only the candle close confirms it.",
+     "card": 1
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Change of *Character*",
+   "clip": "choch",
+   "hook": "How to spot a trend reversal early",
+   "segs": [
+    {
+     "say": "No trend runs forever. The change of character is the first hint that the structure is turning.",
+     "step": -1
+    },
+    {
+     "say": "Here we see a downtrend with lower highs and lower lows.",
+     "step": 0,
+     "point": "LH & LL = *downtrend*"
+    },
+    {
+     "say": "You mark the last lower high. It's the line the sellers have to defend.",
+     "step": 1,
+     "point": "Last LH = *key line*"
+    },
+    {
+     "say": "The market makes one more lower low, but the sell-off is losing strength.",
+     "step": 2
+    },
+    {
+     "say": "Then a candle closes above the last lower high. That's the change of character. The downtrend is broken – but the new trend isn't confirmed yet.",
+     "step": 3,
+     "point": "Close above = *CHoCH*"
+    },
+    {
+     "say": "The reversal is only confirmed by a higher low and a break of structure to the upside. In short: the CHoCH warns, the BOS confirms.",
+     "step": 4,
+     "point": "HL + BOS = *new trend*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "From *H4* to *M5*",
+   "clip": "praxis-mtf",
+   "hook": "H4 for direction, M5 for the entry",
+   "segs": [
+    {
+     "say": "Finally, we connect the timeframes. The bigger chart sets the direction, the smaller one gives you the precise entry.",
+     "step": -1
+    },
+    {
+     "say": "On the four-hour chart there's an uptrend, and price is coming into a zone it previously rallied from. On the five-minute chart we still see a correction to the downside.",
+     "step": 0,
+     "point": "H4: direction & *zone*"
+    },
+    {
+     "say": "In the zone, a wick takes the stops below the last low. That's a sweep.",
+     "step": 1,
+     "point": "M5: *sweep* in the zone"
+    },
+    {
+     "say": "Then the five-minute chart closes above the last lower high. The change of character shows: the small structure is turning in the direction of the big trend.",
+     "step": 2,
+     "point": "M5: *CHoCH* to the upside"
+    },
+    {
+     "say": "The entry comes on the pullback, with the stop below the sweep low. That keeps the risk small and clearly defined.",
+     "step": 3,
+     "point": "Stop below the *sweep*",
+     "arrow": [
+      9,
+      44.5,
+      12,
+      53.5
+     ]
+    },
+    {
+     "say": "If the plan works out, price runs toward the next high. But even the best setup can fail – that's why the stop always belongs in the trade.",
+     "step": 4
+    }
+   ]
+  },
+  {
+   "kind": "summary",
+   "title": "The *summary*",
+   "hook": "Market structure in 5 rules",
+   "segs": [
+    {
+     "say": "Let's sum up.",
+     "bullet": null
+    },
+    {
+     "say": "Higher highs and higher lows mean an uptrend, lower highs and lower lows mean a downtrend.",
+     "bullet": "HH/HL = up · LH/LL = down"
+    },
+    {
+     "say": "A break of structure confirms the trend – but only with a candle close, not with a wick.",
+     "bullet": "BOS only with a candle close"
+    },
+    {
+     "say": "The change of character is a warning. The reversal is only confirmed with a higher low and a new break of structure.",
+     "bullet": "CHoCH warns, BOS confirms"
+    },
+    {
+     "say": "The direction comes from the four-hour chart, the entry from the five-minute chart.",
+     "bullet": "H4 = direction · M5 = entry"
+    },
+    {
+     "say": "And no matter how clear the structure looks: risk only a small part of your account per trade, about one to two percent.",
+     "bullet": "Max. 1–2 % risk per trade"
+    }
+   ]
+  },
+  {
+   "kind": "outro",
+   "title": "Wealth Club",
+   "segs": [
+    {
+     "say": "If you want to practise market structure with us on the gold chart every day: join our free gold group on Telegram. You'll find the link in the description. Our bootcamp with fifty-five lessons and daily trade ideas are waiting for you there too. See you in the next video!"
+    }
+   ]
+  }
+ ],
+ "lang": "en"
+}
