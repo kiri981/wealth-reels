@@ -2,6 +2,7 @@
 // Bewertet Setups nach einer Checkliste (Sweep, HTF-Zone, Momentum, iFVG, Ziel, Premium/Discount, SMT, Session)
 // und vergibt eine Note: A++ / A+ / A / B+ / B / C. Zeigt Einstieg, SL, Ziel und die Lotgröße für dein Risiko.
 // Auslöser (Pflicht): Liquidity Sweep + iFVG (Rückeroberung einer Gegen-FVG) innerhalb weniger Kerzen danach.
+// v2 (Backtest Gold 3m/5m/10m, 2 Zeiträume): nur Reversals gegen den 1h-Trend, Ziel 2R mit Break-even bei 1R. Empfohlen: 5-Minuten-Chart.
 // Keine Anlageberatung. Werkzeug zur Analyse – jede Entscheidung triffst du selbst.
 //@version=5
 indicator("WC Setup Score", shorttitle = "WC Score", overlay = true, max_labels_count = 300, max_lines_count = 300)
@@ -16,6 +17,12 @@ dispMul  = input.float(1.2,  "Momentum: Kerzenkörper ≥ × ATR",    step = 0.1
 rrMin    = input.float(2.0,  "Klares Ziel: mindestens R",         step = 0.5,  minval = 0.5, group = grpS)
 slBuf    = input.float(0.10, "SL-Puffer hinter dem Sweep (× ATR)", step = 0.05, minval = 0, group = grpS)
 pdLen    = input.int(100,   "Range für Ziel + Premium/Discount (Kerzen)",   minval = 20, group = grpS)
+
+grpF     = "Filter & Ziel (v2, aus Backtest)"
+useTrend = input.bool(true, "Nur Reversals GEGEN den 1h-Trend",                    group = grpF)
+trendTf  = input.timeframe("60", "Trend-Zeitrahmen",                               group = grpF)
+trendLen = input.int(50, "Trend-EMA Länge",                          minval = 5,   group = grpF)
+tgtMode  = input.string("2R + BE bei 1R", "Ziel", options = ["2R + BE bei 1R", "Range-Ziel"], group = grpF)
 
 grpH     = "HTF-Zone (PDA)"
 htf      = input.timeframe("60", "HTF-Zeitrahmen",                                  group = grpH)
@@ -126,16 +133,22 @@ if bullSweep
 if bearSweep
     smtBearState := not useSmt or na(smtHigh) or na(smtPrevHigh) ? -1 : smtHigh <= smtPrevHigh ? 1 : 0
 
+// ───────── 9) 1h-Trend (EMA, abgeschlossene Kerzen) ─────────
+trF() =>
+    e = ta.ema(close, trendLen)
+    close[1] > e[1] and e[1] > e[4] ? 1 : close[1] < e[1] and e[1] < e[4] ? -1 : 0
+trSt = request.security(syminfo.tickerid, trendTf, trF(), lookahead = barmerge.lookahead_on)
+
 // ───────── 8) Session ─────────
 inSess = not na(time(timeframe.period, sess1, tz)) or not na(time(timeframe.period, sess2, tz))
 
 // ───────── Auslöser + Bewertung ─────────
-longTrig  = bullIfvg and bsBull <= swAge
-shortTrig = bearIfvg and bsBear <= swAge and not longTrig
+longTrig  = bullIfvg and bsBull <= swAge and (not useTrend or trSt == -1)
+shortTrig = bearIfvg and bsBear <= swAge and not longTrig and (not useTrend or trSt == 1)
 
 var string lGrade = ""
 var string lDir   = ""
-var array<int> lChk = array.new_int(8, -1)
+var array<int> lChk = array.new_int(9, -1)
 var float lEntry = na
 var float lSl    = na
 var float lTp    = na
@@ -147,9 +160,13 @@ if longTrig or shortTrig
     entry = close
     sl    = isL ? lowSince - slBuf * atr : highSince + slBuf * atr
     rpts  = math.abs(entry - sl)
-    tgt   = isL ? rngHi : rngLo
-    rr    = rpts > 0 ? (isL ? tgt - entry : entry - tgt) / rpts : 0.0
-    c = array.from(1, b2i(isL ? htfBull : htfBear), b2i(isL ? momBull : momBear), 1, b2i(rr >= rrMin), b2i(isL ? pdBull : pdBear), isL ? smtBullState : smtBearState, useSess ? b2i(inSess) : -1)
+    rng   = isL ? rngHi : rngLo
+    rrRng = rpts > 0 ? (isL ? rng - entry : entry - rng) / rpts : 0.0
+    fix2  = tgtMode == "2R + BE bei 1R"
+    tgt   = fix2 ? entry + (isL ? 2 : -2) * rpts : rng
+    rr    = fix2 ? 2.0 : rrRng
+    be    = entry + (isL ? 1 : -1) * rpts
+    c = array.from(1, b2i(isL ? htfBull : htfBear), b2i(isL ? momBull : momBear), 1, b2i(rrRng >= rrMin), b2i(isL ? pdBull : pdBear), isL ? smtBullState : smtBearState, useSess ? b2i(inSess) : -1, b2i(isL ? trSt == -1 : trSt == 1))
     ok  = 0
     tot = 0
     for v in c
@@ -174,7 +191,9 @@ if longTrig or shortTrig
             line.new(bar_index, entry, bar_index + 15, entry, color = color.new(#c9a227, 0), width = 1)
             line.new(bar_index, sl,    bar_index + 15, sl,    color = color.new(#d64545, 0), width = 1, style = line.style_dashed)
             line.new(bar_index, tgt,   bar_index + 15, tgt,   color = color.new(#2e9e5b, 0), width = 1, style = line.style_dashed)
-        alert("WC Setup " + g + " " + lDir + " " + syminfo.ticker + " | Entry " + str.tostring(entry, format.mintick) + " | SL " + str.tostring(sl, format.mintick) + " | Ziel " + str.tostring(tgt, format.mintick) + " | R:R " + str.tostring(rr, "#.#") + " | Lots " + str.tostring(lots, "#.##") + " (" + str.tostring(ok) + "/" + str.tostring(tot) + ")", alert.freq_once_per_bar_close)
+            if fix2
+                line.new(bar_index, be, bar_index + 15, be, color = color.new(color.gray, 0), width = 1, style = line.style_dotted)
+        alert("WC Setup " + g + " " + lDir + " " + syminfo.ticker + " | Entry " + str.tostring(entry, format.mintick) + " | SL " + str.tostring(sl, format.mintick) + " | Ziel " + str.tostring(tgt, format.mintick) + (fix2 ? " | BE ab " + str.tostring(be, format.mintick) : "") + " | R:R " + str.tostring(rr, "#.#") + " | Lots " + str.tostring(lots, "#.##") + " (" + str.tostring(ok) + "/" + str.tostring(tot) + ")", alert.freq_once_per_bar_close)
 
 // kleine Markierungen für Sweeps
 plotshape(bullSweep, "Sweep unten", shape.triangleup,   location.belowbar, color.new(#2e9e5b, 40), size = size.tiny)
@@ -182,19 +201,19 @@ plotshape(bearSweep, "Sweep oben",  shape.triangledown, location.abovebar, color
 
 // ───────── Checkliste ─────────
 pos = tblPos == "Oben rechts" ? position.top_right : tblPos == "Unten rechts" ? position.bottom_right : tblPos == "Oben links" ? position.top_left : tblPos == "Unten links" ? position.bottom_left : position.middle_right
-var table t = table.new(pos, 2, 12, bgcolor = color.new(#111111, 10), border_color = color.new(#c9a227, 40), border_width = 1, frame_color = color.new(#c9a227, 0), frame_width = 1)
+var table t = table.new(pos, 2, 13, bgcolor = color.new(#111111, 10), border_color = color.new(#c9a227, 40), border_width = 1, frame_color = color.new(#c9a227, 0), frame_width = 1)
 if showTbl and barstate.islast
-    names = array.from("Liquidity Sweep", "HTF-Zone (PDA)", "Momentum", "iFVG", "Klares Ziel ≥ " + str.tostring(rrMin, "#.#") + " R", "Premium/Discount", "SMT", "Session")
+    names = array.from("Liquidity Sweep", "HTF-Zone (PDA)", "Momentum", "iFVG", "Klares Ziel ≥ " + str.tostring(rrMin, "#.#") + " R", "Premium/Discount", "SMT", "Session", "Gegen 1h-Trend")
     head = lGrade == "" ? "noch kein Setup" : lGrade + " " + lDir
     table.cell(t, 0, 0, "Checkliste", text_color = color.white, text_size = size.small)
     table.cell(t, 1, 0, head, text_color = lDir == "LONG" ? color.new(#2e9e5b, 0) : lDir == "SHORT" ? color.new(#d64545, 0) : color.gray, text_size = size.small)
-    for i = 0 to 7
+    for i = 0 to 8
         v = array.get(lChk, i)
         table.cell(t, 0, i + 1, array.get(names, i), text_color = color.white, text_size = size.small, text_halign = text.align_left)
         table.cell(t, 1, i + 1, lGrade == "" ? "" : mark(v), text_color = markCol(v), text_size = size.small)
-    table.cell(t, 0, 9,  "Risiko $", text_color = color.white, text_size = size.small, text_halign = text.align_left)
-    table.cell(t, 1, 9,  str.tostring(riskUsd, "#"), text_color = color.white, text_size = size.small)
-    table.cell(t, 0, 10, "Lots", text_color = color.white, text_size = size.small, text_halign = text.align_left)
-    table.cell(t, 1, 10, na(lLots) ? "–" : str.tostring(lLots, "#.##"), text_color = color.new(#c9a227, 0), text_size = size.small)
-    table.cell(t, 0, 11, "R:R bis Ziel", text_color = color.white, text_size = size.small, text_halign = text.align_left)
-    table.cell(t, 1, 11, na(lRr) ? "–" : str.tostring(lRr, "#.#"), text_color = color.white, text_size = size.small)
+    table.cell(t, 0, 10, "Risiko $", text_color = color.white, text_size = size.small, text_halign = text.align_left)
+    table.cell(t, 1, 10, str.tostring(riskUsd, "#"), text_color = color.white, text_size = size.small)
+    table.cell(t, 0, 11, "Lots", text_color = color.white, text_size = size.small, text_halign = text.align_left)
+    table.cell(t, 1, 11, na(lLots) ? "–" : str.tostring(lLots, "#.##"), text_color = color.new(#c9a227, 0), text_size = size.small)
+    table.cell(t, 0, 12, "R:R bis Ziel", text_color = color.white, text_size = size.small, text_halign = text.align_left)
+    table.cell(t, 1, 12, na(lRr) ? "–" : str.tostring(lRr, "#.#"), text_color = color.white, text_size = size.small)
