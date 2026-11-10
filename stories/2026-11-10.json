@@ -1,0 +1,39 @@
+{
+ "date": "Dienstag, 10. November",
+ "headline": "Gold vor US-Inflation leicht im Minus",
+ "price": "4.120 $",
+ "points": [
+  "Billigeres Öl belastet",
+  "Fed-Erhöhung im Dez. ~84 % eingepreist",
+  "China kaufte im Oktober 25,8 t Gold"
+ ],
+ "termine_label": "DIESE WOCHE (Bukarest)",
+ "termine": [
+  {
+   "zeit": "15:30",
+   "text": "Heute: US-Inflation (CPI)",
+   "hot": true,
+   "say": "heute um 15 Uhr 30 die US-Verbraucherpreise"
+  },
+  {
+   "zeit": "Mi",
+   "text": "Veterans Day – Anleihemarkt zu",
+   "say": "am Mittwoch ist der US-Anleihemarkt zu"
+  },
+  {
+   "zeit": "15:30",
+   "text": "Fr: US-Erzeugerpreise (PPI)",
+   "say": "am Freitag die US-Erzeugerpreise"
+  }
+ ],
+ "levels": {
+  "oben": "4.150",
+  "unten": "4.100"
+ },
+ "termine_intro": "Diese Woche wichtig:",
+ "points_say": [
+  "Billigeres Öl belastet den Goldpreis",
+  "Eine Fed-Zinserhöhung im Dezember ist zu rund 84 Prozent eingepreist",
+  "Chinas Notenbank kaufte im Oktober 25,8 Tonnen Gold"
+ ]
+}
