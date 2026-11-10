@@ -1,0 +1,22 @@
+{
+ "cover": {"kicker": "MARKT", "title": "Gold: *+1,7 %* an einem Tag", "chart": "up"},
+ "music": "drive",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 3.0, "text": "Gold springt fast 2 % an einem Tag.", "accent": "Doch der Auslöser kam nicht vom Gold.", "icon": "up"},
+  {"type": "counter", "dur": 3.4, "label": "Spot-Gold am Montag", "from": 0, "to": 1.7, "decimals": 1, "prefix": "+", "suffix": " %", "color": "green", "sub": "Schluss 4.141 $ · Quelle: Investing.com"},
+  {"type": "cards", "dur": 4.4, "title": "Was Gold gestern bewegt hat", "items": [
+    {"left": "US-Dollar", "right": "schwächer", "hot": true},
+    {"left": "Brent-Öl", "right": "−5,1 %"},
+    {"left": "Iran", "right": "Hoffnung auf Diplomatie"}
+  ]},
+  {"type": "words", "dur": 3.6, "kicker": "DER KONTEXT", "text": "Vor einer Woche lag Gold noch unter 3.900 $."},
+  {"type": "words", "dur": 3.8, "kicker": "JETZT IM FOKUS", "text": "US-Inflation (CPI): Trägt der Anstieg – oder war es nur ein Rebound?"},
+  {"type": "notify", "dur": 4.0, "title": "Keine Zeit, den Markt *selbst* zu analysieren?", "items": [
+    {"text": "Gold +1,7 %: die Treiber", "time": "jetzt"},
+    {"text": "CPI-Check: Di 14:30", "time": "1 Min.", "color": "gold"},
+    {"text": "Live-Updates in der Gruppe", "time": "2 Min."}
+  ]},
+  {"type": "cta", "dur": 3.0, "title": "Erst der Grund. Dann der Kurs.", "button": "Kommentiere GOLD"}
+ ]
+}
