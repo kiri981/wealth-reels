@@ -37,6 +37,7 @@ ptVal    = input.float(100, "$ pro 1,0 Kursbewegung je Lot (Gold = 100)", minval
 minGrade = input.string("B", "Mindest-Note anzeigen", options = ["A++", "A+", "A", "B+", "B", "C"], group = grpR)
 showLvl  = input.bool(true, "Einstieg / SL / Ziel einzeichnen",                    group = grpR)
 showTbl  = input.bool(true, "Checkliste anzeigen",                                 group = grpR)
+tblPos   = input.string("Mitte rechts", "Position der Checkliste", options = ["Oben rechts", "Mitte rechts", "Unten rechts", "Oben links", "Unten links"], group = grpR)
 
 // ───────── Hilfsfunktionen ─────────
 gradeOf(float p) =>
@@ -180,7 +181,8 @@ plotshape(bullSweep, "Sweep unten", shape.triangleup,   location.belowbar, color
 plotshape(bearSweep, "Sweep oben",  shape.triangledown, location.abovebar, color.new(#d64545, 40), size = size.tiny)
 
 // ───────── Checkliste ─────────
-var table t = table.new(position.bottom_right, 2, 12, bgcolor = color.new(#111111, 10), border_color = color.new(#c9a227, 40), border_width = 1, frame_color = color.new(#c9a227, 0), frame_width = 1)
+pos = tblPos == "Oben rechts" ? position.top_right : tblPos == "Unten rechts" ? position.bottom_right : tblPos == "Oben links" ? position.top_left : tblPos == "Unten links" ? position.bottom_left : position.middle_right
+var table t = table.new(pos, 2, 12, bgcolor = color.new(#111111, 10), border_color = color.new(#c9a227, 40), border_width = 1, frame_color = color.new(#c9a227, 0), frame_width = 1)
 if showTbl and barstate.islast
     names = array.from("Liquidity Sweep", "HTF-Zone (PDA)", "Momentum", "iFVG", "Klares Ziel ≥ " + str.tostring(rrMin, "#.#") + " R", "Premium/Discount", "SMT", "Session")
     head = lGrade == "" ? "noch kein Setup" : lGrade + " " + lDir
