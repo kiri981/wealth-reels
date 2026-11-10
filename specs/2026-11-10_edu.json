@@ -1,0 +1,105 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "PSYCHOLOGIE",
+  "title": "Der Trade *aus Wut*",
+  "chart": "down"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Verlust – und du willst es sofort zurück?",
+   "accent": "Genau da wird's teuer.",
+   "icon": "alert",
+   "say": "Verlust gemacht und willst es sofort zurück? Genau da wird's teuer."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "REVENGE-TRADING",
+   "text": "Traden aus Wut, um einen Verlust sofort zurückzuholen.",
+   "say": "Revenge-Trading: traden aus Wut."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "SCHRITT 01",
+   "text": "Der Verlust tut weh – dein Kopf will Rache, nicht Analyse.",
+   "say": "Schritt eins: Dein Kopf will Rache, keine Analyse."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "SCHRITT 02 · Beispiel",
+   "from": 1,
+   "to": 2,
+   "decimals": 0,
+   "prefix": "×",
+   "suffix": " Lot",
+   "color": "red",
+   "sub": "Doppelte Größe – ohne echtes Setup.",
+   "say": "Schritt zwei: doppelte Lot-Größe, ohne Setup."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 03 · Das Gegenmittel",
+   "items": [
+    {
+     "left": "01",
+     "right": "Nach Verlust: 15 Min Pause"
+    },
+    {
+     "left": "02",
+     "right": "Nur Setups aus dem Plan",
+     "hot": true
+    },
+    {
+     "left": "03",
+     "right": "Lot-Größe bleibt gleich"
+    }
+   ],
+   "say": "Schritt drei: Pause, nur Setups aus dem Plan."
+  },
+  {
+   "type": "words",
+   "dur": 3.4,
+   "kicker": "MERKE",
+   "text": "Der Markt schuldet dir nichts. Jeder Trade ist ein neuer Trade.",
+   "say": "Merke: Der Markt schuldet dir nichts."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Neue Gold-Idee: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "Zone: Unterstützung H1",
+     "color": "gold"
+    },
+    {
+     "text": "Update: SL auf Einstieg",
+     "color": "gold"
+    }
+   ],
+   "say": "Keine Zeit, den Markt selbst zu analysieren?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Erst durchatmen. Dann traden.",
+   "button": "Kommentiere GOLD",
+   "say": "Geplante Setups zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}

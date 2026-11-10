@@ -1,0 +1,106 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "PSYCHOLOGY",
+  "title": "The trade *out of anger*",
+  "chart": "down"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "A loss – and you want it back now?",
+   "accent": "That's where it gets expensive.",
+   "icon": "alert",
+   "say": "Took a loss and want it back right now? That's where it gets expensive."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "REVENGE TRADING",
+   "text": "Trading out of anger to win back a loss immediately.",
+   "say": "Revenge trading: trading out of anger."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "STEP 01",
+   "text": "The loss hurts – your mind wants revenge, not analysis.",
+   "say": "Step one: your mind wants revenge, not analysis."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "STEP 02 · Example",
+   "from": 1,
+   "to": 2,
+   "decimals": 0,
+   "prefix": "×",
+   "suffix": " Lot",
+   "color": "red",
+   "sub": "Double the size – no real setup.",
+   "say": "Step two: double the lot size, no setup."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "STEP 03 · The antidote",
+   "items": [
+    {
+     "left": "01",
+     "right": "After a loss: 15 min break"
+    },
+    {
+     "left": "02",
+     "right": "Only setups from your plan",
+     "hot": true
+    },
+    {
+     "left": "03",
+     "right": "Lot size stays the same"
+    }
+   ],
+   "say": "Step three: take a break, only trade setups from your plan."
+  },
+  {
+   "type": "words",
+   "dur": 3.4,
+   "kicker": "REMEMBER",
+   "text": "The market owes you nothing. Every trade is a new trade.",
+   "say": "Remember: the market owes you nothing."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "No time to analyze the market *yourself*?",
+   "items": [
+    {
+     "text": "New gold idea: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "Zone: H1 support",
+     "color": "gold"
+    },
+    {
+     "text": "Update: SL to entry",
+     "color": "gold"
+    }
+   ],
+   "say": "No time to analyze the market yourself?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Breathe first. Then trade.",
+   "button": "Comment GOLD",
+   "say": "I share planned setups live in my free group. Comment GOLD."
+  }
+ ],
+ "lang": "en"
+}
