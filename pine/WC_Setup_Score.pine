@@ -1,0 +1,198 @@
+// © Wealth Club – WC Setup Score
+// Bewertet Setups nach einer Checkliste (Sweep, HTF-Zone, Momentum, iFVG, Ziel, Premium/Discount, SMT, Session)
+// und vergibt eine Note: A++ / A+ / A / B+ / B / C. Zeigt Einstieg, SL, Ziel und die Lotgröße für dein Risiko.
+// Auslöser (Pflicht): Liquidity Sweep + iFVG (Rückeroberung einer Gegen-FVG) innerhalb weniger Kerzen danach.
+// Keine Anlageberatung. Werkzeug zur Analyse – jede Entscheidung triffst du selbst.
+//@version=5
+indicator("WC Setup Score", shorttitle = "WC Score", overlay = true, max_labels_count = 300, max_lines_count = 300)
+
+// ───────── Eingaben ─────────
+grpS     = "Setup"
+swLen    = input.int(20,    "Sweep: Liquidität der letzten X Kerzen",       minval = 5,  group = grpS)
+swAge    = input.int(10,    "iFVG max. X Kerzen nach dem Sweep",             minval = 1,  group = grpS)
+fvgAge   = input.int(30,    "Gegen-FVG höchstens X Kerzen alt",              minval = 3,  group = grpS)
+fvgMin   = input.float(0.15, "FVG Mindestgröße (× ATR)",          step = 0.05, minval = 0, group = grpS)
+dispMul  = input.float(1.2,  "Momentum: Kerzenkörper ≥ × ATR",    step = 0.1,  minval = 0.1, group = grpS)
+rrMin    = input.float(2.0,  "Klares Ziel: mindestens R",         step = 0.5,  minval = 0.5, group = grpS)
+slBuf    = input.float(0.10, "SL-Puffer hinter dem Sweep (× ATR)", step = 0.05, minval = 0, group = grpS)
+pdLen    = input.int(100,   "Range für Ziel + Premium/Discount (Kerzen)",   minval = 20, group = grpS)
+
+grpH     = "HTF-Zone (PDA)"
+htf      = input.timeframe("60", "HTF-Zeitrahmen",                                  group = grpH)
+htfAge   = input.int(12,    "HTF-FVG in den letzten X Kerzen berührt",     minval = 1,  group = grpH)
+
+grpM     = "SMT"
+useSmt   = input.bool(true, "SMT prüfen",                                          group = grpM)
+smtSym   = input.symbol("OANDA:XAGUSD", "Vergleichssymbol (positiv korreliert)",    group = grpM)
+
+grpT     = "Session"
+useSess  = input.bool(true, "Session als Kriterium",                               group = grpT)
+sess1    = input.session("0900-1200", "London",                                    group = grpT)
+sess2    = input.session("1530-1800", "New York",                                  group = grpT)
+tz       = input.string("Europe/Bucharest", "Zeitzone",                            group = grpT)
+
+grpR     = "Risiko & Anzeige"
+riskUsd  = input.float(500, "Risiko pro Trade ($)",                  minval = 1,   group = grpR)
+ptVal    = input.float(100, "$ pro 1,0 Kursbewegung je Lot (Gold = 100)", minval = 0.0001, group = grpR)
+minGrade = input.string("B", "Mindest-Note anzeigen", options = ["A++", "A+", "A", "B+", "B", "C"], group = grpR)
+showLvl  = input.bool(true, "Einstieg / SL / Ziel einzeichnen",                    group = grpR)
+showTbl  = input.bool(true, "Checkliste anzeigen",                                 group = grpR)
+
+// ───────── Hilfsfunktionen ─────────
+gradeOf(float p) =>
+    p >= 0.99 ? "A++" : p >= 0.87 ? "A+" : p >= 0.75 ? "A" : p >= 0.62 ? "B+" : p >= 0.5 ? "B" : "C"
+rankOf(string g) =>
+    g == "A++" ? 6 : g == "A+" ? 5 : g == "A" ? 4 : g == "B+" ? 3 : g == "B" ? 2 : 1
+mark(int v) =>
+    v == 1 ? "✓" : v == 0 ? "✗" : "–"
+markCol(int v) =>
+    v == 1 ? color.new(#2e9e5b, 0) : v == 0 ? color.new(#d64545, 0) : color.gray
+b2i(bool b) =>
+    b ? 1 : 0
+
+atr = ta.atr(14)
+
+// ───────── 1) Liquidity Sweep ─────────
+prevLow   = ta.lowest(low, swLen)[1]
+prevHigh  = ta.highest(high, swLen)[1]
+bullSweep = low < prevLow and close > prevLow
+bearSweep = high > prevHigh and close < prevHigh
+bsBull    = nz(ta.barssince(bullSweep), 99999)
+bsBear    = nz(ta.barssince(bearSweep), 99999)
+lowSince  = ta.lowest(low,  math.max(1, math.min(bsBull, 500) + 1))
+highSince = ta.highest(high, math.max(1, math.min(bsBear, 500) + 1))
+
+// ───────── 4) iFVG (Gegen-FVG wird zurückerobert) ─────────
+bullFvg = low > high[2]  and (low - high[2]) >= fvgMin * atr
+bearFvg = high < low[2]  and (low[2] - high) >= fvgMin * atr
+var float bearFvgTop = na
+var int   bearFvgBar = na
+var float bullFvgBot = na
+var int   bullFvgBar = na
+if bearFvg
+    bearFvgTop := low[2]
+    bearFvgBar := bar_index
+if bullFvg
+    bullFvgBot := high[2]
+    bullFvgBar := bar_index
+bullIfvg = not na(bearFvgTop) and bar_index - bearFvgBar <= fvgAge and close > bearFvgTop and close[1] <= bearFvgTop
+bearIfvg = not na(bullFvgBot) and bar_index - bullFvgBar <= fvgAge and close < bullFvgBot and close[1] >= bullFvgBot
+
+// ───────── 3) Momentum (Verdrängungskerze) ─────────
+bullDisp = close > open and (close - open) >= dispMul * atr
+bearDisp = close < open and (open - close) >= dispMul * atr
+momBull  = nz(ta.barssince(bullDisp), 99999) <= swAge
+momBear  = nz(ta.barssince(bearDisp), 99999) <= swAge
+
+// ───────── 2) HTF-Zone: Preis hat eine HTF-FVG berührt ─────────
+// abgeschlossene HTF-Kerzen (um 1 versetzt + lookahead_on = kein Repaint)
+htfF() =>
+    bf = low[1] > high[3]
+    sf = high[1] < low[3]
+    [bf ? high[3] : na, bf ? low[1] : na, sf ? high[1] : na, sf ? low[3] : na]
+[hBullBot, hBullTop, hBearBot, hBearTop] = request.security(syminfo.tickerid, htf, htfF(), lookahead = barmerge.lookahead_on)
+var float zBullBot = na
+var float zBullTop = na
+var float zBearBot = na
+var float zBearTop = na
+if not na(hBullTop)
+    zBullBot := hBullBot
+    zBullTop := hBullTop
+if not na(hBearTop)
+    zBearBot := hBearBot
+    zBearTop := hBearTop
+touchBull = not na(zBullTop) and low <= zBullTop and high >= zBullBot
+touchBear = not na(zBearTop) and high >= zBearBot and low <= zBearTop
+htfBull   = nz(ta.barssince(touchBull), 99999) <= htfAge
+htfBear   = nz(ta.barssince(touchBear), 99999) <= htfAge
+
+// ───────── 6) Premium / Discount + 5) Ziel ─────────
+rngHi  = ta.highest(high, pdLen)
+rngLo  = ta.lowest(low, pdLen)
+eq     = (rngHi + rngLo) / 2
+pdBull = close < eq
+pdBear = close > eq
+
+// ───────── 7) SMT (Vergleichssymbol bestätigt den Sweep nicht) ─────────
+smtLow  = request.security(smtSym, timeframe.period, low,  ignore_invalid_symbol = true)
+smtHigh = request.security(smtSym, timeframe.period, high, ignore_invalid_symbol = true)
+smtPrevLow  = ta.lowest(smtLow, swLen)[1]
+smtPrevHigh = ta.highest(smtHigh, swLen)[1]
+var int smtBullState = -1
+var int smtBearState = -1
+if bullSweep
+    smtBullState := not useSmt or na(smtLow) or na(smtPrevLow) ? -1 : smtLow >= smtPrevLow ? 1 : 0
+if bearSweep
+    smtBearState := not useSmt or na(smtHigh) or na(smtPrevHigh) ? -1 : smtHigh <= smtPrevHigh ? 1 : 0
+
+// ───────── 8) Session ─────────
+inSess = not na(time(timeframe.period, sess1, tz)) or not na(time(timeframe.period, sess2, tz))
+
+// ───────── Auslöser + Bewertung ─────────
+longTrig  = bullIfvg and bsBull <= swAge
+shortTrig = bearIfvg and bsBear <= swAge and not longTrig
+
+var string lGrade = ""
+var string lDir   = ""
+var array<int> lChk = array.new_int(8, -1)
+var float lEntry = na
+var float lSl    = na
+var float lTp    = na
+var float lRr    = na
+var float lLots  = na
+
+if longTrig or shortTrig
+    isL   = longTrig
+    entry = close
+    sl    = isL ? lowSince - slBuf * atr : highSince + slBuf * atr
+    rpts  = math.abs(entry - sl)
+    tgt   = isL ? rngHi : rngLo
+    rr    = rpts > 0 ? (isL ? tgt - entry : entry - tgt) / rpts : 0.0
+    c = array.from(1, b2i(isL ? htfBull : htfBear), b2i(isL ? momBull : momBear), 1, b2i(rr >= rrMin), b2i(isL ? pdBull : pdBear), isL ? smtBullState : smtBearState, useSess ? b2i(inSess) : -1)
+    ok  = 0
+    tot = 0
+    for v in c
+        if v >= 0
+            tot += 1
+        if v == 1
+            ok += 1
+    g = gradeOf(tot > 0 ? float(ok) / tot : 0.0)
+    if rankOf(g) >= rankOf(minGrade)
+        lots = rpts > 0 ? math.floor(riskUsd / (rpts * ptVal) * 100) / 100 : na
+        lGrade := g
+        lDir   := isL ? "LONG" : "SHORT"
+        lChk   := c
+        lEntry := entry
+        lSl    := sl
+        lTp    := tgt
+        lRr    := rr
+        lLots  := lots
+        col = isL ? color.new(#2e9e5b, 0) : color.new(#d64545, 0)
+        label.new(bar_index, isL ? low : high, g + " " + lDir, style = isL ? label.style_label_up : label.style_label_down, color = col, textcolor = color.white, size = size.small)
+        if showLvl
+            line.new(bar_index, entry, bar_index + 15, entry, color = color.new(#c9a227, 0), width = 1)
+            line.new(bar_index, sl,    bar_index + 15, sl,    color = color.new(#d64545, 0), width = 1, style = line.style_dashed)
+            line.new(bar_index, tgt,   bar_index + 15, tgt,   color = color.new(#2e9e5b, 0), width = 1, style = line.style_dashed)
+        alert("WC Setup " + g + " " + lDir + " " + syminfo.ticker + " | Entry " + str.tostring(entry, format.mintick) + " | SL " + str.tostring(sl, format.mintick) + " | Ziel " + str.tostring(tgt, format.mintick) + " | R:R " + str.tostring(rr, "#.#") + " | Lots " + str.tostring(lots, "#.##") + " (" + str.tostring(ok) + "/" + str.tostring(tot) + ")", alert.freq_once_per_bar_close)
+
+// kleine Markierungen für Sweeps
+plotshape(bullSweep, "Sweep unten", shape.triangleup,   location.belowbar, color.new(#2e9e5b, 40), size = size.tiny)
+plotshape(bearSweep, "Sweep oben",  shape.triangledown, location.abovebar, color.new(#d64545, 40), size = size.tiny)
+
+// ───────── Checkliste ─────────
+var table t = table.new(position.bottom_right, 2, 12, bgcolor = color.new(#111111, 10), border_color = color.new(#c9a227, 40), border_width = 1, frame_color = color.new(#c9a227, 0), frame_width = 1)
+if showTbl and barstate.islast
+    names = array.from("Liquidity Sweep", "HTF-Zone (PDA)", "Momentum", "iFVG", "Klares Ziel ≥ " + str.tostring(rrMin, "#.#") + " R", "Premium/Discount", "SMT", "Session")
+    head = lGrade == "" ? "noch kein Setup" : lGrade + " " + lDir
+    table.cell(t, 0, 0, "Checkliste", text_color = color.white, text_size = size.small)
+    table.cell(t, 1, 0, head, text_color = lDir == "LONG" ? color.new(#2e9e5b, 0) : lDir == "SHORT" ? color.new(#d64545, 0) : color.gray, text_size = size.small)
+    for i = 0 to 7
+        v = array.get(lChk, i)
+        table.cell(t, 0, i + 1, array.get(names, i), text_color = color.white, text_size = size.small, text_halign = text.align_left)
+        table.cell(t, 1, i + 1, lGrade == "" ? "" : mark(v), text_color = markCol(v), text_size = size.small)
+    table.cell(t, 0, 9,  "Risiko $", text_color = color.white, text_size = size.small, text_halign = text.align_left)
+    table.cell(t, 1, 9,  str.tostring(riskUsd, "#"), text_color = color.white, text_size = size.small)
+    table.cell(t, 0, 10, "Lots", text_color = color.white, text_size = size.small, text_halign = text.align_left)
+    table.cell(t, 1, 10, na(lLots) ? "–" : str.tostring(lLots, "#.##"), text_color = color.new(#c9a227, 0), text_size = size.small)
+    table.cell(t, 0, 11, "R:R bis Ziel", text_color = color.white, text_size = size.small, text_halign = text.align_left)
+    table.cell(t, 1, 11, na(lRr) ? "–" : str.tostring(lRr, "#.#"), text_color = color.white, text_size = size.small)
