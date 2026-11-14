@@ -1,0 +1,93 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "RISK",
+  "title": "Why *1:2* is enough",
+  "chart": "up"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "You win often – and still lose?",
+   "accent": "Then your R:R is off.",
+   "icon": "alert",
+   "say": "You win often and still lose money? Then your risk-reward is off."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "RISK-REWARD (R:R)",
+   "text": "Risk-reward ratio: potential profit divided by your risk.",
+   "say": "Risk-reward: potential profit divided by your risk."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "STEP 01 · Example calculation",
+   "items": [
+    {
+     "left": "Entry",
+     "right": "$4,000"
+    },
+    {
+     "left": "Stop",
+     "right": "$3,995 = $5 risk"
+    },
+    {
+     "left": "Target",
+     "right": "$4,010 = $10 reward"
+    },
+    {
+     "left": "R:R",
+     "right": "10 ÷ 5 = 1:2",
+     "hot": true
+    }
+   ],
+   "say": "Five dollars risk, ten dollars reward: a one-to-two ratio."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "STEP 02 · Example",
+   "from": 0,
+   "to": 100,
+   "decimals": 0,
+   "prefix": "+$",
+   "suffix": "",
+   "color": "green",
+   "sub": "10 trades: 4 × +$100, 6 × −$50",
+   "say": "Only four winners out of ten – and still in profit."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "STEP 03",
+   "text": "Check the R:R before entry. Below 1:2? Skip the trade.",
+   "say": "Below one-to-two? Skip the trade."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "COMMON MISTAKE",
+   "text": "Moving the target until the R:R fits. The target comes from the chart!",
+   "say": "Common mistake: moving the target until it fits."
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "1:2 is enough – with discipline.",
+   "button": "Comment GOLD",
+   "say": "I share setups like this live in my free group. Comment GOLD.",
+   "sub": "Gold trade ideas live on Telegram",
+   "disclaimer": "Not financial advice. Trading involves risk of loss."
+  }
+ ],
+ "lang": "en",
+ "footer": "Not financial advice · Trading involves risk of loss"
+}

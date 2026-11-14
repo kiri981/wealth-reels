@@ -1,0 +1,89 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "RISIKO",
+  "title": "Warum *1:2* reicht",
+  "chart": "up"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Du gewinnst oft – und verlierst trotzdem?",
+   "accent": "Dann stimmt dein CRV nicht.",
+   "icon": "alert",
+   "say": "Du gewinnst oft und verlierst trotzdem? Dann stimmt dein CRV nicht."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "CRV",
+   "text": "Chance-Risiko-Verhältnis: möglicher Gewinn geteilt durch dein Risiko.",
+   "say": "CRV: möglicher Gewinn geteilt durch dein Risiko."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 01 · Beispiel berechnen",
+   "items": [
+    {
+     "left": "Einstieg",
+     "right": "4.000 $"
+    },
+    {
+     "left": "Stop",
+     "right": "3.995 $ = 5 $ Risiko"
+    },
+    {
+     "left": "Ziel",
+     "right": "4.010 $ = 10 $ Chance"
+    },
+    {
+     "left": "CRV",
+     "right": "10 ÷ 5 = 1:2",
+     "hot": true
+    }
+   ],
+   "say": "Fünf Dollar Risiko, zehn Dollar Chance: CRV eins zu zwei."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "SCHRITT 02 · Beispiel",
+   "from": 0,
+   "to": 100,
+   "decimals": 0,
+   "prefix": "+",
+   "suffix": " $",
+   "color": "green",
+   "sub": "10 Trades: 4 × +100 $, 6 × −50 $",
+   "say": "Nur vier von zehn Treffern – und trotzdem im Plus."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "SCHRITT 03",
+   "text": "CRV vor dem Einstieg prüfen. Unter 1:2? Trade auslassen.",
+   "say": "Unter eins zu zwei? Trade auslassen."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "TYPISCHER FEHLER",
+   "text": "Das Ziel weiter schieben, bis das CRV passt. Das Ziel kommt aus dem Chart!",
+   "say": "Typischer Fehler: Ziel schieben, bis es passt."
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "1:2 reicht – mit Disziplin.",
+   "button": "Kommentiere GOLD",
+   "say": "Solche Setups zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}
