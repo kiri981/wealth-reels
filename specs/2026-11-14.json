@@ -1,0 +1,104 @@
+{
+ "cover": {
+  "kicker": "MARKT",
+  "title": "Gold-Woche: *−5%* in 3 Fakten",
+  "chart": "down"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "Die Inflation steigt.",
+   "accent": "Und Gold fällt trotzdem.",
+   "icon": "alert"
+  },
+  {
+   "type": "counter",
+   "dur": 3.4,
+   "label": "Fakt 1: Spot-Gold diese Woche",
+   "from": 0,
+   "to": -5.0,
+   "decimals": 1,
+   "suffix": " %",
+   "color": "red",
+   "sub": "Tief seit Okt. 2025 · Quelle: Kitco"
+  },
+  {
+   "type": "cards",
+   "dur": 4.0,
+   "title": "Fakt 2: Hoch & Tief",
+   "items": [
+    {
+     "left": "Mo",
+     "right": "Hoch 4.149 $"
+    },
+    {
+     "left": "Do",
+     "right": "Tief 3.852 $",
+     "hot": true
+    },
+    {
+     "left": "Fr",
+     "right": "um 3.884 $"
+    }
+   ]
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "Fakt 3: Der Treiber",
+   "items": [
+    {
+     "left": "CPI",
+     "right": "Okt. +0,4 %",
+     "hot": true
+    },
+    {
+     "left": "Fed",
+     "right": "Zinserhöhung erwartet"
+    },
+    {
+     "left": "10J",
+     "right": "US-Rendite 5,13 %"
+    }
+   ]
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "DER KONTEXT",
+   "text": "Gold fiel in 10 der letzten 12 Wochen."
+  },
+  {
+   "type": "notify",
+   "dur": 4.0,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Gold −5 %: die Treiber",
+     "time": "jetzt"
+    },
+    {
+     "text": "Fed-Termin Dez. im Blick",
+     "time": "1 Min.",
+     "color": "gold"
+    },
+    {
+     "text": "Live-Updates in der Gruppe",
+     "time": "2 Min."
+    }
+   ]
+  },
+  {
+   "type": "cta",
+   "dur": 3.0,
+   "title": "Erst die Zinsen. Dann der Kurs.",
+   "button": "Kommentiere GOLD"
+  }
+ ]
+}
