@@ -1,0 +1,209 @@
+"""WC Trading Hub – Forschungs-Agent (läuft täglich).
+
+Ablauf:
+ 1. Daten laden (hub/data/*.csv, vom Worker täglich aus MetaApi ergänzt).
+ 2. Suche: je Familie neue, noch nie getestete Parameter-Kombinationen (Zufall + Nachbarschaft der Besten).
+ 3. Prüfung (gegen Zufallsfunde; Papierhandel ist danach der eigentliche Test):
+    - genug Trades, positiver Erwartungswert in >= 3 von 4 Zeitblöcken,
+    - t-Wert im Entwicklungsteil über max(2, 0.6·sqrt(2·ln K)) (K = Anzahl aller je getesteten Varianten der Familie),
+    - positiver Erwartungswert im jüngsten Teil (Holdout, wandert mit den Daten mit),
+    - Nachbar-Einstellungen ebenfalls im Schnitt positiv (keine Einzelspitze).
+ 4. Lebenszyklus: candidate -> paper (läuft live auf Papier im Worker) -> approved (Kandidat für echtes Geld, Freigabe nur durch Kevin)
+    -> retired (fällt durch Neu-Bewertung oder Live-Ergebnis).
+ 5. registry.json + Tagesbericht schreiben.
+Aufruf: python3 hub/research.py [--budget 300]
+"""
+import json, os, sys, time, hashlib, random, datetime as dt
+import numpy as np, pandas as pd
+sys.path.insert(0, os.path.dirname(__file__))
+from engine import load, resample, days, run_sess, feats, run_rbo, run_swing, stats
+
+HUB = os.path.dirname(os.path.abspath(__file__))
+REG = os.path.join(HUB, "registry.json")
+MAX_PAPER = 8
+
+# ---------------------------------------------------------------- Grammatik / Suchraum
+SPACE = {
+    "sess": dict(anchor=list(range(-360, 961, 15)), rl=[15, 30, 45, 60], win=[30, 60, 120, 180], hold=[120, 240, 360],
+                 ctr=[0, 1], maxW=[0.2, 0.27, 0.35, 99], tp=[1.0, 1.5, 2.0, 3.0], slm=["opp", "mid"], be=[0, 1.0], tf=["5m"]),
+    "rbo": dict(N=[12, 24, 36, 48, 72, 96], body=[0.5, 0.75, 1.0, 1.5], trend=[0, 1], tp=[1.5, 2.0, 3.0], be=[0, 1.0], tf=["5m", "15m"]),
+    "swing": dict(entry=["A", "B", "AB"], k=[1.5, 2.0, 3.0], exitN=[10, 20, 40], brkN=[20, 55, 100], tf=["1d"]),
+}
+def key(fam, p): return fam + ":" + hashlib.md5(json.dumps(p, sort_keys=True).encode()).hexdigest()[:10]
+
+def neighbors(fam, p):
+    out = []
+    for k, vals in SPACE[fam].items():
+        if k == "tf" or len(vals) < 2: continue
+        i = vals.index(p[k]) if p[k] in vals else None
+        if i is None: continue
+        for j in (i - 1, i + 1):
+            if 0 <= j < len(vals): q = dict(p); q[k] = vals[j]; out.append(q)
+    return out
+
+# ---------------------------------------------------------------- Daten
+class Data:
+    def __init__(self):
+        import glob
+        parts = [load(os.path.join(HUB, "data/xauusd_m5.csv"))] + [load(f) for f in sorted(glob.glob(os.path.join(HUB, "data/live/m5_*.csv")))]
+        m5 = pd.concat(parts); self.m5 = m5[~m5.index.duplicated(keep="last")].sort_index()
+        self.DAYS = days(self.m5)
+        self.F = {"5m": feats(self.m5), "15m": feats(resample(self.m5, "15min"))}
+        p1 = os.path.join(HUB, "data/xauusd_d1.csv")
+        self.d1 = load(p1) if os.path.exists(p1) else None
+        self.t0, self.t1 = int(self.m5.index[0].timestamp()), int(self.m5.index[-1].timestamp())
+    def trades(self, fam, p):
+        if fam == "sess": return run_sess(self.DAYS, p)
+        if fam == "rbo": return run_rbo(self.F[p["tf"]], p)
+        if fam == "swing": return run_swing(self.d1, p) if self.d1 is not None else []
+        return []
+    def span(self, fam):
+        if fam == "swing" and self.d1 is not None: return int(self.d1.index[0].timestamp()), int(self.d1.index[-1].timestamp())
+        return self.t0, self.t1
+
+def evaluate(D, fam, p, K, cache):
+    k = key(fam, p)
+    if k in cache: return cache[k]
+    tr = D.trades(fam, p); a, b = D.span(fam)
+    r = np.array([x["r"] for x in tr]); t = np.array([x["t"] for x in tr])
+    res = dict(n=len(r), ok=False, why="")
+    min_n = 15 if fam == "swing" else 40
+    if len(r) < min_n:
+        res["why"] = f"zu wenige Trades ({len(r)})"; cache[k] = res; return res
+    cut = a + 0.7 * (b - a)
+    dev, hold = r[t < cut], r[t >= cut]
+    blocks = [r[(t >= a + i * (b - a) / 4) & (t < a + (i + 1) * (b - a) / 4 + 1)] for i in range(4)]
+    bpos = sum(1 for x in blocks if len(x) and x.mean() > 0)
+    sd = dev.std(ddof=1) if len(dev) > 2 else np.inf
+    tdev = dev.mean() / sd * np.sqrt(len(dev)) if sd > 0 else 0
+    thr = max(2.0, 0.6 * np.sqrt(2 * np.log(max(K, 2))))   # Papier-Schwelle: Papierhandel kostet nichts und ist selbst der echte Test
+    s = stats(tr)
+    res.update(s, tdev=float(tdev), thr=float(thr), hold_mean=float(hold.mean()) if len(hold) else None, hold_n=int(len(hold)),
+               blocks_pos=bpos, mfe05=float(np.mean([x.get("mfe", 0) >= 0.5 for x in tr])) if fam == "sess" else None)
+    if tdev < thr: res["why"] = f"t {tdev:.1f} < Schwelle {thr:.1f}"
+    elif len(hold) < (5 if fam == "swing" else 12) or hold.mean() <= 0: res["why"] = "Holdout nicht positiv"
+    elif bpos < 3: res["why"] = f"nur {bpos}/4 Zeitblöcke positiv"
+    else: res["ok"] = True
+    cache[k] = res
+    return res
+
+def neighbor_ok(D, fam, p, K, cache):
+    ms = []
+    for q in neighbors(fam, p):
+        tr = D.trades(fam, q)
+        if len(tr) >= 10: ms.append(np.mean([x["r"] for x in tr]))
+    return (np.mean(ms) > 0 and np.mean(np.array(ms) > 0) >= 0.6) if ms else False
+
+def sample(fam, rng):
+    return {k: rng.choice(v) for k, v in SPACE[fam].items()}
+
+def clean(p):  # numpy -> json
+    return {k: (v.item() if hasattr(v, "item") else v) for k, v in p.items()}
+
+# ---------------------------------------------------------------- Hauptlauf
+def main(budget=300, seed=None):
+    t_start = time.time()
+    reg = json.load(open(REG)) if os.path.exists(REG) else {"tried": {}, "strategies": [], "log": []}
+    tried = reg["tried"]; D = Data(); cache = {}
+    today = dt.date.today().isoformat(); rng = random.Random(seed or today)
+    live = {}
+    lp = os.path.join(HUB, "live/trades.json")
+    if os.path.exists(lp):
+        for x in json.load(open(lp)): live.setdefault(x["sid"], []).append(x)
+    report = [f"# Hub-Forschung {today}", "", f"Daten: 5m {D.m5.index[0].date()} – {D.m5.index[-1].date()} ({len(D.DAYS)} Handelstage)" +
+              (f", Tageskerzen ab {D.d1.index[0].date()}" if D.d1 is not None else ", Tageskerzen: noch keine")]
+
+    # 1) bestehende Strategien neu bewerten
+    report += ["", "## Bestehende Strategien"]
+    for s in reg["strategies"]:
+        if s["status"] == "retired": continue
+        fam, p = s["family"], s["params"]
+        K = len([k for k in tried if k.startswith(fam + ":")])
+        ev = evaluate(D, fam, p, K, cache)
+        L = [x for x in live.get(s["id"], []) if x.get("closed")]
+        lr = np.array([x["r"] for x in L]); s["live"] = dict(n=len(lr), mean=float(lr.mean()) if len(lr) else None, win=float((lr > 0).mean()) if len(lr) else None)
+        s["backtest"] = {k: ev.get(k) for k in ("n", "mean", "win", "pf", "dd", "tdev", "thr", "hold_mean", "blocks_pos", "mfe05")}
+        old = s["status"]
+        if not ev["ok"] and ev.get("n", 0) and (ev.get("mean") or 0) <= 0.02:
+            s["status"] = "retired"; s["reason"] = "Neubewertung: " + ev["why"]
+        elif len(lr) >= 20 and lr[-20:].mean() < -0.15:
+            s["status"] = "retired"; s["reason"] = f"Live schwach: letzte 20 Papier-Trades Ø {lr[-20:].mean():+.2f}R"
+        elif s["status"] == "paper" and len(lr) >= 30 and lr.mean() > 0.1 and lr.mean() / (lr.std(ddof=1) or 1) * np.sqrt(len(lr)) >= 1.5:
+            s["status"] = "approved"; s["reason"] = f"30+ Papier-Trades, live Ø {lr.mean():+.2f}R – Freigabe durch Kevin nötig"
+        if s["status"] != old: reg["log"].append(dict(d=today, id=s["id"], von=old, nach=s["status"], grund=s.get("reason", "")))
+        report.append(f"- **{s['name']}** [{s['status']}] Backtest Ø {ev.get('mean', 0):+.2f}R (n={ev.get('n')}, Holdout {ev.get('hold_mean') if ev.get('hold_mean') is None else round(ev['hold_mean'], 2)}), live n={len(lr)}" +
+                      (f" Ø {lr.mean():+.2f}R" if len(lr) else "") + (f" → {s['status'].upper()}: {s.get('reason')}" if s["status"] != old else ""))
+
+    # 2) Suche nach neuen Strategien
+    report += ["", "## Suche nach neuen Strategien"]
+    fams = ["sess", "rbo"] + (["swing"] if D.d1 is not None else [])
+    found = []
+    for fam in fams:
+        share = {"sess": 0.7, "rbo": 0.2, "swing": 0.1}[fam]
+        n_new = int(budget * share); tested = 0; passed = 0; tries = 0
+        # Nachbarschaft der aktuell besten Kandidaten zuerst (gezielte Weiterentwicklung)
+        seeds = [s["params"] for s in reg["strategies"] if s["family"] == fam and s["status"] in ("paper", "approved")]
+        queue = [q for sp in seeds for q in neighbors(fam, sp)]
+        rng.shuffle(queue)
+        while tested < n_new and tries < n_new * 20:
+            tries += 1
+            p = clean(queue.pop()) if queue else clean(sample(fam, rng))
+            if fam == "sess" and p["anchor"] + p["rl"] + p["win"] + p["hold"] > 1020: continue
+            k = key(fam, p)
+            if k in tried: continue
+            tried[k] = today; tested += 1
+            K = len([x for x in tried if x.startswith(fam + ":")])
+            ev = evaluate(D, fam, p, K, cache)
+            if ev["ok"] and neighbor_ok(D, fam, p, K, cache):
+                passed += 1; found.append((fam, p, ev))
+        report.append(f"- {fam}: {tested} neue Varianten getestet (insgesamt {len([x for x in tried if x.startswith(fam + ':')])}), bestanden: {passed}")
+
+    # 3) Neue Strategien aufnehmen (Duplikate vermeiden, Obergrenze)
+    def similar(a, b):
+        if a[0] != b["family"]: return False
+        if a[0] == "sess": return abs(a[1]["anchor"] - b["params"]["anchor"]) <= 30
+        if a[0] == "rbo": return a[1]["tf"] == b["params"]["tf"] and abs(a[1]["N"] - b["params"]["N"]) <= 12
+        return True
+    found.sort(key=lambda x: -x[2]["tdev"])
+    active = [s for s in reg["strategies"] if s["status"] in ("paper", "approved")]
+    added = 0
+    for fam, p, ev in found:
+        if len(active) >= MAX_PAPER: break
+        if any(similar((fam, p), s) for s in active): continue
+        sid = key(fam, p)
+        name = describe(fam, p)
+        s = dict(id=sid, name=name, family=fam, params=p, status="paper", created=today,
+                 backtest={k: ev.get(k) for k in ("n", "mean", "win", "pf", "dd", "tdev", "thr", "hold_mean", "blocks_pos", "mfe05")}, live=dict(n=0))
+        reg["strategies"].append(s); active.append(s); added += 1
+        reg["log"].append(dict(d=today, id=sid, von="neu", nach="paper", grund=f"bestanden: t={ev['tdev']:.1f} > {ev['thr']:.1f}, Holdout Ø {ev['hold_mean']:+.2f}R"))
+        report.append(f"- **NEU auf Papier:** {name} – Backtest Ø {ev['mean']:+.2f}R, Treffer {ev['win']:.0%}, n={ev['n']}, Holdout Ø {ev['hold_mean']:+.2f}R")
+    if not added: report.append("- Heute keine neue Strategie, die alle Prüfungen besteht.")
+
+    reg["updated"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    reg["log"] = reg["log"][-300:]
+    json.dump(reg, open(REG, "w"), indent=1, ensure_ascii=False)
+    os.makedirs(os.path.join(HUB, "reports"), exist_ok=True)
+    act = [s for s in reg["strategies"] if s["status"] in ("paper", "approved")]
+    report += ["", f"## Aktiv: {len(act)} Strategien", *[f"- {s['name']} [{s['status']}]" for s in act], "", f"_Laufzeit {time.time() - t_start:.0f}s_"]
+    txt = "\n".join(report)
+    open(os.path.join(HUB, "reports", f"{today}.md"), "w").write(txt)
+    open(os.path.join(HUB, "reports", "latest.md"), "w").write(txt)
+    print(txt)
+
+def hm(m):
+    m = int(m); b = (m + 420) % 1440; s = "" if m >= 0 else " Vortag"; m %= 1440
+    return f"{b // 60:02d}:{b % 60:02d} Uhr (≈ {m // 60:02d}:{m % 60:02d} NY{s})"
+
+def describe(fam, p):
+    if fam == "sess":
+        f = (" gegen Tagesrichtung" if p["ctr"] else "") + (f", Range < {p['maxW']}σ" if p["maxW"] < 99 else "")
+        return f"Session-Ausbruch {hm(p['anchor'])}, Range {p['rl']}m, Fenster {p['win']}m, Ziel {p['tp']}R{', BE 1R' if p['be'] else ''}, SL {'Gegenseite' if p['slm'] == 'opp' else 'Mitte'}{f}"
+    if fam == "rbo":
+        return f"Ausbruch+Retest {p['tf']} N={p['N']}, Körper {p['body']}·ATR{', mit 1h-Trend' if p['trend'] else ''}, Ziel {p['tp']}R{', BE 1R' if p['be'] else ''}"
+    if fam == "swing":
+        return f"Swing Long {p['entry']} (Ausbruch {p['brkN']}T), SL {p['k']}·ATR, Ausstieg {p['exitN']}-Tage-Tief"
+    return fam
+
+if __name__ == "__main__":
+    b = int(sys.argv[sys.argv.index("--budget") + 1]) if "--budget" in sys.argv else 300
+    main(b)

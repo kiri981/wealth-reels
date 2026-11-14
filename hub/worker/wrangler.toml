@@ -1,0 +1,26 @@
+name = "wc-hub"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Alle 5 Minuten: Kerzen holen, Papierhandel, (stündlich) Register, (täglich) GitHub-Export + Bericht
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Gleiche Datenbank wie der Welcome-Bot (Postausgang an Kevin läuft über dessen Tabelle "outbox")
+[[d1_databases]]
+binding = "DB"
+database_name = "trading-hub"
+database_id = "fa40e3b3-a557-4213-86ab-a36d30394586"
+
+[vars]
+SYMBOL = "XAUUSD"
+GH_REPO = "kiri981/wealth-reels"
+
+# Secrets (einmalig mit "npx.cmd wrangler secret put NAME" setzen):
+#   META_TOKEN, META_ACCOUNT, META_REGION  – wie beim Copy-Trader (nur lesend genutzt)
+#   GH_TOKEN  – GitHub Fine-grained Token, nur Repo kiri981/wealth-reels, Recht "Contents: Read and write"
+#   HUB_KEY   – frei gewähltes Passwort fürs Dashboard
+
+[observability]
+enabled = true
