@@ -16,10 +16,12 @@ database_id = "fa40e3b3-a557-4213-86ab-a36d30394586"
 [vars]
 SYMBOL = "XAUUSD"
 GH_REPO = "kiri981/wealth-reels"
+# Region des MetaApi-Kontos (wie META_REGION beim Copy-Trader, z. B. "london" oder "new-york")
+META_REGION = "london"
 
 # Secrets (einmalig mit "npx.cmd wrangler secret put NAME" setzen):
-#   META_TOKEN, META_ACCOUNT, META_REGION  – wie beim Copy-Trader (nur lesend genutzt)
-#   GH_TOKEN  – GitHub Fine-grained Token, nur Repo kiri981/wealth-reels, Recht "Contents: Read and write"
+#   META_TOKEN, META_ACCOUNT  – wie beim Copy-Trader (nur lesend genutzt)
+#   (GH_TOKEN optional – nicht nötig: der nächtliche Forschungs-Agent holt die Daten selbst aus D1)
 #   HUB_KEY   – frei gewähltes Passwort fürs Dashboard
 
 [observability]
