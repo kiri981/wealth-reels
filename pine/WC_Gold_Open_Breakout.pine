@@ -1,0 +1,141 @@
+//@version=5
+// WC Gold Open Breakout – Wealth Club
+// Range der ersten 30 Minuten ab COMEX-Eröffnung (08:20–08:50 New York),
+// Einstieg nach Kerzenschluss außerhalb der Range (nächste Kerze), SL an der Gegenseite,
+// Ziel 1,5R, spätestens 14:50 NY raus, max. 1 Trade pro Tag. Lernzwecke – keine Anlageberatung.
+indicator("WC Gold Open Breakout", shorttitle="WC GOB", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500)
+
+rngSess = input.session("0820-0850", "Range-Zeit (New York)")
+trdSess = input.session("0850-1150", "Einstiegsfenster (New York)")
+exitHM  = input.int(1450, "Spätester Exit (HHMM New York)")
+slMode  = input.string("Gegenseite", "Stop-Loss", options=["Gegenseite", "Range-Mitte"])
+tpR     = input.float(1.5, "Ziel (R)", step=0.25)
+useBE   = input.bool(false, "SL auf Einstand ab 1R")
+minRisk = input.float(0.3, "Mindestrisiko in $", step=0.1)
+cost    = input.float(0.35, "Kosten pro Trade in $", step=0.05)
+showTbl = input.bool(true, "Statistik-Tabelle")
+
+tz  = "America/New_York"
+inR = not na(time(timeframe.period, rngSess, tz))
+inT = not na(time(timeframe.period, trdSess, tz))
+hm  = hour(time, tz) * 100 + minute(time, tz)
+
+// Zustand: 0 = wartet, 1 = Ausbruch erkannt (Einstieg nächste Kerze), 2 = im Trade
+var float rH     = na
+var float rL     = na
+var box   rBox   = na
+var bool  traded = true
+var int   state  = 0
+var int   dir    = 0
+var float ent    = na
+var float sl     = na
+var float stop   = na
+var float tp     = na
+var float risk   = na
+var bool  beDone = false
+var line  lE     = na
+var line  lS     = na
+var line  lT     = na
+var int   nT     = 0
+var int   nTP    = 0
+var float sumR   = 0.0
+var float peak   = 0.0
+var float maxDD  = 0.0
+
+if barstate.isconfirmed
+    // neue Range
+    if inR and not inR[1]
+        rH     := high
+        rL     := low
+        traded := false
+        state  := 0
+        rBox   := box.new(bar_index, high, bar_index, low, border_color=color.new(color.orange, 30), bgcolor=color.new(color.orange, 88))
+    else if inR
+        rH := math.max(rH, high)
+        rL := math.min(rL, low)
+        box.set_top(rBox, rH)
+        box.set_bottom(rBox, rL)
+        box.set_right(rBox, bar_index)
+
+    float  exitPx = na
+    string why    = ""
+
+    // 1) Einstieg zur Eröffnung dieser Kerze
+    if state == 1
+        ent  := open
+        sl   := slMode == "Gegenseite" ? (dir == 1 ? rL : rH) : (rH + rL) / 2
+        risk := dir * (ent - sl)
+        if risk <= minRisk or hm >= exitHM
+            state := 0
+        else
+            stop   := sl
+            tp     := ent + dir * tpR * risk
+            beDone := false
+            state  := 2
+            lE := line.new(bar_index, ent, bar_index + 1, ent, color=color.blue, width=2)
+            lS := line.new(bar_index, sl, bar_index + 1, sl, color=color.red, width=2)
+            lT := line.new(bar_index, tp, bar_index + 1, tp, color=color.green, width=2)
+            alert("WC GOB: " + (dir == 1 ? "LONG" : "SHORT") + " @ " + str.tostring(ent, format.mintick) + " | SL " + str.tostring(sl, format.mintick) + " | TP " + str.tostring(tp, format.mintick), alert.freq_once_per_bar_close)
+
+    // 2) Trade managen (inkl. Einstiegskerze)
+    if state == 2
+        if hm >= exitHM
+            exitPx := open
+            why    := "Zeit"
+        else if (dir == 1 and low <= stop) or (dir == -1 and high >= stop)
+            exitPx := dir == 1 ? math.min(stop, open) : math.max(stop, open)
+            why    := beDone ? "Einstand" : "SL"
+        else if (dir == 1 and high >= tp) or (dir == -1 and low <= tp)
+            exitPx := tp
+            why    := "Ziel"
+        else if useBE and not beDone and dir * ((dir == 1 ? high : low) - ent) >= risk
+            stop   := ent
+            beDone := true
+            line.set_y1(lS, ent)
+            line.set_y2(lS, ent)
+        if not na(exitPx)
+            r = (dir * (exitPx - ent) - cost) / risk
+            nT   += 1
+            nTP  += why == "Ziel" ? 1 : 0
+            sumR += r
+            peak  := math.max(peak, sumR)
+            maxDD := math.max(maxDD, peak - sumR)
+            line.set_x2(lE, bar_index)
+            line.set_x2(lS, bar_index)
+            line.set_x2(lT, bar_index)
+            col = r > 0.1 ? color.green : r < -0.1 ? color.red : color.gray
+            label.new(bar_index, exitPx, why + " " + str.tostring(r, "+0.0;-0.0") + "R", style=label.style_label_left, color=color.new(col, 20), textcolor=color.white, size=size.small)
+            alert("WC GOB: Trade beendet (" + why + ") " + str.tostring(r, "+0.0;-0.0") + "R", alert.freq_once_per_bar_close)
+            state := 0
+        else
+            line.set_x2(lE, bar_index + 1)
+            line.set_x2(lS, bar_index + 1)
+            line.set_x2(lT, bar_index + 1)
+
+    // 3) Ausbruch per Kerzenschluss im Einstiegsfenster (einmal pro Tag)
+    if state == 0 and not traded and inT and not na(rH)
+        if close > rH or close < rL
+            dir    := close > rH ? 1 : -1
+            state  := 1
+            traded := true
+            label.new(bar_index, dir == 1 ? low : high, dir == 1 ? "GOB ▲" : "GOB ▼", style=dir == 1 ? label.style_label_up : label.style_label_down, color=dir == 1 ? color.new(color.green, 10) : color.new(color.red, 10), textcolor=color.white, size=size.small)
+            alert("WC GOB: Ausbruch " + (dir == 1 ? "LONG" : "SHORT") + " – Einstieg zur nächsten Kerze, SL " + str.tostring(dir == 1 ? rL : rH, format.mintick), alert.freq_once_per_bar_close)
+    // Fenster vorbei ohne Ausbruch
+    if not inT and not inR and state == 0
+        traded := true
+
+if showTbl and barstate.islast
+    var table t = table.new(position.top_right, 2, 6, bgcolor=color.new(color.black, 20), border_width=1)
+    st = timeframe.in_seconds() > 1800 ? "Timeframe ≤ 30m nutzen!" : state == 2 ? (dir == 1 ? "LONG läuft" : "SHORT läuft") : traded ? "heute fertig" : "wartet"
+    table.cell(t, 0, 0, "WC Gold Open Breakout", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 0, st, text_color=color.yellow, text_size=size.small)
+    table.cell(t, 0, 1, "Trades", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 1, str.tostring(nT), text_color=color.white, text_size=size.small)
+    table.cell(t, 0, 2, "Ziel erreicht", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 2, nT > 0 ? str.tostring(100.0 * nTP / nT, "0") + "%" : "-", text_color=color.white, text_size=size.small)
+    table.cell(t, 0, 3, "Ø R pro Trade", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 3, nT > 0 ? str.tostring(sumR / nT, "+0.00;-0.00") : "-", text_color=sumR >= 0 ? color.lime : color.red, text_size=size.small)
+    table.cell(t, 0, 4, "Summe R", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 4, str.tostring(sumR, "+0.0;-0.0"), text_color=sumR >= 0 ? color.lime : color.red, text_size=size.small)
+    table.cell(t, 0, 5, "Max. Drawdown R", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 5, str.tostring(maxDD, "0.0"), text_color=color.white, text_size=size.small)
