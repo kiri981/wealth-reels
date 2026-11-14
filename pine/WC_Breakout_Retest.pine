@@ -1,0 +1,162 @@
+//@version=5
+// WC Breakout Retest – Wealth Club
+// Logik: Ausbruch aus der 48-Kerzen-Range mit starker Kerze in 1h-Trendrichtung,
+// Einstieg per Limit beim Retest des gebrochenen Levels, SL an der anderen Range-Seite,
+// SL auf Einstand ab 1R, Ziel 3R. Lernzwecke – keine Anlageberatung.
+indicator("WC Breakout Retest", shorttitle="WC BO", overlay=true, max_lines_count=500, max_labels_count=500)
+
+N       = input.int(48, "Range-Länge (Kerzen)", minval=10)
+bodyK   = input.float(1.0, "Mindest-Körper Ausbruchskerze (x ATR)", step=0.1)
+useTr   = input.bool(true, "Nur in Richtung 1h-Trend (EMA50)")
+tpR     = input.float(3.0, "Ziel (R)", step=0.5)
+beR     = input.float(1.0, "SL auf Einstand ab (R)", step=0.5)
+waitB   = input.int(6, "Retest-Wartezeit (Kerzen)", minval=1)
+maxB    = input.int(96, "Max. Haltedauer (Kerzen)", minval=10)
+minRisk = input.float(0.3, "Mindestrisiko in $", step=0.1)
+cost    = input.float(0.35, "Kosten pro Trade in $ (Spread/Kommission)", step=0.05)
+showRng = input.bool(true, "Range-Hoch/Tief anzeigen")
+showTbl = input.bool(true, "Statistik-Tabelle")
+
+atr = ta.atr(14)
+hi  = ta.highest(high, N)[1]
+lo  = ta.lowest(low, N)[1]
+
+trF() =>
+    e = ta.ema(close, 50)
+    close > e and e > e[3] ? 1 : close < e and e < e[3] ? -1 : 0
+tr1h = request.security(syminfo.tickerid, "60", trF()[1], lookahead=barmerge.lookahead_on)
+
+plot(showRng ? hi : na, "Range-Hoch", color.new(color.gray, 60), 1, plot.style_stepline)
+plot(showRng ? lo : na, "Range-Tief", color.new(color.gray, 60), 1, plot.style_stepline)
+
+// Zustand: 0 = frei, 1 = Limit wartet auf Retest, 2 = im Trade
+var int   state  = 0
+var int   dir    = 0
+var float lvl    = na
+var float sl     = na
+var float stop   = na
+var float tp     = na
+var float ent    = na
+var float risk   = na
+var float best   = na
+var bool  beDone = false
+var int   setBar = na
+var int   entBar = na
+var line  lLim   = na
+var line  lE     = na
+var line  lS     = na
+var line  lT     = na
+var int   nT     = 0
+var int   nTP    = 0
+var int   nBE    = 0
+var float sumR   = 0.0
+var float peak   = 0.0
+var float maxDD  = 0.0
+
+if barstate.isconfirmed
+    float  exitPx = na
+    string why    = ""
+
+    // 1) offener Trade
+    if state == 2 and bar_index > entBar
+        if (dir == 1 and low <= stop) or (dir == -1 and high >= stop)
+            exitPx := dir == 1 ? math.min(stop, open) : math.max(stop, open)
+            why    := beDone ? "Einstand" : "SL"
+        else if (dir == 1 and high >= tp) or (dir == -1 and low <= tp)
+            exitPx := tp
+            why    := "Ziel"
+        else
+            best := dir == 1 ? math.max(best, high) : math.min(best, low)
+            if not beDone and dir * (best - ent) >= beR * risk
+                stop   := ent
+                beDone := true
+                line.set_y1(lS, ent)
+                line.set_y2(lS, ent)
+                alert("WC BO: SL auf Einstand " + str.tostring(ent, format.mintick), alert.freq_once_per_bar_close)
+            if bar_index - entBar >= maxB
+                exitPx := close
+                why    := "Zeit"
+
+    // 2) Limit wartet auf Retest
+    if state == 1
+        if bar_index - setBar > waitB
+            state := 0
+            line.set_x2(lLim, bar_index)
+        else if (dir == 1 and low <= lvl) or (dir == -1 and high >= lvl)
+            ent  := dir == 1 ? math.min(lvl, open) : math.max(lvl, open)
+            risk := math.abs(ent - sl)
+            line.set_x2(lLim, bar_index)
+            if risk < minRisk
+                state := 0
+            else
+                stop   := sl
+                tp     := ent + dir * tpR * risk
+                best   := ent
+                beDone := false
+                entBar := bar_index
+                state  := 2
+                lE := line.new(bar_index, ent, bar_index + 1, ent, color=color.new(color.blue, 0), width=2)
+                lS := line.new(bar_index, sl, bar_index + 1, sl, color=color.new(color.red, 0), width=2)
+                lT := line.new(bar_index, tp, bar_index + 1, tp, color=color.new(color.green, 0), width=2)
+                alert("WC BO: " + (dir == 1 ? "LONG" : "SHORT") + " ausgeführt @ " + str.tostring(ent, format.mintick) + " | SL " + str.tostring(sl, format.mintick) + " | TP " + str.tostring(tp, format.mintick), alert.freq_once_per_bar_close)
+                // Einstieg und SL in derselben Kerze = Verlust
+                if (dir == 1 and low <= sl) or (dir == -1 and high >= sl)
+                    exitPx := sl
+                    why    := "SL"
+
+    // 3) Trade abschließen + Statistik
+    if not na(exitPx) and state == 2
+        r = (dir * (exitPx - ent) - cost) / risk
+        nT   += 1
+        nTP  += why == "Ziel" ? 1 : 0
+        nBE  += why == "Einstand" ? 1 : 0
+        sumR += r
+        peak  := math.max(peak, sumR)
+        maxDD := math.max(maxDD, peak - sumR)
+        line.set_x2(lE, bar_index)
+        line.set_x2(lS, bar_index)
+        line.set_x2(lT, bar_index)
+        col = r > 0.1 ? color.green : r < -0.1 ? color.red : color.gray
+        label.new(bar_index, exitPx, why + " " + str.tostring(r, "+0.0;-0.0") + "R", style=label.style_label_left, color=color.new(col, 20), textcolor=color.white, size=size.small)
+        alert("WC BO: Trade beendet (" + why + ") " + str.tostring(r, "+0.0;-0.0") + "R", alert.freq_once_per_bar_close)
+        state := 0
+
+    // 4) neuer Ausbruch (nicht in derselben Kerze wie ein Exit)
+    else if state != 2
+        bull = close > hi and close - open >= bodyK * atr and (not useTr or tr1h == 1)
+        bear = close < lo and open - close >= bodyK * atr and (not useTr or tr1h == -1)
+        if bull or bear
+            if state == 1
+                line.set_x2(lLim, bar_index)
+            dir    := bull ? 1 : -1
+            lvl    := bull ? hi : lo
+            sl     := bull ? lo : hi
+            setBar := bar_index
+            state  := 1
+            lLim := line.new(bar_index, lvl, bar_index + waitB, lvl, color=color.new(bull ? color.green : color.red, 0), style=line.style_dashed, width=1)
+            label.new(bar_index, bull ? low : high, bull ? "BO ▲\nLimit " + str.tostring(lvl, format.mintick) : "BO ▼\nLimit " + str.tostring(lvl, format.mintick), style=bull ? label.style_label_up : label.style_label_down, color=bull ? color.new(color.green, 10) : color.new(color.red, 10), textcolor=color.white, size=size.small)
+            alert("WC BO: Ausbruch " + (bull ? "LONG" : "SHORT") + " – Limit beim Retest " + str.tostring(lvl, format.mintick) + " | SL " + str.tostring(sl, format.mintick) + " | gültig " + str.tostring(waitB) + " Kerzen", alert.freq_once_per_bar_close)
+
+// laufende Linien nach rechts mitziehen
+if state == 2
+    line.set_x2(lE, bar_index + 1)
+    line.set_x2(lS, bar_index + 1)
+    line.set_x2(lT, bar_index + 1)
+
+if showTbl and barstate.islast
+    var table t = table.new(position.top_right, 2, 7, bgcolor=color.new(color.black, 20), border_width=1)
+    st = state == 2 ? (dir == 1 ? "LONG läuft" : "SHORT läuft") : state == 1 ? "Limit @ " + str.tostring(lvl, format.mintick) : "wartet"
+    table.cell(t, 0, 0, "WC Breakout Retest", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 0, st, text_color=color.yellow, text_size=size.small)
+    table.cell(t, 0, 1, "Trades", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 1, str.tostring(nT), text_color=color.white, text_size=size.small)
+    table.cell(t, 0, 2, "Ziel / Einstand", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 2, nT > 0 ? str.tostring(100.0 * nTP / nT, "0") + "% / " + str.tostring(100.0 * nBE / nT, "0") + "%" : "-", text_color=color.white, text_size=size.small)
+    table.cell(t, 0, 3, "Ø R pro Trade", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 3, nT > 0 ? str.tostring(sumR / nT, "+0.00;-0.00") : "-", text_color=sumR >= 0 ? color.lime : color.red, text_size=size.small)
+    table.cell(t, 0, 4, "Summe R", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 4, str.tostring(sumR, "+0.0;-0.0"), text_color=sumR >= 0 ? color.lime : color.red, text_size=size.small)
+    table.cell(t, 0, 5, "Max. Drawdown R", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 5, str.tostring(maxDD, "0.0"), text_color=color.white, text_size=size.small)
+    table.cell(t, 0, 6, "1h-Trend", text_color=color.white, text_size=size.small)
+    table.cell(t, 1, 6, tr1h == 1 ? "aufwärts" : tr1h == -1 ? "abwärts" : "neutral", text_color=color.white, text_size=size.small)
