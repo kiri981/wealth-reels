@@ -2,7 +2,7 @@
 // WC Gold Open Breakout – Wealth Club
 // Range der ersten 30 Minuten ab COMEX-Eröffnung (08:20–08:50 New York),
 // Einstieg nach Kerzenschluss außerhalb der Range (nächste Kerze), SL an der Gegenseite,
-// Ziel 1,5R, spätestens 14:50 NY raus, max. 1 Trade pro Tag. Lernzwecke – keine Anlageberatung.
+// Ziel 1,5R, spätestens 14:50 NY raus, max. 1 Trade pro Tag. v2: Filter gegen die Tagesrichtung. Lernzwecke – keine Anlageberatung.
 indicator("WC Gold Open Breakout", shorttitle="WC GOB", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500)
 
 rngSess = input.session("0820-0850", "Range-Zeit (New York)")
@@ -13,18 +13,24 @@ tpR     = input.float(1.5, "Ziel (R)", step=0.25)
 useBE   = input.bool(false, "SL auf Einstand ab 1R")
 minRisk = input.float(0.3, "Mindestrisiko in $", step=0.1)
 cost    = input.float(0.35, "Kosten pro Trade in $", step=0.05)
+useCtr  = input.bool(true, "Nur gegen die Tagesrichtung (Eröffnung → 08:20 NY)")
+usePD   = input.bool(false, "Nur innerhalb Vortageshoch/-tief")
 showTbl = input.bool(true, "Statistik-Tabelle")
 
 tz  = "America/New_York"
 inR = not na(time(timeframe.period, rngSess, tz))
 inT = not na(time(timeframe.period, trdSess, tz))
 hm  = hour(time, tz) * 100 + minute(time, tz)
+dOpen = request.security(syminfo.tickerid, "D", open, lookahead=barmerge.lookahead_on)
+pdh   = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_on)
+pdl   = request.security(syminfo.tickerid, "D", low[1], lookahead=barmerge.lookahead_on)
 
 // Zustand: 0 = wartet, 1 = Ausbruch erkannt (Einstieg nächste Kerze), 2 = im Trade
 var float rH     = na
 var float rL     = na
 var box   rBox   = na
 var bool  traded = true
+var int   preDir = 0
 var int   state  = 0
 var int   dir    = 0
 var float ent    = na
@@ -49,6 +55,7 @@ if barstate.isconfirmed
         rL     := low
         traded := false
         state  := 0
+        preDir := int(math.sign(close[1] - dOpen))
         rBox   := box.new(bar_index, high, bar_index, low, border_color=color.new(color.orange, 30), bgcolor=color.new(color.orange, 88))
     else if inR
         rH := math.max(rH, high)
@@ -115,11 +122,17 @@ if barstate.isconfirmed
     // 3) Ausbruch per Kerzenschluss im Einstiegsfenster (einmal pro Tag)
     if state == 0 and not traded and inT and not na(rH)
         if close > rH or close < rL
-            dir    := close > rH ? 1 : -1
-            state  := 1
+            d0     = close > rH ? 1 : -1
             traded := true
-            label.new(bar_index, dir == 1 ? low : high, dir == 1 ? "GOB ▲" : "GOB ▼", style=dir == 1 ? label.style_label_up : label.style_label_down, color=dir == 1 ? color.new(color.green, 10) : color.new(color.red, 10), textcolor=color.white, size=size.small)
-            alert("WC GOB: Ausbruch " + (dir == 1 ? "LONG" : "SHORT") + " – Einstieg zur nächsten Kerze, SL " + str.tostring(dir == 1 ? rL : rH, format.mintick), alert.freq_once_per_bar_close)
+            okCtr  = not useCtr or d0 != preDir
+            okPD   = not usePD or (d0 == 1 ? close <= pdh : close >= pdl)
+            if okCtr and okPD
+                dir   := d0
+                state := 1
+                label.new(bar_index, dir == 1 ? low : high, dir == 1 ? "GOB ▲" : "GOB ▼", style=dir == 1 ? label.style_label_up : label.style_label_down, color=dir == 1 ? color.new(color.green, 10) : color.new(color.red, 10), textcolor=color.white, size=size.small)
+                alert("WC GOB: Ausbruch " + (dir == 1 ? "LONG" : "SHORT") + " – Einstieg zur nächsten Kerze, SL " + str.tostring(dir == 1 ? rL : rH, format.mintick), alert.freq_once_per_bar_close)
+            else
+                label.new(bar_index, d0 == 1 ? low : high, "gefiltert", style=d0 == 1 ? label.style_label_up : label.style_label_down, color=color.new(color.gray, 40), textcolor=color.white, size=size.tiny)
     // Fenster vorbei ohne Ausbruch
     if not inT and not inR and state == 0
         traded := true
