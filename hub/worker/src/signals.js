@@ -20,6 +20,7 @@ export async function sigSchema(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_sig_post (src TEXT, pid INTEGER, t INTEGER, txt TEXT, kind TEXT, PRIMARY KEY (src, pid))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_spos (src TEXT, pid INTEGER, ref TEXT, sym TEXT, dir INTEGER, mkt INTEGER, lo REAL, hi REAL, tps TEXT, sl0 REAL, sl REAL, lev TEXT, t INTEGER, live INTEGER, status TEXT, e REAL, t_open INTEGER, last_t INTEGER, filled REAL DEFAULT 0, part REAL DEFAULT 0, hits INTEGER DEFAULT 0, tries INTEGER DEFAULT 0, ex TEXT, t_close INTEGER, px_close REAL, r REAL, pct REAL, why TEXT, PRIMARY KEY (src, pid))"),
   ]);
+  try { await env.DB.prepare("ALTER TABLE hub_spos ADD COLUMN early_t INTEGER").run(); } catch (e) {}   // vorzeitiges Schließen durch die Gruppe
 }
 
 // ---------------------------------------------------------------- Telegram-Vorschau lesen
@@ -112,6 +113,10 @@ export function step(p, C, nowS) {
   const tps = JSON.parse(p.tps), plan = PLAN(tps.length), dir = p.dir;
   for (const k of C) {
     const ts = Math.floor(k.t / 1000);
+    if (p.early_t && ts >= p.early_t) {   // die Gruppe hat die Idee selbst vorzeitig geschlossen/abgesagt → wir folgen zum Kurs dieser Kerze
+      if (p.status === "wait") { p.status = "expired"; p.why = "von der Gruppe abgesagt, bevor der Einstieg kam"; p.t_close = ts; return null; }
+      if (p.status === "open") return close(p, k.o, ts, `von der Gruppe vorzeitig geschlossen${p.hits ? " (nach Ziel " + p.hits + ")" : ""}`);
+    }
     if (p.status === "wait") {
       if (ts - p.t > waitH * 3600) { p.status = "expired"; p.why = `Einstieg nie erreicht (${waitH >= 72 ? waitH / 24 + " Tage" : waitH + " Std."})`; p.t_close = ts; return null; }
       let fill = null;
@@ -159,12 +164,19 @@ export async function sigTick(env, say, kvGet, kvPut) {
         for (let i = 0; i < SP.backPages && isFinite(b); i++) { const P = await tgFetch(S.ch, b).catch(() => []); if (!P.length) break; posts = [...P, ...posts]; b = Math.min(...P.map((x) => x.pid)); }
       }
       const fresh = posts.filter((x) => x.pid > (known.m || 0) && x.t);
-      let ideas = 0, bad = 0;
+      let ideas = 0, bad = 0, early = 0;
       for (const x of fresh.sort((a, b) => a.pid - b.pid)) {
         const I = x.txt ? parseIdea(x.txt) : null;
         const kind = !I ? "other" : I.bad ? "bad" : "idea";
         await env.DB.prepare("INSERT OR IGNORE INTO hub_sig_post (src, pid, t, txt, kind) VALUES (?, ?, ?, ?, ?)").bind(S.id, x.pid, x.t, (x.txt || "").slice(0, 1500), kind + (I?.bad ? ": " + I.bad : "")).run();
-        if (kind !== "idea") { if (kind === "bad") bad++; continue; }
+        if (kind !== "idea") {
+          const rid = (x.txt.match(/signal\s*id\s*:?\s*#?(\d{2,7})/i) || [])[1];
+          if (rid && /\b(clos(e|ing|ed)|off the table|exit(ing)?|cancel(l?ed)?)\b/i.test(x.txt) && !/target\s*\d\s*:.*✅/i.test(x.txt)) {   // Nachtrag „wir schließen #…“
+            const u = await env.DB.prepare("UPDATE hub_spos SET early_t = ? WHERE src = ? AND ref = ? AND early_t IS NULL").bind(x.t, S.id, rid).run();
+            if (u.meta?.changes) early++;
+          } else if (kind === "bad") bad++;
+          continue;
+        }
         if (I.ref && (await env.DB.prepare("SELECT 1 FROM hub_spos WHERE src = ? AND ref = ?").bind(S.id, I.ref).first())) continue;   // Nachtrag zur selben Idee
         const live = first ? 0 : 1;
         await env.DB.prepare("INSERT OR IGNORE INTO hub_spos (src, pid, ref, sym, dir, mkt, lo, hi, tps, sl0, sl, lev, t, live, status, last_t) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'wait', ?)")
@@ -172,8 +184,16 @@ export async function sigTick(env, say, kvGet, kvPut) {
         ideas++;
         if (live) await say(env, `📥 Fremd-Idee ${S.name}: ${I.sym} ${I.dir > 0 ? "Long" : "Short"}${I.lev ? " (" + I.lev + ")" : ""}\nEinstieg ${I.mkt ? "sofort (Markt)" : d(I.lo) + (I.hi !== I.lo ? " – " + d(I.hi) : "")} · Ziele ${I.tps.slice(0, 3).map(d).join(" / ")}${I.tps.length > 3 ? " …" : ""} · Stopp ${d(I.sl)}\nWird auf Papier mitgeschrieben (nur für dich – nicht weiterleiten, keine Anlageberatung).`);
       }
-      log.push(`${S.name}: ${fresh.length} neu, ${ideas} Ideen${bad ? ", " + bad + " unvollständig" : ""}`);
+      log.push(`${S.name}: ${fresh.length} neu, ${ideas} Ideen${bad ? ", " + bad + " unvollständig" : ""}${early ? ", " + early + " vorzeitig geschlossen" : ""}`);
     } catch (e) { log.push(`${S.name}: ${e.message}`); }
+  }
+  if (!(await kvGet(env, "sig_early_v1"))) {   // einmalig: schon gespeicherte Nachträge („wir schließen #…“) nachholen
+    for (const x of (await env.DB.prepare("SELECT src, t, txt FROM hub_sig_post WHERE kind <> 'idea'").all()).results) {
+      const rid = (x.txt.match(/signal\s*id\s*:?\s*#?(\d{2,7})/i) || [])[1];
+      if (rid && /\b(clos(e|ing|ed)|off the table|exit(ing)?|cancel(l?ed)?)\b/i.test(x.txt) && !/target\s*\d\s*:.*✅/i.test(x.txt))
+        await env.DB.prepare("UPDATE hub_spos SET early_t = ? WHERE src = ? AND ref = ? AND early_t IS NULL").bind(x.t, x.src, rid).run();
+    }
+    await kvPut(env, "sig_early_v1", "1");
   }
   // offene/wartende Ideen mit Kursen fortschreiben
   klines.skip = new Set();
