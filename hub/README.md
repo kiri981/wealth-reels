@@ -1,6 +1,6 @@
 # WC Trading Hub
 
-- `engine.py` / `worker/src/engine.js` – identische Backtest-/Live-Engine (Familien: sess, rbo, swing)
+- `engine.py` / `worker/src/engine.js` – identische Backtest-/Live-Engine (Familien: sess, rbo, swing; Symbole XAUUSD, XAGUSD, BTCUSD mit eigenen Kosten)
 - `research.py` – Forschungs-Agent, läuft jede Nacht (geplante Aufgabe), pflegt `registry.json` + `reports/`
 - `worker/` – Cloudflare-Worker `wc-hub`: Kerzen über MetaApi, Papierhandel, Dashboard, täglicher Export nach `data/live/`
 - `data/` – Kerzen (Seed aus TradingView-Exporten + täglich aus D1 per `ingest.py`)

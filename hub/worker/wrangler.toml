@@ -14,7 +14,8 @@ database_name = "trading-hub"
 database_id = "fa40e3b3-a557-4213-86ab-a36d30394586"
 
 [vars]
-SYMBOL = "XAUUSD"
+# Gehandelte Symbole (Papierhandel): Gold, Silber, Bitcoin
+SYMBOLS = "XAUUSD,XAGUSD,BTCUSD"
 GH_REPO = "kiri981/wealth-reels"
 # Region des MetaApi-Kontos (wie META_REGION beim Copy-Trader, z. B. "london" oder "new-york")
 META_REGION = "london"

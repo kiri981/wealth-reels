@@ -1,6 +1,9 @@
 // WC Trading Hub – Live-Engine (JavaScript). 1:1 zur Python-Engine hub/engine.py.
 // Kerzen: Arrays von {t (Unix-Sek. UTC), o, h, l, c}. Trades: {t, dr, e, sl, r, why, tx, open}
 export const COST = 0.35;
+// Handelskosten und Mindestrisiko je Symbol (wie hub/engine.py SYMS)
+export const SYMS = { XAUUSD: { _cost: 0.35, _minr: 0.3, name: "Gold" }, XAGUSD: { _cost: 0.03, _minr: 0.02, name: "Silber" }, BTCUSD: { _cost: 20, _minr: 20, name: "Bitcoin" } };
+export const withSym = (p) => ({ ...p, ...(SYMS[p.sym || "XAUUSD"] || SYMS.XAUUSD) });
 
 const fmtBuc = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bucharest", year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" });
 const fmtNy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
@@ -30,7 +33,7 @@ export function days(C) {
 const avg = (a) => a.reduce((s, v) => s + v, 0) / a.length;
 
 // ---------------------------------------------------------------- Familie sess
-function manage(D, k, dr, e, sl, tp, xend, be) {
+function manage(D, k, dr, e, sl, tp, xend, be, COST) {
   const { h, l, o, c, m } = D; const r = dr * (e - sl); let stop = sl, moved = false;
   for (let q = k; q < c.length; q++) {
     if (m[q] >= xend) return [(dr * (o[q] - e) - COST) / r, q, "Zeit", false];
@@ -54,8 +57,8 @@ export function sessDay(D, p, last) {
       if (p.ctr && Math.sign(pre - D.op) === dr) return null;
       if ((H - L) / D.sig >= (p.maxW ?? 99)) return null;
       const e = o[j + 1]; const sl = (p.slm || "opp") === "opp" ? (dr > 0 ? L : H) : (H + L) / 2;
-      const r = dr * (e - sl); if (r <= 0.3) return null;
-      let [R, q, why, open] = manage(D, j + 1, dr, e, sl, e + dr * p.tp * r, a + rl + hold, p.be || 0);
+      const r = dr * (e - sl); if (r <= (p._minr ?? 0.3)) return null;
+      let [R, q, why, open] = manage(D, j + 1, dr, e, sl, e + dr * p.tp * r, a + rl + hold, p.be || 0, p._cost ?? COST);
       if (open && !last) open = false;
       let mfe = 0; for (let z = j + 1; z <= q; z++) mfe = Math.max(mfe, dr * ((dr > 0 ? h[z] : l[z]) - e) / r);
       return { t: D.t[j + 1], dr, e, sl, tp: e + dr * p.tp * r, r: R, why: open ? "offen" : why, mfe, tx: D.t[q], open };
@@ -83,7 +86,7 @@ export function feats(C) {
 }
 export function runRbo(F, p) {
   const { N, body, trend, tp } = p, be = p.be ?? 1.0, wait = p.wait ?? 6, maxb = p.maxb ?? 96;
-  const { o, h, l, c, atr: a, st, n, t } = F; const out = [];
+  const { o, h, l, c, atr: a, st, n, t } = F; const out = []; const COST = p._cost ?? 0.35, MINR = p._minr ?? 0.3;
   const hiN = (i) => { let m = -Infinity; for (let k = i - N; k < i; k++) m = Math.max(m, h[k]); return m; };
   const loN = (i) => { let m = Infinity; for (let k = i - N; k < i; k++) m = Math.min(m, l[k]); return m; };
   let i = 300;
@@ -97,7 +100,7 @@ export function runRbo(F, p) {
     for (let j = i + 1; j < Math.min(n, i + 1 + wait); j++) if ((dr > 0 && l[j] <= lvl) || (dr < 0 && h[j] >= lvl)) { k = j; break; }
     if (k === null) { i++; continue; }
     const e = dr > 0 ? Math.min(lvl, o[k]) : Math.max(lvl, o[k]); const r = Math.abs(e - sl);
-    if (r <= 0.3) { i++; continue; }
+    if (r <= MINR) { i++; continue; }
     const tpp = e + dr * tp * r; let stop = sl, moved = false, res = null;
     if ((dr > 0 && l[k] <= sl) || (dr < 0 && h[k] >= sl)) res = [(-r - COST) / r, k, "SL"];
     else {
@@ -138,7 +141,7 @@ export function runSwing(C, p) {
       j++;
     }
     const open = ex === null; if (open) { ex = c[n - 1]; j = n - 1; }
-    out.push({ t: t[j0], dr: 1, e, sl: e - R, r: (ex - e - 0.5) / R, why: open ? "offen" : "exit", tx: t[j], open });
+    out.push({ t: t[j0], dr: 1, e, sl: e - R, r: (ex - e - (p._cost ?? 0.5)) / R, why: open ? "offen" : "exit", tx: t[j], open });
     i = j + 1;
   }
   return out;

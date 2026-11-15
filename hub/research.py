@@ -16,25 +16,25 @@ Aufruf: python3 hub/research.py [--budget 300]
 import json, os, sys, time, hashlib, random, datetime as dt
 import numpy as np, pandas as pd
 sys.path.insert(0, os.path.dirname(__file__))
-from engine import load, resample, days, run_sess, feats, run_rbo, run_swing, stats
+from engine import load, resample, days, run_sess, feats, run_rbo, run_swing, stats, with_sym, SYMS
 
 HUB = os.path.dirname(os.path.abspath(__file__))
 REG = os.path.join(HUB, "registry.json")
-MAX_PAPER = 8
+MAX_PAPER = 12
 
 # ---------------------------------------------------------------- Grammatik / Suchraum
 SPACE = {
-    "sess": dict(anchor=list(range(-360, 961, 15)), rl=[15, 30, 45, 60], win=[30, 60, 120, 180], hold=[120, 240, 360],
+    "sess": dict(sym=list(SYMS), anchor=list(range(-360, 961, 15)), rl=[15, 30, 45, 60], win=[30, 60, 120, 180], hold=[120, 240, 360],
                  ctr=[0, 1], maxW=[0.2, 0.27, 0.35, 99], tp=[1.0, 1.5, 2.0, 3.0], slm=["opp", "mid"], be=[0, 1.0], tf=["5m"]),
-    "rbo": dict(N=[12, 24, 36, 48, 72, 96], body=[0.5, 0.75, 1.0, 1.5], trend=[0, 1], tp=[1.5, 2.0, 3.0], be=[0, 1.0], tf=["5m", "15m"]),
-    "swing": dict(entry=["A", "B", "AB"], k=[1.5, 2.0, 3.0], exitN=[10, 20, 40], brkN=[20, 55, 100], tf=["1d"]),
+    "rbo": dict(sym=list(SYMS), N=[12, 24, 36, 48, 72, 96], body=[0.5, 0.75, 1.0, 1.5], trend=[0, 1], tp=[1.5, 2.0, 3.0], be=[0, 1.0], tf=["5m", "15m"]),
+    "swing": dict(sym=list(SYMS), entry=["A", "B", "AB"], k=[1.5, 2.0, 3.0], exitN=[10, 20, 40], brkN=[20, 55, 100], tf=["1d"]),
 }
 def key(fam, p): return fam + ":" + hashlib.md5(json.dumps(p, sort_keys=True).encode()).hexdigest()[:10]
 
 def neighbors(fam, p):
     out = []
     for k, vals in SPACE[fam].items():
-        if k == "tf" or len(vals) < 2: continue
+        if k in ("tf", "sym") or len(vals) < 2: continue
         i = vals.index(p[k]) if p[k] in vals else None
         if i is None: continue
         for j in (i - 1, i + 1):
@@ -42,29 +42,46 @@ def neighbors(fam, p):
     return out
 
 # ---------------------------------------------------------------- Daten
+class SymData:
+    """Daten eines Symbols. Gold: Seed (TradingView) + live/m5_*.csv; andere: live/<sym>_m5_*.csv (vom Worker über MetaApi)."""
+    def __init__(self, sym):
+        import glob
+        lo = sym.lower()
+        files = ([os.path.join(HUB, "data/xauusd_m5.csv")] + sorted(glob.glob(os.path.join(HUB, "data/live/m5_*.csv")))) if sym == "XAUUSD" \
+            else sorted(glob.glob(os.path.join(HUB, f"data/live/{lo}_m5_*.csv")))
+        parts = [load(f) for f in files if os.path.exists(f) and os.path.getsize(f) > 30]
+        self.m5 = None
+        if parts:
+            m5 = pd.concat(parts); m5 = m5[~m5.index.duplicated(keep="last")].sort_index()
+            if len(m5) and (m5.index[-1] - m5.index[0]).days >= 30:   # mind. 30 Tage für Intraday-Familien
+                self.m5 = m5; self.DAYS = days(m5); self.F = {"5m": feats(m5), "15m": feats(resample(m5, "15min"))}
+                self.t0, self.t1 = int(m5.index[0].timestamp()), int(m5.index[-1].timestamp())
+        p1 = os.path.join(HUB, f"data/{lo}_d1.csv")
+        self.d1 = load(p1) if os.path.exists(p1) else None
+        if self.d1 is not None and len(self.d1) < 260: self.d1 = None
+
 class Data:
     def __init__(self):
-        import glob
-        parts = [load(os.path.join(HUB, "data/xauusd_m5.csv"))] + [load(f) for f in sorted(glob.glob(os.path.join(HUB, "data/live/m5_*.csv")))]
-        m5 = pd.concat(parts); self.m5 = m5[~m5.index.duplicated(keep="last")].sort_index()
-        self.DAYS = days(self.m5)
-        self.F = {"5m": feats(self.m5), "15m": feats(resample(self.m5, "15min"))}
-        p1 = os.path.join(HUB, "data/xauusd_d1.csv")
-        self.d1 = load(p1) if os.path.exists(p1) else None
-        self.t0, self.t1 = int(self.m5.index[0].timestamp()), int(self.m5.index[-1].timestamp())
+        self.S = {s: SymData(s) for s in SYMS}
+        g = self.S["XAUUSD"]; self.m5, self.DAYS, self.d1 = g.m5, g.DAYS, g.d1
+    def has(self, fam, sym):
+        x = self.S[sym]; return (x.d1 is not None) if fam == "swing" else (x.m5 is not None)
     def trades(self, fam, p):
-        if fam == "sess": return run_sess(self.DAYS, p)
-        if fam == "rbo": return run_rbo(self.F[p["tf"]], p)
-        if fam == "swing": return run_swing(self.d1, p) if self.d1 is not None else []
+        x = self.S[p.get("sym", "XAUUSD")]; q = with_sym(p)
+        if not self.has(fam, p.get("sym", "XAUUSD")): return []
+        if fam == "sess": return run_sess(x.DAYS, q)
+        if fam == "rbo": return run_rbo(x.F[p["tf"]], q)
+        if fam == "swing": return run_swing(x.d1, q)
         return []
-    def span(self, fam):
-        if fam == "swing" and self.d1 is not None: return int(self.d1.index[0].timestamp()), int(self.d1.index[-1].timestamp())
-        return self.t0, self.t1
+    def span(self, fam, sym="XAUUSD"):
+        x = self.S[sym]
+        if fam == "swing" and x.d1 is not None: return int(x.d1.index[0].timestamp()), int(x.d1.index[-1].timestamp())
+        return x.t0, x.t1
 
 def evaluate(D, fam, p, K, cache):
     k = key(fam, p)
     if k in cache: return cache[k]
-    tr = D.trades(fam, p); a, b = D.span(fam)
+    tr = D.trades(fam, p); a, b = D.span(fam, p.get("sym", "XAUUSD"))
     r = np.array([x["r"] for x in tr]); t = np.array([x["t"] for x in tr])
     res = dict(n=len(r), ok=False, why="")
     min_n = 15 if fam == "swing" else 40
@@ -110,8 +127,10 @@ def main(budget=300, seed=None):
     lp = os.path.join(HUB, "live/trades.json")
     if os.path.exists(lp):
         for x in json.load(open(lp)): live.setdefault(x["sid"], []).append(x)
-    report = [f"# Hub-Forschung {today}", "", f"Daten: 5m {D.m5.index[0].date()} – {D.m5.index[-1].date()} ({len(D.DAYS)} Handelstage)" +
-              (f", Tageskerzen ab {D.d1.index[0].date()}" if D.d1 is not None else ", Tageskerzen: noch keine")]
+    report = [f"# Hub-Forschung {today}", ""]
+    for sy, x in D.S.items():
+        report.append(f"- {SYMS[sy]['name']}: " + (f"5m {x.m5.index[0].date()} – {x.m5.index[-1].date()} ({len(x.DAYS)} Tage)" if x.m5 is not None else "5m: noch zu wenig Daten (< 30 Tage)") +
+                      (f", Tageskerzen ab {x.d1.index[0].date()}" if x.d1 is not None else ", Tageskerzen: keine"))
 
     # 1) bestehende Strategien neu bewerten
     report += ["", "## Bestehende Strategien"]
@@ -120,7 +139,8 @@ def main(budget=300, seed=None):
         fam, p = s["family"], s["params"]
         K = len([k for k in tried if k.startswith(fam + ":")])
         ev = evaluate(D, fam, p, K, cache)
-        L = [x for x in live.get(s["id"], []) if x.get("closed")]
+        born = int(pd.Timestamp(s.get("created", "2000-01-01"), tz="UTC").timestamp()) + 86400   # nur echte Vorwärts-Trades
+        L = [x for x in live.get(s["id"], []) if x.get("closed") and x["t"] >= born]
         lr = np.array([x["r"] for x in L]); s["live"] = dict(n=len(lr), mean=float(lr.mean()) if len(lr) else None, win=float((lr > 0).mean()) if len(lr) else None)
         s["backtest"] = {k: ev.get(k) for k in ("n", "mean", "win", "pf", "dd", "tdev", "thr", "hold_mean", "blocks_pos", "mfe05")}
         old = s["status"]
@@ -136,7 +156,7 @@ def main(budget=300, seed=None):
 
     # 2) Suche nach neuen Strategien
     report += ["", "## Suche nach neuen Strategien"]
-    fams = ["sess", "rbo"] + (["swing"] if D.d1 is not None else [])
+    fams = ["sess", "rbo"] + (["swing"] if any(D.has("swing", x) for x in SYMS) else [])
     found = []
     for fam in fams:
         share = {"sess": 0.7, "rbo": 0.2, "swing": 0.1}[fam]
@@ -149,6 +169,7 @@ def main(budget=300, seed=None):
             tries += 1
             p = clean(queue.pop()) if queue else clean(sample(fam, rng))
             if fam == "sess" and p["anchor"] + p["rl"] + p["win"] + p["hold"] > 1020: continue
+            if not D.has(fam, p.get("sym", "XAUUSD")): continue   # für dieses Symbol (noch) keine Daten
             k = key(fam, p)
             if k in tried: continue
             tried[k] = today; tested += 1
@@ -160,7 +181,7 @@ def main(budget=300, seed=None):
 
     # 3) Neue Strategien aufnehmen (Duplikate vermeiden, Obergrenze)
     def similar(a, b):
-        if a[0] != b["family"]: return False
+        if a[0] != b["family"] or a[1].get("sym", "XAUUSD") != b["params"].get("sym", "XAUUSD"): return False
         if a[0] == "sess": return abs(a[1]["anchor"] - b["params"]["anchor"]) <= 30
         if a[0] == "rbo": return a[1]["tf"] == b["params"]["tf"] and abs(a[1]["N"] - b["params"]["N"]) <= 12
         return True
@@ -195,6 +216,9 @@ def hm(m):
     return f"{b // 60:02d}:{b % 60:02d} Uhr (≈ {m // 60:02d}:{m % 60:02d} NY{s})"
 
 def describe(fam, p):
+    return SYMS[p.get("sym", "XAUUSD")]["name"] + " · " + _describe(fam, p)
+
+def _describe(fam, p):
     if fam == "sess":
         f = (" gegen Tagesrichtung" if p["ctr"] else "") + (f", Range < {p['maxW']}σ" if p["maxW"] < 99 else "")
         return f"Session-Ausbruch {hm(p['anchor'])}, Range {p['rl']}m, Fenster {p['win']}m, Ziel {p['tp']}R{', BE 1R' if p['be'] else ''}, SL {'Gegenseite' if p['slm'] == 'opp' else 'Mitte'}{f}"

@@ -14,6 +14,10 @@ Alle Kurse in $, Kosten COST je Trade. Ergebnis: Liste von Trades (dict) mit Zei
 import numpy as np, pandas as pd
 
 COST = 0.35
+# Handelskosten (Spread/Kommission, in Preis-Einheiten) und Mindestrisiko je Symbol
+SYMS = {"XAUUSD": dict(_cost=0.35, _minr=0.3, name="Gold"), "XAGUSD": dict(_cost=0.03, _minr=0.02, name="Silber"), "BTCUSD": dict(_cost=20.0, _minr=20.0, name="Bitcoin")}
+def with_sym(p):
+    c = SYMS.get(p.get("sym", "XAUUSD"), SYMS["XAUUSD"]); return {**p, "_cost": c["_cost"], "_minr": c["_minr"]}
 
 def load(path):
     d = pd.read_csv(path)
@@ -44,7 +48,7 @@ def days(d):
     return out
 
 # ---------------------------------------------------------------- Familie sess
-def _manage(D, k, dr, e, sl, tp, xend, be):
+def _manage(D, k, dr, e, sl, tp, xend, be, COST=COST):
     h, l, o, c, m = D["h"], D["l"], D["o"], D["c"], D["m"]
     r = dr * (e - sl); stop = sl; moved = False
     for q in range(k, len(c)):
@@ -80,9 +84,9 @@ def sess_day(D, p):
             e = o[j + 1]
             sl = (L if dr > 0 else H) if p.get("slm", "opp") == "opp" else (H + L) / 2
             r = dr * (e - sl)
-            if r <= 0.3:
+            if r <= p.get("_minr", 0.3):
                 return None
-            R_, q, why = _manage(D, j + 1, dr, e, sl, e + dr * p["tp"] * r, a + rl + hold, p.get("be", 0))
+            R_, q, why = _manage(D, j + 1, dr, e, sl, e + dr * p["tp"] * r, a + rl + hold, p.get("be", 0), p.get("_cost", COST))
             # MFE bis SL/Exit (für Trailing-Auswertung)
             mfe = 0.0
             for z in range(j + 1, q + 1):
@@ -105,6 +109,7 @@ def feats(d):
 
 def run_rbo(F, p):
     N, body, trend, tp, be, wait, maxb = p["N"], p["body"], p["trend"], p["tp"], p.get("be", 1.0), p.get("wait", 6), p.get("maxb", 96)
+    COST, MINR = p.get("_cost", 0.35), p.get("_minr", 0.3)
     o, h, l, c, a, st, n = F["o"], F["h"], F["l"], F["c"], F["atr"], F["st"], F["n"]
     hi = pd.Series(h).rolling(N).max().shift(1).values; lo = pd.Series(l).rolling(N).min().shift(1).values
     out = []; i = 300
@@ -122,7 +127,7 @@ def run_rbo(F, p):
         if k is None:
             i += 1; continue
         e = min(lvl, o[k]) if dr > 0 else max(lvl, o[k]); r = abs(e - sl)
-        if r <= 0.3:
+        if r <= MINR:
             i += 1; continue
         tpp = e + dr * tp * r; stop = sl; moved = False; res = None
         if (dr > 0 and l[k] <= sl) or (dr < 0 and h[k] >= sl):
@@ -165,7 +170,7 @@ def run_swing(d1, p):
             if j > j0 + 1 and c[j] < ll[j] and j + 1 < n: ex = o[j + 1]; j += 1; break
             j += 1
         if ex is None: ex = c[-1]; j = n - 1
-        out.append(dict(t=int(t[j0]), dr=1, e=float(e), sl=float(e - R), r=float((ex - e - 0.5) / R), why="exit", tx=int(t[j])))
+        out.append(dict(t=int(t[j0]), dr=1, e=float(e), sl=float(e - R), r=float((ex - e - p.get("_cost", 0.5)) / R), why="exit", tx=int(t[j])))
         i = j + 1
     return out
 
