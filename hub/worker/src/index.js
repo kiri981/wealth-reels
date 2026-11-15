@@ -7,7 +7,7 @@
 // Secrets: META_TOKEN, META_ACCOUNT, (META_REGION), GH_TOKEN, HUB_KEY
 import * as E from "./engine.js";
 
-const VERSION = "1.1";
+const VERSION = "1.2";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -51,6 +51,7 @@ async function schema(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_trades (sid TEXT, t INTEGER, dr INTEGER, e REAL, sl REAL, tp REAL, r REAL, why TEXT, tx INTEGER, closed INTEGER, notified INTEGER DEFAULT 0, PRIMARY KEY (sid, t))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_strats (id TEXT PRIMARY KEY, name TEXT, family TEXT, params TEXT, status TEXT, backtest TEXT, live TEXT, created TEXT)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_kv (k TEXT PRIMARY KEY, v TEXT)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_events (id TEXT PRIMARY KEY, t INTEGER, cur TEXT, title TEXT, impact TEXT, forecast TEXT, previous TEXT, actual TEXT, note TEXT)"),
   ]);
   await env.STATE?.put?.("hub:schema1", "1");
 }
@@ -64,6 +65,53 @@ async function store(env, tf, C) {
 async function load(env, tf, sinceSec) {
   const { results } = await env.DB.prepare("SELECT t, o, h, l, c FROM hub_candles WHERE tf = ? AND t >= ? ORDER BY t").bind(tf, sinceSec).all();
   return results;
+}
+
+// ---------------------------------------------------------------- Wirtschaftskalender (v1.2)
+// Quelle: Forex-Factory-Wochenkalender (JSON, kostenlos). Wichtig für Gold/Silber/Bitcoin: US-Termine mit hoher Bedeutung.
+const IMPORTANT = (e) => e.impact === "High" && ["USD"].includes(e.cur);
+async function syncCalendar(env) {
+  let n = 0;
+  for (const w of ["thisweek", "nextweek"]) {
+    const r = await fetch(`https://nfs.faireconomy.media/ff_calendar_${w}.json?ts=${Date.now()}`, { headers: { "User-Agent": "Mozilla/5.0 wc-hub" } });
+    if (!r.ok) continue;
+    const L = await r.json(); const st = [];
+    for (const e of L) {
+      const t = Math.floor(new Date(e.date).getTime() / 1000); if (!t) continue;
+      const id = `${t}_${e.country}_${e.title}`.slice(0, 120);
+      st.push(env.DB.prepare("INSERT INTO hub_events (id, t, cur, title, impact, forecast, previous) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET t=excluded.t, impact=excluded.impact, forecast=excluded.forecast, previous=excluded.previous")
+        .bind(id, t, e.country, e.title, e.impact, e.forecast || "", e.previous || ""));
+    }
+    for (let i = 0; i < st.length; i += 80) await env.DB.batch(st.slice(i, i + 80));
+    n += st.length;
+  }
+  return n;
+}
+const hmB = (t) => new Date(t * 1000).toLocaleTimeString("de-DE", { timeZone: "Europe/Bucharest", hour: "2-digit", minute: "2-digit" });
+async function newsAlerts(env) {
+  const now = Math.floor(Date.now() / 1000); let n = 0;
+  // 1) Tagesübersicht morgens (07:00–07:05 Bukarest, Mo–Fr)
+  const loc = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Bucharest" }));
+  if (loc.getHours() === 7 && loc.getMinutes() < 5 && loc.getDay() >= 1 && loc.getDay() <= 5) {
+    const day = loc.toISOString().slice(0, 10);
+    if ((await kvGet(env, "news_day")) !== day) {
+      await kvPut(env, "news_day", day);
+      const { results: E2 } = await env.DB.prepare("SELECT * FROM hub_events WHERE t BETWEEN ? AND ? AND impact IN ('High','Medium') AND cur = 'USD' ORDER BY t").bind(now, now + 18 * 3600).all();
+      const txt = E2.length ? E2.map((e) => `${e.impact === "High" ? "🔴" : "🟠"} ${hmB(e.t)} ${e.title}${e.forecast ? " · Prognose " + e.forecast : ""}${e.previous ? " · vorher " + e.previous : ""}`).join("\n") : "Keine wichtigen US-Termine heute.";
+      await say(env, `📅 Wirtschaftstermine heute (Bukarest-Zeit)\n\n${txt}\n\n🔴 = hoch: Gold, Silber und Bitcoin reagieren oft stark. Der Hub eröffnet ±30 Min. um rote Termine keine Papier-Trades.`); n++;
+    }
+  }
+  // 2) Vorwarnung 30 Minuten vor wichtigen Terminen
+  const { results: E3 } = await env.DB.prepare("SELECT * FROM hub_events WHERE t BETWEEN ? AND ? AND impact = 'High' AND cur = 'USD' AND (note IS NULL OR note NOT LIKE '%warn%') ORDER BY t").bind(now + 20 * 60, now + 35 * 60).all();
+  if (E3.length) {
+    await say(env, `⏰ In ca. 30 Min. (${hmB(E3[0].t)} Uhr):\n` + E3.map((e) => `🔴 ${e.title}${e.forecast ? " · Prognose " + e.forecast : ""}${e.previous ? " · vorher " + e.previous : ""}`).join("\n") + `\n\nErfahrungsgemäß springen Gold, Silber und Bitcoin um diese Zeit stark. Erst den Kerzenschluss abwarten.`); n++;
+    for (const e of E3) await env.DB.prepare("UPDATE hub_events SET note = COALESCE(note,'') || ' warn' WHERE id = ?").bind(e.id).run();
+  }
+  return n;
+}
+async function newsWindows(env, from) {   // Zeitfenster ±30 Min. um rote US-Termine
+  const { results } = await env.DB.prepare("SELECT t FROM hub_events WHERE impact = 'High' AND cur = 'USD' AND t >= ?").bind(from).all();
+  return results.map((x) => [x.t - 1800, x.t + 1800]);
 }
 
 // ---------------------------------------------------------------- Postausgang (Welcome-Bot schickt an Kevin)
@@ -88,6 +136,8 @@ async function paper(env) {
   if (!strats.length) return 0;
   const now = Math.floor(Date.now() / 1000);
   const recent = now - 4 * 86400; let n = 0; const DATA = {};
+  const NW = await newsWindows(env, now - 5 * 86400).catch(() => []);
+  const inNews = (t) => NW.some(([a, b]) => t >= a && t <= b);
   for (const s of strats) {
     const p = E.withSym(JSON.parse(s.params)); const sym = p.sym || "XAUUSD";
     if (!DATA[sym]) {
@@ -99,7 +149,7 @@ async function paper(env) {
     if (s.family !== "swing" && !data.DAYS) continue;
     let tr; try { tr = E.trades(s.family, p, data); } catch (e) { console.log("Engine", s.id, e.message); continue; }
     const born = Math.floor(new Date((s.created || "2000-01-01") + "T00:00:00Z").getTime() / 1000) + 86400;   // nur Trades NACH der Aufnahme zählen (echter Vorwärtstest)
-    for (const x of tr.filter((x) => (x.t >= recent || x.open) && x.t >= born)) {
+    for (const x of tr.filter((x) => (x.t >= recent || x.open) && x.t >= born && !inNews(x.t))) {
       const old = await env.DB.prepare("SELECT closed, notified FROM hub_trades WHERE sid = ? AND t = ?").bind(s.id, x.t).first();
       await env.DB.prepare("INSERT INTO hub_trades (sid, t, dr, e, sl, tp, r, why, tx, closed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(sid, t) DO UPDATE SET r=excluded.r, why=excluded.why, tx=excluded.tx, closed=excluded.closed, sl=excluded.sl")
         .bind(s.id, x.t, x.dr, x.e, x.sl, x.tp ?? null, x.r, x.why, x.tx, x.open ? 0 : 1).run();
@@ -190,9 +240,11 @@ async function tick(env) {
     if (min < 5) { try { const c = await candles(env, sym, "1d", 1000); await store(env, TK(sym, "1d"), c); log.push(`${sym} 1d:${c.length}`); } catch (e) { log.push(sym + " 1d-Fehler " + e.message); } }
   }
   if (min < 5) {   // stündlich
+    try { log.push("Kalender:" + await syncCalendar(env)); } catch (e) { log.push("Kalender-Fehler " + e.message); }
     try { log.push("Register:" + await syncRegistry(env)); } catch (e) { log.push("Register-Fehler " + e.message); }
     await env.DB.prepare("DELETE FROM hub_candles WHERE (tf = '5m' OR tf LIKE '%:5m') AND t < ?").bind(Math.floor(Date.now() / 1000) - 75 * 86400).run();
   }
+  try { log.push("News:" + await newsAlerts(env)); } catch (e) { log.push("News-Fehler " + e.message); }
   try { log.push("Papier:" + await paper(env)); } catch (e) { log.push("Papier-Fehler " + e.message); }
   if (hr === 22 && min >= 30 && min < 35) { try { await exportDaily(env); log.push("Export ok"); } catch (e) { log.push("Export-Fehler " + e.message); await say(env, "⚠️ Hub-Export nach GitHub: " + e.message.slice(0, 200)); } }
   if (hr >= 4 && hr < 7 && min % 15 < 5) { try { await reportPush(env); } catch (e) { log.push("Bericht-Fehler " + e.message); } }
