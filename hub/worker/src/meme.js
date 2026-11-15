@@ -134,7 +134,30 @@ export async function memeTick(env, say, kvGet, kvPut) {
   } catch (e) { log.push("DS " + e.message); }
   try {   // Pump.fun (Solana-Startrampe): Coins kurz vor dem Abschluss der Bonding-Kurve, frisch abgeschlossene und „König des Hügels“ – Kennzahlen dann über DexScreener
     const PF = "https://frontend-api-v3.pump.fun", M = {}; let ok = 0;
-    for (const [path, tag] of [["/coins?offset=0&limit=50&sort=market_cap&order=DESC&includeNsfw=false", "Pump.fun"], ["/coins?offset=0&limit=50&sort=last_trade_timestamp&order=DESC&includeNsfw=false", "Pump.fun aktiv"], ["/coins/king-of-the-hill?includeNsfw=false", "Pump.fun König"]]) {
+    if (env.MORALIS_KEY) {   // v2.7: Pump.fun-Daten über Moralis (Pump.fun selbst sperrt Cloudflare) – alle 15 Min., dazwischen aus dem Zwischenspeicher
+      const ck = "moralis_pf", c = await kvGet(env, ck).catch(() => null); let L = null;
+      if (c) { const o = JSON.parse(c); if (now - o.t < 900) L = o.L; }
+      if (!L) {
+        L = [];
+        for (const [ep, tag] of [["bonding", "Pump.fun kurz vor Abschluss"], ["graduated", "Pump.fun abgeschlossen"], ["new", "Pump.fun neu"]]) {
+          try {
+            const r = await fetch(`https://solana-gateway.moralis.io/token/mainnet/exchange/pumpfun/${ep}?limit=${ep === "new" ? 50 : 100}`, { headers: { accept: "application/json", "X-API-Key": env.MORALIS_KEY } });
+            if (!r.ok) { log.push("Moralis " + ep + " " + r.status); continue; }
+            const J = await r.json(); ok++;
+            for (const x of J.result || []) {
+              if (!x.tokenAddress) continue;
+              if (ep === "bonding" && (+x.bondingCurveProgress || 0) < 70) continue;   // nur die, die kurz vor dem Abschluss stehen
+              if (ep === "new" && (+x.liquidity || 0) < 5000) continue;
+              const tt = Date.parse(x.graduatedAt || x.createdAt || "") / 1000; if (tt && now - tt > 3 * 86400) continue;
+              L.push([x.tokenAddress, tag]);
+            }
+          } catch (e) { log.push("Moralis " + ep + " " + e.message); }
+        }
+        if (ok) await kvPut(env, ck, JSON.stringify({ t: now, L }));
+      } else ok = 1;
+      for (const [m, tag] of L) if (!M[m]) M[m] = tag;
+    }
+    if (!ok) for (const [path, tag] of [["/coins?offset=0&limit=50&sort=market_cap&order=DESC&includeNsfw=false", "Pump.fun"], ["/coins?offset=0&limit=50&sort=last_trade_timestamp&order=DESC&includeNsfw=false", "Pump.fun aktiv"], ["/coins/king-of-the-hill?includeNsfw=false", "Pump.fun König"]]) {
       try {
         const r = await j(PF + path, 2); ok++;
         for (const c of Array.isArray(r) ? r : r && r.mint ? [r] : r?.coins || []) {

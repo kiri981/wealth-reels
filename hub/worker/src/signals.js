@@ -94,12 +94,12 @@ async function klines(sym, fromMs, iv) {   // → { ex, C: [{t,o,h,l,c}] aufstei
     errs.push("Binance " + r.status); if (r.status === 451 || r.status === 403) SK.add("Binance");
   } catch (e) { errs.push("Binance " + e.message); }
   if (!SK.has("Bybit")) try {
-    const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${sym}USDT&interval=${iv === "1h" ? 60 : 5}&start=${fromMs}&limit=1000`, { headers: UA });
+    const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${sym}USDT&interval=${iv === "1h" ? 60 : 5}&start=${fromMs}&end=${Math.min(now, fromMs + 999 * ms)}&limit=1000`, { headers: UA });
     if (r.ok) { const J = await r.json(); if (J.retCode === 0 && J.result?.list?.length) return done("Bybit", J.result.list.map((k) => ({ t: +k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4] }))); errs.push("Bybit " + (J.retMsg || "leer")); }
     else { errs.push("Bybit " + r.status); if (r.status === 451 || r.status === 403) SK.add("Bybit"); }
   } catch (e) { errs.push("Bybit " + e.message); }
-  try {   // OKX: höchstens 100 Kerzen je Abruf – ab Startzeit vorwärts über „before“
-    const r = await fetch(`https://www.okx.com/api/v5/market/history-candles?instId=${sym}-USDT-SWAP&bar=${iv === "1h" ? "1H" : "5m"}&before=${fromMs - 1}&limit=100`, { headers: UA });
+  try {   // OKX: höchstens 100 Kerzen je Abruf – „after“ = älter als dieser Zeitpunkt, also Fenster [Start, Start + 100 Kerzen)
+    const r = await fetch(`https://www.okx.com/api/v5/market/history-candles?instId=${sym}-USDT-SWAP&bar=${iv === "1h" ? "1H" : "5m"}&after=${Math.min(now, fromMs + 100 * ms)}&limit=100`, { headers: UA });
     if (r.ok) { const J = await r.json(); if (J.data?.length) return done("OKX", J.data.map((k) => ({ t: +k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4] }))); errs.push("OKX leer"); }
     else errs.push("OKX " + r.status);
   } catch (e) { errs.push("OKX " + e.message); }
@@ -178,6 +178,7 @@ export async function sigTick(env, say, kvGet, kvPut) {
           continue;
         }
         if (I.ref && (await env.DB.prepare("SELECT 1 FROM hub_spos WHERE src = ? AND ref = ?").bind(S.id, I.ref).first())) continue;   // Nachtrag zur selben Idee
+        if (await env.DB.prepare("SELECT 1 FROM hub_spos WHERE src = ? AND sym = ? AND dir = ? AND sl0 = ? AND t > ?").bind(S.id, I.sym, I.dir, I.sl, x.t - 2 * 86400).first()) continue;   // gleiche Idee nochmal gepostet
         const live = first ? 0 : 1;
         await env.DB.prepare("INSERT OR IGNORE INTO hub_spos (src, pid, ref, sym, dir, mkt, lo, hi, tps, sl0, sl, lev, t, live, status, last_t) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'wait', ?)")
           .bind(S.id, x.pid, I.ref, I.sym, I.dir, I.mkt, I.lo, I.hi, JSON.stringify(I.tps), I.sl, I.sl, I.lev, x.t, live, x.t * 1000).run();
@@ -186,6 +187,11 @@ export async function sigTick(env, say, kvGet, kvPut) {
       }
       log.push(`${S.name}: ${fresh.length} neu, ${ideas} Ideen${bad ? ", " + bad + " unvollständig" : ""}${early ? ", " + early + " vorzeitig geschlossen" : ""}`);
     } catch (e) { log.push(`${S.name}: ${e.message}`); }
+  }
+  if (!(await kvGet(env, "sig_reset_v2"))) {   // einmalig: doppelt gepostete Ideen entfernen und wegen eines Kursdaten-Fehlers (OKX/Bybit-Zeitfenster) falsch verfallene Ideen neu prüfen
+    await env.DB.prepare("DELETE FROM hub_spos WHERE EXISTS (SELECT 1 FROM hub_spos b WHERE b.src = hub_spos.src AND b.sym = hub_spos.sym AND b.dir = hub_spos.dir AND b.sl0 = hub_spos.sl0 AND b.pid < hub_spos.pid AND hub_spos.t - b.t < 2 * 86400)").run();
+    await env.DB.prepare("UPDATE hub_spos SET status = 'wait', e = NULL, t_open = NULL, last_t = t * 1000, filled = 0, part = 0, hits = 0, sl = sl0, tries = 0, t_close = NULL, px_close = NULL, r = NULL, pct = NULL, why = NULL WHERE status IN ('expired', 'missed', 'nodata') AND COALESCE(why, '') NOT LIKE '%Gruppe%'").run();
+    await kvPut(env, "sig_reset_v2", "1");
   }
   if (!(await kvGet(env, "sig_early_v1"))) {   // einmalig: schon gespeicherte Nachträge („wir schließen #…“) nachholen
     for (const x of (await env.DB.prepare("SELECT src, t, txt FROM hub_sig_post WHERE kind <> 'idea'").all()).results) {
@@ -213,13 +219,22 @@ export async function sigTick(env, say, kvGet, kvPut) {
       .bind(p.status, p.e, p.t_open, p.last_t, p.filled, p.part, p.hits, p.sl, p.ex, p.t_close, p.px_close, p.r, p.pct, p.why, p.src, p.pid).run();
     const nm = (SRC.find((s) => s.id === p.src) || {}).name || p.src;
     if (p.live && before === "wait" && p.status === "open" && !res) await say(env, `📥 ${nm}: ${p.sym} ${p.dir > 0 ? "Long" : "Short"} auf Papier eröffnet @ ${d(p.e)} (${p.ex})`);
-    if (res) { closed++; if (p.live) await say(env, `📥 ${nm}: ${p.sym} ${p.dir > 0 ? "Long" : "Short"} beendet – ${p.why} · ${p.r >= 0 ? "+" : ""}${p.r.toFixed(2)}R (${p.pct >= 0 ? "+" : ""}${p.pct.toFixed(1)} % ohne Hebel) (Papier)`); }
+    if (res) { closed++; if (p.live) await say(env, `📥 ${nm}: ${p.sym} ${p.dir > 0 ? "Long" : "Short"} beendet – ${p.why} · ${p.r >= 0 ? "+" : ""}${p.r.toFixed(2)}R (${p.pct >= 0 ? "+" : ""}${p.pct.toFixed(1)} % ohne Hebel${(() => { const L = levOf(p.lev); if (!L) return ""; const q = (l) => { const x = levRes(p, l); return x.liq ? l + "x Liquidation" : l + "x " + (x.m >= 0 ? "+" : "") + x.m.toFixed(0) + " %"; }; return ", " + (L[0] === L[1] ? q(L[0]) : q(L[0]) + " / " + q(L[1])); })()}) (Papier)`); }
   }
   const msg = log.join(" | ") + ` | Papier: ${P.length} geprüft, ${closed} beendet${nod ? ", " + nod + " ohne Kurs" : ""}`;
   try { await kvPut(env, "log_sig", new Date().toISOString() + " " + msg.slice(0, 900)); } catch (e) {}
   return msg;
 }
 
+// ---------------------------------------------------------------- Hebel: Ergebnis auf den Einsatz (Margin) bei der angegebenen Hebelspanne
+// Liquidation, wenn der Stopp weiter weg liegt, als der Hebel aushält (ca. 1/Hebel minus 0,5 % Wartungsmarge) – dann ist der Einsatz weg, bevor der Stopp greift.
+export function levOf(s) { const m = String(s || "").match(/(\d+)\s*(?:-\s*(\d+))?\s*x/i); return m ? [+m[1], +(m[2] || m[1])] : null; }
+export function levRes(p, L) {
+  if (p.e == null || p.pct == null || !L) return null;
+  const d = Math.abs(p.e - p.sl0) / p.e;
+  if (d >= 1 / L - 0.005) return { liq: true, m: -100 };
+  return { liq: false, m: Math.max(-100, p.pct * L) };
+}
 // ---------------------------------------------------------------- Auswertung + Seite
 export async function sigData(env) {
   await sigSchema(env);
@@ -232,7 +247,10 @@ export async function sigData(env) {
     return { id: S.id, name: S.name, ch: S.ch, posts, ideas: L.length, open: L.filter((p) => p.status === "open").length, wait: L.filter((p) => p.status === "wait").length,
       missed: L.filter((p) => p.status === "missed" || p.status === "expired").length, nodata: L.filter((p) => p.status === "nodata").length,
       closed: C.length, win: C.length ? W.length / C.length : null, sumR: C.reduce((s, p) => s + p.r, 0), avgR: C.length ? C.reduce((s, p) => s + p.r, 0) / C.length : null,
-      pf: gl > 0 ? gw / gl : null, tp1: C.length ? C.filter((p) => p.hits >= 1).length / C.length : null, liveClosed: C.filter((p) => p.live).length };
+      pf: gl > 0 ? gw / gl : null, tp1: C.length ? C.filter((p) => p.hits >= 1).length / C.length : null, liveClosed: C.filter((p) => p.live).length,
+      levN: C.filter((p) => levOf(p.lev)).length, levLo: (() => { const v = C.map((p) => levOf(p.lev) && levRes(p, levOf(p.lev)[0])).filter(Boolean); return v.length ? v.reduce((s, x) => s + x.m, 0) / v.length : null; })(),
+      levHi: (() => { const v = C.map((p) => levOf(p.lev) && levRes(p, levOf(p.lev)[1])).filter(Boolean); return v.length ? v.reduce((s, x) => s + x.m, 0) / v.length : null; })(),
+      liqHi: C.filter((p) => levOf(p.lev) && levRes(p, levOf(p.lev)[1])?.liq).length };
   });
   return { stats, rows: A.slice(0, 150), log: await env.DB.prepare("SELECT v FROM hub_kv WHERE k = 'log_sig'").first().then((r) => r?.v || "").catch(() => "") };
 }
@@ -252,12 +270,13 @@ h1{font-size:20px;color:var(--au);margin:4px 0 4px}.mu{color:var(--mu);font-size
 .tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{color:var(--mu);font-weight:500}td:nth-child(-n+4),th:nth-child(-n+4){text-align:left}
 .pos{color:var(--up)}.neg{color:var(--dn)}a{color:var(--au)}</style></head><body>
 <h1>📥 Fremd-Ideen · Papier-Prüfung</h1>
-<div class=mu>Liest die öffentlichen Kanäle alle 5 Minuten und handelt jede erkannte Idee auf Papier mit echten Futures-Kursen – nach festen, gleichen Regeln: 50 % bei Ziel 1 und Stopp auf Einstand, 25 % bei Ziel 2, das letzte Viertel läuft bis zum letzten Ziel (Stopp wird nachgezogen). Binance Killers: 7 Tage Wartezeit auf den Einstieg, bis 60 Tage Laufzeit · ChainX: 48 Std. / 21 Tage. Ergebnis in R (1R = Abstand Einstieg–Stopp), Prozent ohne Hebel. Nur für dich – nicht weiterleiten. Keine Anlageberatung.</div>
+<div class=mu>Liest die öffentlichen Kanäle alle 5 Minuten und handelt jede erkannte Idee auf Papier mit echten Futures-Kursen – nach festen, gleichen Regeln: 50 % bei Ziel 1 und Stopp auf Einstand, 25 % bei Ziel 2, das letzte Viertel läuft bis zum letzten Ziel (Stopp wird nachgezogen). Binance Killers: 7 Tage Wartezeit auf den Einstieg, bis 60 Tage Laufzeit · ChainX: 48 Std. / 21 Tage. Ergebnis in R (1R = Abstand Einstieg–Stopp), Prozent ohne Hebel und – wo die Gruppe einen Hebel angibt – auf den Einsatz bei kleinstem und größtem Hebel (inkl. Liquidation, wenn der Stopp weiter weg liegt, als der Hebel aushält). Nur für dich – nicht weiterleiten. Keine Anlageberatung.</div>
 <div class=g>${D.stats.map((s) => `<div class=c><h2>${esc(s.name)} <a class=mu href="https://t.me/s/${esc(s.ch)}" target=_blank rel=noopener>t.me/${esc(s.ch)}</a></h2>
 <div class=k><div><b>${s.closed}</b><span>beendet (${s.liveClosed} live)</span></div><div><b>${pct(s.win)}</b><span>im Plus</span></div><div><b class="${(s.avgR || 0) >= 0 ? "pos" : "neg"}">${f(s.avgR)}R</b><span>Ø je Idee</span></div>
 <div><b class="${s.sumR >= 0 ? "pos" : "neg"}">${f(s.sumR, 1)}R</b><span>Summe</span></div><div><b>${s.pf == null ? "–" : s.pf.toFixed(2)}</b><span>Gewinnfaktor</span></div><div><b>${pct(s.tp1)}</b><span>Ziel 1 erreicht</span></div></div>
+${s.levN ? `<div class=mu style="margin-top:8px">Mit angegebenem Hebel (${s.levN} Trades), Ø je Trade auf den Einsatz: <b class="${(s.levLo || 0) >= 0 ? "pos" : "neg"}">${f(s.levLo, 1)} %</b> beim kleinsten · <b class="${(s.levHi || 0) >= 0 ? "pos" : "neg"}">${f(s.levHi, 1)} %</b> beim größten Hebel${s.liqHi ? " · " + s.liqHi + "× liquidiert beim größten Hebel" : ""}</div>` : ""}
 <div class=mu style="margin-top:8px">${s.posts} Beiträge gelesen · ${s.ideas} Ideen · ${s.open} offen · ${s.wait} warten · ${s.missed} verpasst/verfallen${s.nodata ? " · " + s.nodata + " ohne Kurs" : ""}</div></div>`).join("")}</div>
-<div class="c tw"><table><thead><tr><th>Beitrag</th><th>Gruppe</th><th>Coin</th><th>Status</th><th>Einstieg</th><th>Stopp</th><th>Ziele erreicht</th><th>Ergebnis</th><th>% o. Hebel</th></tr></thead><tbody>
-${D.rows.map((p) => `<tr><td>${dt(p.t)}</td><td>${esc((SRC.find((s) => s.id === p.src) || {}).name)}${p.live ? "" : ' <span class=mu title="vor dem Start eingelesen – Verlierer könnten gelöscht worden sein">(rückwirkend)</span>'}</td><td><a href="https://t.me/${esc((SRC.find((s) => s.id === p.src) || {}).ch)}/${p.pid}" target=_blank rel=noopener>${esc(p.sym)}</a> ${p.dir > 0 ? "Long" : "Short"}</td><td title="${esc(p.why || "")}">${esc(st[p.status] || p.status)}${p.why && p.status !== "open" ? " · " + esc(p.why) : ""}</td><td>${p.e != null ? d(p.e) : p.mkt ? "Markt" : d(p.lo) + "–" + d(p.hi)}</td><td>${d(p.sl0)}</td><td>${p.hits}/${JSON.parse(p.tps).length}</td><td class="${(p.r || 0) >= 0 ? "pos" : "neg"}">${p.r == null ? (p.status === "open" ? f(p.part) + "R real." : "–") : f(p.r) + "R"}</td><td>${p.pct == null ? "–" : f(p.pct, 1) + " %"}</td></tr>`).join("") || "<tr><td colspan=9>Noch nichts eingelesen.</td></tr>"}
+<div class="c tw"><table><thead><tr><th>Beitrag</th><th>Gruppe</th><th>Coin</th><th>Status</th><th>Einstieg</th><th>Stopp</th><th>Ziele erreicht</th><th>Ergebnis</th><th>% o. Hebel</th><th>mit Hebel (auf Einsatz)</th></tr></thead><tbody>
+${D.rows.map((p) => `<tr><td>${dt(p.t)}</td><td>${esc((SRC.find((s) => s.id === p.src) || {}).name)}${p.live ? "" : ' <span class=mu title="vor dem Start eingelesen – Verlierer könnten gelöscht worden sein">(rückwirkend)</span>'}</td><td><a href="https://t.me/${esc((SRC.find((s) => s.id === p.src) || {}).ch)}/${p.pid}" target=_blank rel=noopener>${esc(p.sym)}</a> ${p.dir > 0 ? "Long" : "Short"}</td><td title="${esc(p.why || "")}">${esc(st[p.status] || p.status)}${p.why && p.status !== "open" ? " · " + esc(p.why) : ""}</td><td>${p.e != null ? d(p.e) : p.mkt ? "Markt" : d(p.lo) + "–" + d(p.hi)}</td><td>${d(p.sl0)}</td><td>${p.hits}/${JSON.parse(p.tps).length}</td><td class="${(p.r || 0) >= 0 ? "pos" : "neg"}">${p.r == null ? (p.status === "open" ? f(p.part) + "R real." : "–") : f(p.r) + "R"}</td><td>${p.pct == null ? "–" : f(p.pct, 1) + " %"}</td><td>${(() => { const L = levOf(p.lev); if (!L) return p.lev ? esc(p.lev) : '<span class=mu>keine Angabe</span>'; const a = levRes(p, L[0]), b = levRes(p, L[1]); if (!a) return esc(p.lev); const t = (x, l) => l + "x: " + (x.liq ? '<span class=neg>Liquidation</span>' : `<span class="${x.m >= 0 ? "pos" : "neg"}">${f(x.m, 1)} %</span>`); return L[0] === L[1] ? t(a, L[0]) : t(a, L[0]) + " · " + t(b, L[1]); })()}</td></tr>`).join("") || "<tr><td colspan=10>Noch nichts eingelesen.</td></tr>"}
 </tbody></table></div><p class=mu>Letzter Lauf: ${esc(D.log)}</p></body></html>`;
 }
