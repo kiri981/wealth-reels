@@ -117,9 +117,13 @@ export function scan(D, H4, btcD, ctx = {}) {
 }
 
 // ---------------------------------------------------------------- Stündlicher Scan
-async function cz(env, path, q) {
-  const r = await fetch(`https://api.coinalyze.net/v1/${path}?${new URLSearchParams(q)}`, { headers: { api_key: env.COINALYZE_KEY } });
-  if (!r.ok) throw new Error(`Coinalyze ${path} ${r.status}`); return r.json();
+async function cz(env, path, q, tries = 4) {   // Coinalyze: max. 40 Abfragen/Min. – bei 429 warten (Retry-After) und wiederholen
+  for (let k = 0; ; k++) {
+    const r = await fetch(`https://api.coinalyze.net/v1/${path}?${new URLSearchParams(q)}`, { headers: { api_key: env.COINALYZE_KEY } });
+    if (r.ok) return r.json();
+    if (r.status === 429 && k < tries - 1) { await new Promise((ok) => setTimeout(ok, Math.min(20000, (+(r.headers.get("retry-after") || 0) * 1000) || 4000 * (k + 1)))); continue; }
+    throw new Error(`Coinalyze ${path} ${r.status}`);
+  }
 }
 async function czMap(env, kvGet, kvPut) {   // Basis-Symbol → bestes USDT-Perp (bevorzugt Binance „.A“), täglich neu
   const day = new Date().toISOString().slice(0, 10); const c = await kvGet(env, "czmap_" + day); if (c) return JSON.parse(c);
@@ -131,7 +135,7 @@ async function czMap(env, kvGet, kvPut) {   // Basis-Symbol → bestes USDT-Perp
 async function hist(env, path, syms, interval, from, to, extra = {}) {
   const out = {};
   for (let i = 0; i < syms.length; i += 20) {
-    const L = await cz(env, path, { symbols: syms.slice(i, i + 20).join(","), interval, from, to, ...extra }).catch(() => []);
+    const L = await cz(env, path, { symbols: syms.slice(i, i + 20).join(","), interval, from, to, ...extra }).catch((e) => { hist.err = (hist.err || 0) + 1; hist.last = e.message; return []; });
     for (const x of L) out[x.symbol] = x.history || [];
   }
   return out;
@@ -154,7 +158,7 @@ export async function altTick(env, say, kvGet, kvPut, force) {
   const map = await czMap(env, kvGet, kvPut);
   const coins = M.map((x) => ({ sym: x.symbol.toUpperCase(), name: x.name, rank: x.market_cap_rank, mcap: x.market_cap, px: x.current_price, cz: map[x.symbol.toUpperCase()] })).filter((x) => x.cz);
   if (!coins.find((x) => x.sym === "BTC") && map.BTC) coins.unshift({ sym: "BTC", name: "Bitcoin", rank: 1, cz: map.BTC });
-  const syms = coins.map((x) => x.cz);
+  const syms = coins.map((x) => x.cz); hist.err = 0;
   const Dd = await hist(env, "ohlcv-history", syms, "daily", now - 230 * 86400, now);
   const H4 = await hist(env, "ohlcv-history", syms, "4hour", now - 40 * 86400, now);
   const OI = await hist(env, "open-interest-history", syms, "daily", now - 9 * 86400, now, { convert_to_usd: "true" });
@@ -195,7 +199,7 @@ export async function altTick(env, say, kvGet, kvPut, force) {
     const col = dt >= 7 * 86400 ? "px7d" : dt >= 3 * 86400 && g.px3d == null ? "px3d" : g.px1d == null ? "px1d" : null;
     if (col || hit !== g.hit) await env.DB.prepare(`UPDATE hub_altsig SET ${col || "hit"} = ?, hit = ? WHERE sym = ? AND t = ?`).bind(col ? px : hit, hit || null, g.sym, g.t).run();
   }
-  const msg = `Altcoins (${msrc}): ${res.length} gescannt, ${res.filter((r) => r.s.scen).length} mit Szenario, ${sent} Hinweise`;
+  const msg = `Altcoins (${msrc}${hist.err ? ", " + hist.err + " Coinalyze-Abrufe fehlgeschlagen: " + hist.last : ""}): ${coins.length} mit Perp, ${res.length} gescannt, ${res.filter((r) => r.s.scen).length} mit Szenario, ${sent} Hinweise`;
   await kvPut(env, "log_alt", new Date().toISOString() + " " + msg);
   return msg;
 }

@@ -25,7 +25,15 @@ export async function memeSchema(env) {
 }
 
 // ---------------------------------------------------------------- Daten holen
-async function j(url) { const r = await fetch(url, { headers: UA }); if (!r.ok) throw new Error(url.split("?")[0].slice(-40) + " " + r.status); return r.json(); }
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+async function j(url, tries = 3) {   // bei „zu viele Anfragen“ (429) kurz warten und wiederholen – Cloudflare-Server teilen sich die Grenzen der Anbieter
+  for (let k = 0; ; k++) {
+    const r = await fetch(url, { headers: UA });
+    if (r.ok) return r.json();
+    if ((r.status === 429 || r.status >= 500) && k < tries - 1) { await wait(+(r.headers.get("retry-after") || 0) * 1000 || 2500 + k * 2500); continue; }
+    throw new Error(url.split("?")[0].replace(/^https:\/\/[^/]+/, "").slice(-40) + " " + r.status);
+  }
+}
 function fromGT(p, tokens, src) {
   const a = p.attributes; const net = p.relationships?.network?.data?.id || p.id.split("_")[0]; const chain = NET[net] || net;
   const tid = p.relationships?.base_token?.data?.id; const tk = tokens[tid] || {}; const addr = tk.address || (tid ? tid.slice(tid.indexOf("_") + 1) : null);
@@ -114,7 +122,7 @@ export async function memeTick(env, say, kvGet, kvPut) {
   const add = (x) => { if (!x.token || !x.pool || STABLE.test(x.sym || "")) return; const k = x.chain + ":" + x.token; if (C[k]) { C[k].src = [...new Set([...C[k].src, ...x.src])]; if ((x.liq || 0) > (C[k].liq || 0)) Object.assign(C[k], { ...x, src: C[k].src }); } else C[k] = x; };
   for (const [url, src] of [[`${GT}/networks/trending_pools?include=base_token&duration=5m`, "Trend 5m"], [`${GT}/networks/trending_pools?include=base_token&duration=1h`, "Trend 1h"],
     [`${GT}/networks/new_pools?include=base_token`, "Neu"], [`${GT}/networks/solana/new_pools?include=base_token`, "Neu"]]) {
-    try { const r = await j(url); const T = Object.fromEntries((r.included || []).map((t) => [t.id, t.attributes])); for (const p of r.data || []) add(fromGT(p, T, src)); }
+    try { const r = await j(url); await wait(1200); const T = Object.fromEntries((r.included || []).map((t) => [t.id, t.attributes])); for (const p of r.data || []) add(fromGT(p, T, src)); }
     catch (e) { log.push("GT " + e.message); }
   }
   try {   // DexScreener: frisch angelegte Profile und Boosts (Teams, die Werbung bezahlen – Hinweis, kein Qualitätsmerkmal)
@@ -123,7 +131,8 @@ export async function memeTick(env, say, kvGet, kvPut) {
     for (const [chain, M] of Object.entries(by)) { const pairs = await dsPairs(chain, Object.keys(M).slice(0, 30)); for (const [addr, x] of Object.entries(pairs)) add(fromDS(x, M[addr])); }
   } catch (e) { log.push("DS " + e.message); }
 
-  const ids = Object.keys(C); if (!ids.length) return "Meme-Radar: keine Daten " + log.join(" ");
+  const ids = Object.keys(C);
+  if (!ids.length) { let mp = ""; try { mp = await mpManage(env, say); } catch (e) { mp = "Papier-Wallet " + e.message; } return "Meme-Radar: keine Daten " + log.join(" ") + " | " + mp; }
   const old = {}; for (let i = 0; i < ids.length; i += 90) for (const r of (await env.DB.prepare(`SELECT * FROM hub_meme WHERE id IN (${ids.slice(i, i + 90).map(() => "?").join(",")})`).bind(...ids.slice(i, i + 90)).all()).results) old[r.id] = r;
   const rows = ids.map((id) => { const x = C[id], o = old[id]; const m = metrics(x, now, o); return { id, x, o, m }; }).sort((a, b) => b.m.score - a.m.score);
 
