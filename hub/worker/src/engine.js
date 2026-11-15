@@ -133,6 +133,7 @@ export function runSwing(C, p) {
     const s50 = sma(50, i), s200 = sma(200, i), trend = c[i] > s200 && s50 > s200; let ent = false;
     if (trend && (p.entry === "A" || p.entry === "AB") && c[i] > hh(i)) ent = true;
     if (trend && (p.entry === "B" || p.entry === "AB") && Math.min(l[i], l[i - 1], l[i - 2]) <= Math.max(s50, sma(50, i - 1), sma(50, i - 2)) && c[i] > h[i - 1]) ent = true;
+    if (ent && p._filt && !p._filt[i]) ent = false;   // Zusatzfilter (COT/Realzins), vorab je Tag berechnet
     if (!ent) { i++; continue; }
     const j0 = i + 1, e = o[j0], R = p.k * atr[i], stop = e - R; let ex = null, j = j0;
     while (j < n) {
@@ -145,6 +146,37 @@ export function runSwing(C, p) {
     i = j + 1;
   }
   return out;
+}
+
+// ---------------------------------------------------------------- Swing-Zusatzfilter (v1.5) – 1:1 wie swing_filter() in engine.py
+// cot: [{d:"YYYY-MM-DD", mm_l, mm_s, oi}] aufsteigend · ry: [{d, v}] (FRED DFII10, US-Realzins 10J) aufsteigend
+export const FILTERS = ["none", "cot80", "cotchg", "ry20", "rysma", "cot80ry"];
+const day = (t) => new Date(t * 1000).toISOString().slice(0, 10);
+const addDays = (d, k) => new Date(Date.parse(d + "T00:00:00Z") + k * 86400000).toISOString().slice(0, 10);
+export function swingFilter(C, kind, cot, ry) {
+  const n = C.length, ok = new Array(n).fill(true), D = C.map((x) => day(x.t));
+  if (!kind || kind === "none") return ok;
+  if (["cot80", "cotchg", "cot80ry"].includes(kind) && cot && cot.length) {
+    const net = cot.map((x) => (x.mm_l - x.mm_s) / x.oi), av = cot.map((x) => addDays(x.d.slice(0, 10), 4));
+    const pct = net.map((v, i) => { const w = net.slice(Math.max(0, i - 155), i + 1); return w.length >= 52 ? w.filter((x) => x <= v).length / w.length : NaN; });
+    const chg = net.map((v, i) => (i >= 4 ? v - net[i - 4] : NaN));
+    let j = -1;
+    for (let i = 0; i < n; i++) {
+      while (j + 1 < av.length && av[j + 1] <= D[i]) j++;
+      const P = j >= 0 ? pct[j] : NaN, G = j >= 0 ? chg[j] : NaN;
+      if ((kind === "cot80" || kind === "cot80ry") && P >= 0.8) ok[i] = false;
+      if (kind === "cotchg" && G <= 0) ok[i] = false;
+    }
+  }
+  if (["ry20", "rysma", "cot80ry"].includes(kind) && ry && ry.length) {
+    const R = []; let j = -1;
+    for (let i = 0; i < n; i++) { while (j + 1 < ry.length && ry[j + 1].d < D[i]) j++; R.push(j >= 0 ? ry[j].v : NaN); }   // letzter Wert VOR dem Handelstag
+    for (let i = 0; i < n; i++) {
+      if ((kind === "ry20" || kind === "cot80ry") && i >= 20 && R[i] - R[i - 20] > 0) ok[i] = false;
+      if (kind === "rysma" && i >= 49) { let s = 0, f = true; for (let k = i - 49; k <= i; k++) { if (!isFinite(R[k])) f = false; s += R[k]; } if (f && R[i] > s / 50) ok[i] = false; }
+    }
+  }
+  return ok;
 }
 
 export function trades(fam, p, data) {

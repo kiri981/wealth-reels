@@ -162,6 +162,7 @@ def run_swing(d1, p):
         ent = False
         if trend and p["entry"] in ("A", "AB") and c[i] > hh[i]: ent = True
         if trend and p["entry"] in ("B", "AB") and min(l[i], l[i-1], l[i-2]) <= max(s50[i], s50[i-1], s50[i-2]) and c[i] > h[i-1]: ent = True
+        if ent and p.get("_filt") is not None and not p["_filt"][i]: ent = False   # Zusatzfilter (COT/Zinsen), vorab je Tag berechnet
         if not ent:
             i += 1; continue
         j0 = i + 1; e = o[j0]; R = p["k"] * atr[i]; stop = e - R; ex = None; j = j0
@@ -173,6 +174,39 @@ def run_swing(d1, p):
         out.append(dict(t=int(t[j0]), dr=1, e=float(e), sl=float(e - R), r=float((ex - e - p.get("_cost", 0.5)) / R), why="exit", tx=int(t[j])))
         i = j + 1
     return out
+
+
+# ---------------------------------------------------------------- Swing-Zusatzfilter (v1.5): COMEX-Positionierung (COT) und US-Realzinsen (FRED DFII10)
+# cot: DataFrame d (Dienstag des Berichts), net = (mm_l - mm_s) / oi   ·   ry: Series DFII10 mit Datum als Index
+# Arten: none · cot80 (Fonds nicht extrem long: Perzentil < 80 % der letzten 3 Jahre) · cotchg (Fonds bauen in 4 Wochen Longs auf)
+#        ry20 (Realzins in 20 Handelstagen nicht gestiegen) · rysma (Realzins unter 50-Tage-Schnitt) · cot80ry (cot80 und ry20)
+FILTERS = ["none", "cot80", "cotchg", "ry20", "rysma", "cot80ry"]
+def cot_feats(cot):
+    c = cot.sort_values("d"); net = ((c.mm_l - c.mm_s) / c.oi).values; pct = np.full(len(net), np.nan); chg = np.full(len(net), np.nan)
+    for i in range(len(net)):
+        w = net[max(0, i - 155): i + 1]
+        if len(w) >= 52: pct[i] = (w <= net[i]).mean()
+        if i >= 4: chg[i] = net[i] - net[i - 4]
+    avail = (pd.to_datetime(c.d).values.astype("datetime64[D]") + np.timedelta64(4, "D")).astype("datetime64[D]")   # Bericht Di, veröffentlicht Fr
+    return avail, pct, chg
+def swing_filter(dates, kind, cot=None, ry=None):
+    """dates: Handelstage (datetime64[D]); gibt bool-Array zurück (True = Einstieg erlaubt). Fehlende Daten = erlaubt."""
+    n = len(dates); ok = np.ones(n, bool); dates = np.asarray(dates).astype("datetime64[D]")
+    if kind == "none": return ok
+    if kind in ("cot80", "cotchg", "cot80ry") and cot is not None and len(cot):
+        av, pct, chg = cot_feats(cot); j = np.searchsorted(av, dates, side="right") - 1
+        P = np.where(j >= 0, pct[np.clip(j, 0, None)], np.nan); Cg = np.where(j >= 0, chg[np.clip(j, 0, None)], np.nan)
+        if kind in ("cot80", "cot80ry"): ok &= ~(P >= 0.8)
+        if kind == "cotchg": ok &= ~(Cg <= 0)
+    if kind in ("ry20", "rysma", "cot80ry") and ry is not None and len(ry):
+        ry = ry.dropna(); rd = ry.index.values.astype("datetime64[D]"); rv = ry.values
+        j = np.searchsorted(rd, dates, side="left") - 1   # letzter Wert VOR dem Handelstag (FRED veröffentlicht am Folgetag)
+        R = np.where(j >= 0, rv[np.clip(j, 0, None)], np.nan)
+        if kind in ("ry20", "cot80ry"):
+            d20 = R - np.r_[np.full(20, np.nan), R[:-20]] if n > 20 else np.full(n, np.nan); ok &= ~(d20 > 0)
+        if kind == "rysma":
+            sma = pd.Series(R).rolling(50).mean().values; ok &= ~(R > sma)
+    return ok
 
 # ---------------------------------------------------------------- Kennzahlen
 def stats(trades):

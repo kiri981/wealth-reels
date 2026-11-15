@@ -16,7 +16,7 @@ Aufruf: python3 hub/research.py [--budget 300]
 import json, os, sys, time, hashlib, random, datetime as dt
 import numpy as np, pandas as pd
 sys.path.insert(0, os.path.dirname(__file__))
-from engine import load, resample, days, run_sess, feats, run_rbo, run_swing, stats, with_sym, SYMS
+from engine import load, resample, days, run_sess, feats, run_rbo, run_swing, stats, with_sym, SYMS, swing_filter, FILTERS
 
 HUB = os.path.dirname(os.path.abspath(__file__))
 REG = os.path.join(HUB, "registry.json")
@@ -27,7 +27,7 @@ SPACE = {
     "sess": dict(sym=list(SYMS), anchor=list(range(-360, 961, 15)), rl=[15, 30, 45, 60], win=[30, 60, 120, 180], hold=[120, 240, 360],
                  ctr=[0, 1], maxW=[0.2, 0.27, 0.35, 99], tp=[1.0, 1.5, 2.0, 3.0], slm=["opp", "mid"], be=[0, 1.0], tf=["5m"]),
     "rbo": dict(sym=list(SYMS), N=[12, 24, 36, 48, 72, 96], body=[0.5, 0.75, 1.0, 1.5], trend=[0, 1], tp=[1.5, 2.0, 3.0], be=[0, 1.0], tf=["5m", "15m"]),
-    "swing": dict(sym=list(SYMS), entry=["A", "B", "AB"], k=[1.5, 2.0, 3.0], exitN=[10, 20, 40], brkN=[20, 55, 100], tf=["1d"]),
+    "swing": dict(sym=list(SYMS), entry=["A", "B", "AB"], k=[1.5, 2.0, 3.0], exitN=[10, 20, 40], brkN=[20, 55, 100], filt=FILTERS, tf=["1d"]),
 }
 def key(fam, p): return fam + ":" + hashlib.md5(json.dumps(p, sort_keys=True).encode()).hexdigest()[:10]
 
@@ -56,13 +56,22 @@ class SymData:
             if len(m5) and (m5.index[-1] - m5.index[0]).days >= 30:   # mind. 30 Tage für Intraday-Familien
                 self.m5 = m5; self.DAYS = days(m5); self.F = {"5m": feats(m5), "15m": feats(resample(m5, "15min"))}
                 self.t0, self.t1 = int(m5.index[0].timestamp()), int(m5.index[-1].timestamp())
-        p1 = os.path.join(HUB, f"data/{lo}_d1.csv")
-        self.d1 = load(p1) if os.path.exists(p1) else None
-        if self.d1 is not None and len(self.d1) < 260: self.d1 = None
+        p1 = os.path.join(HUB, f"data/{lo}_d1.csv"); pl = os.path.join(HUB, f"data/{lo}_d1_long.csv")   # long = Futures-Historie seit 2006 (Yahoo), davor angehängt
+        d1 = load(p1) if os.path.exists(p1) else None
+        if os.path.exists(pl):
+            L = load(pl); L["h"] = L[["o", "h", "c"]].max(axis=1); L["l"] = L[["o", "l", "c"]].min(axis=1)
+            d1 = L if d1 is None else pd.concat([L[L.index < d1.index[0] - pd.Timedelta(hours=12)], d1])
+        self.d1 = d1 if d1 is not None and len(d1) >= 260 else None
+        self.filt = {}
 
 class Data:
     def __init__(self):
         self.S = {s: SymData(s) for s in SYMS}
+        pc, pm = os.path.join(HUB, "data/cot.csv"), os.path.join(HUB, "data/macro_fred.csv")
+        self.cot = pd.read_csv(pc) if os.path.exists(pc) else None
+        self.ry = None
+        if os.path.exists(pm):
+            m = pd.read_csv(pm); m.index = pd.to_datetime(m.iloc[:, 0]); self.ry = pd.to_numeric(m.get("DFII10"), errors="coerce").dropna() if "DFII10" in m else None
         g = self.S["XAUUSD"]; self.m5, self.DAYS, self.d1 = g.m5, g.DAYS, g.d1
     def has(self, fam, sym):
         x = self.S[sym]; return (x.d1 is not None) if fam == "swing" else (x.m5 is not None)
@@ -71,7 +80,13 @@ class Data:
         if not self.has(fam, p.get("sym", "XAUUSD")): return []
         if fam == "sess": return run_sess(x.DAYS, q)
         if fam == "rbo": return run_rbo(x.F[p["tf"]], q)
-        if fam == "swing": return run_swing(x.d1, q)
+        if fam == "swing":
+            f = p.get("filt", "none"); sym = p.get("sym", "XAUUSD")
+            if f != "none" and sym == "BTCUSD": return []   # COT/Realzins-Filter nur für Gold/Silber
+            if f not in x.filt:
+                cot = self.cot[self.cot.sym == sym] if self.cot is not None else None
+                x.filt[f] = swing_filter(x.d1.index.tz_localize(None).values.astype("datetime64[D]"), f, cot, self.ry)
+            return run_swing(x.d1, {**q, "_filt": x.filt[f]})
         return []
     def span(self, fam, sym="XAUUSD"):
         x = self.S[sym]
@@ -225,7 +240,9 @@ def _describe(fam, p):
     if fam == "rbo":
         return f"Ausbruch+Retest {p['tf']} N={p['N']}, Körper {p['body']}·ATR{', mit 1h-Trend' if p['trend'] else ''}, Ziel {p['tp']}R{', BE 1R' if p['be'] else ''}"
     if fam == "swing":
-        return f"Swing Long {p['entry']} (Ausbruch {p['brkN']}T), SL {p['k']}·ATR, Ausstieg {p['exitN']}-Tage-Tief"
+        F = {"none": "", "cot80": ", nur wenn Fonds nicht extrem long (COT)", "cotchg": ", nur wenn Fonds Longs aufbauen (COT)", "ry20": ", nur wenn Realzins nicht steigt",
+             "rysma": ", nur wenn Realzins unter 50-Tage-Schnitt", "cot80ry": ", nur wenn Fonds nicht extrem long und Realzins nicht steigt"}
+        return f"Swing Long {p['entry']} (Ausbruch {p['brkN']}T), SL {p['k']}·ATR, Ausstieg {p['exitN']}-Tage-Tief" + F.get(p.get("filt", "none"), "")
     return fam
 
 if __name__ == "__main__":

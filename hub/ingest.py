@@ -4,7 +4,7 @@ Symbole: in hub_candles.tf steht "5m"/"1d" für Gold, "XAGUSD:5m", "BTCUSD:1d" u
 Jede Datei: JSON-Liste von Zeilen aus D1, z. B. das "results"-Array von
   SELECT tf, t, o, h, l, c FROM hub_candles WHERE …            (Kerzen, tf = '5m' oder '1d')
   SELECT sid, t, dr, e, sl, r, why, tx, closed FROM hub_trades (Papier-Trades, ersetzt live/trades.json komplett)
-Zusatzdaten: Zeilen aus hub_cot / hub_etf / hub_deriv / hub_events / hub_news werden erkannt und nach hub/data/<art>.csv zusammengeführt.
+Zusatzdaten: Zeilen aus hub_macro (FRED) / hub_cot / hub_etf / hub_deriv / hub_events / hub_news werden erkannt und nach hub/data/<art>.csv zusammengeführt.
 Ausgabe: hub/data/live/m5_YYYY-MM.csv (zusammengeführt, ohne Duplikate), hub/data/xauusd_d1.csv, hub/live/trades.json
 Zeigt am Ende den Zeitpunkt der letzten 5m-Kerze im Repo (für die nächste Abfrage: WHERE t > <wert>).
 """
@@ -29,6 +29,11 @@ def main(files):
         rows = json.load(open(f))
         if isinstance(rows, dict): rows = rows.get("results", [])
         if rows and "sid" in rows[0]: tr = rows; continue
+        if rows and "series" in rows[0]:   # hub_macro (FRED) -> data/macro_fred.csv (breit: observation_date, DFII10, DGS10, …)
+            p = os.path.join(HUB, "data/macro_fred.csv"); new = pd.DataFrame(rows).pivot_table(index="d", columns="series", values="v", aggfunc="last")
+            new.index.name = "observation_date"
+            old = pd.read_csv(p, index_col=0) if os.path.exists(p) else new.iloc[:0]
+            m = new.combine_first(old).sort_index(); m.to_csv(p); print(p, len(m), "Tage"); continue
         if rows and any(k in rows[0] for k in ("mm_l", "tonnes", "fr", "liq_l", "impact", "score")):   # Zusatzdaten (COT, ETF, Derivate, Termine, Nachrichten)
             kind = "cot" if "mm_l" in rows[0] else "etf" if "tonnes" in rows[0] else "deriv" if ("fr" in rows[0] or "liq_l" in rows[0]) else "events" if "impact" in rows[0] else "news"
             key = {"cot": ["sym", "d"], "etf": ["sym", "d"], "deriv": ["sym", "t"], "events": ["id"], "news": ["id"]}[kind]

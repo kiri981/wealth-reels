@@ -7,7 +7,7 @@
 // Secrets: META_TOKEN, META_ACCOUNT, (META_REGION), GH_TOKEN, HUB_KEY
 import * as E from "./engine.js";
 
-const VERSION = "1.4";
+const VERSION = "1.5";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -54,6 +54,7 @@ async function schema(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_news (id TEXT PRIMARY KEY, t INTEGER, src TEXT, title TEXT, url TEXT, score INTEGER, dir TEXT, summary TEXT, sent INTEGER DEFAULT 0)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_deriv (sym TEXT, t INTEGER, oi REAL, fr REAL, liq_l REAL, liq_s REAL, ls REAL, PRIMARY KEY (sym, t))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_cot (sym TEXT, d TEXT, mm_l REAL, mm_s REAL, pm_l REAL, pm_s REAL, sd_l REAL, sd_s REAL, oi REAL, PRIMARY KEY (sym, d))"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_macro (series TEXT, d TEXT, v REAL, PRIMARY KEY (series, d))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_etf (sym TEXT, d TEXT, tonnes REAL, PRIMARY KEY (sym, d))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_events (id TEXT PRIMARY KEY, t INTEGER, cur TEXT, title TEXT, impact TEXT, forecast TEXT, previous TEXT, actual TEXT, note TEXT)"),
   ]);
@@ -269,6 +270,20 @@ async function cotTick(env, log) {
   log.push(`COT/ETF:${n}`);
 }
 
+// ---------------------------------------------------------------- Zinsen & Dollar (FRED, ohne Schlüssel, v1.5)
+// DFII10 = US-Realzins 10J (TIPS) · DGS10 = 10J-Rendite · DTWEXBGS = breiter Dollar-Index · T10YIE = Inflationserwartung 10J
+async function macroTick(env, log) {
+  const today = new Date().toISOString().slice(0, 10);
+  if ((await kvGet(env, "macro_check")) === today) return; await kvPut(env, "macro_check", today);
+  const from = new Date(Date.now() - 400 * 86400000).toISOString().slice(0, 10);
+  const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFII10,DGS10,DTWEXBGS,T10YIE&cosd=${from}`, { headers: { "User-Agent": "Mozilla/5.0 wc-hub" } });
+  if (!r.ok) { log.push("FRED " + r.status); await kvPut(env, "macro_check", ""); return; }
+  const L = (await r.text()).trim().split(/\r?\n/); const head = L[0].split(","); const st = [];
+  for (const l of L.slice(1)) { const c = l.split(","); for (let k = 1; k < c.length; k++) { const v = parseFloat(c[k]); if (!isNaN(v)) st.push(env.DB.prepare("INSERT OR REPLACE INTO hub_macro (series, d, v) VALUES (?, ?, ?)").bind(head[k], c[0], v)); } }
+  for (let i = 0; i < st.length; i += 90) await env.DB.batch(st.slice(i, i + 90));
+  log.push(`FRED:${st.length}`);
+}
+
 // ---------------------------------------------------------------- Postausgang (Welcome-Bot schickt an Kevin)
 const say = (env, text) => env.DB.prepare("INSERT INTO outbox (kind, text) VALUES ('admin', ?)").bind(text).run();
 
@@ -302,6 +317,11 @@ async function paper(env) {
     }
     const data = DATA[sym];
     if (s.family !== "swing" && !data.DAYS) continue;
+    if (s.family === "swing" && p.filt && p.filt !== "none" && data.D1) {   // COT/Realzins-Filter (v1.5)
+      const cot = (await env.DB.prepare("SELECT d, mm_l, mm_s, oi FROM hub_cot WHERE sym = ? ORDER BY d").bind(sym).all()).results;
+      const ry = (await env.DB.prepare("SELECT d, v FROM hub_macro WHERE series = 'DFII10' ORDER BY d").all()).results;
+      p._filt = E.swingFilter(data.D1, p.filt, cot, ry);
+    }
     let tr; try { tr = E.trades(s.family, p, data); } catch (e) { console.log("Engine", s.id, e.message); continue; }
     const born = Math.floor(new Date((s.created || "2000-01-01") + "T00:00:00Z").getTime() / 1000) + 86400;   // nur Trades NACH der Aufnahme zählen (echter Vorwärtstest)
     for (const x of tr.filter((x) => (x.t >= recent || x.open) && x.t >= born && !inNews(x.t))) {
@@ -398,7 +418,12 @@ async function tick(env) {
   }
   if (min < 5) {   // stündlich
     try { await derivTick(env, log); } catch (e) { log.push("Coinalyze-Fehler " + e.message); }
-    if (hr === 21) { try { await cotTick(env, log); } catch (e) { log.push("COT-Fehler " + e.message); } }
+    try {   // COT abends – und sofort, solange die Tabelle noch leer ist (erster Start)
+      const empty = !(await env.DB.prepare("SELECT 1 FROM hub_cot LIMIT 1").first());
+      if (empty) await kvPut(env, "cot_check", "");
+      if (hr === 21 || empty) await cotTick(env, log);
+    } catch (e) { log.push("COT-Fehler " + e.message); }
+    try { await macroTick(env, log); } catch (e) { log.push("FRED-Fehler " + e.message); }
     try { log.push("Kalender:" + await syncCalendar(env)); } catch (e) { log.push("Kalender-Fehler " + e.message); }
     try { log.push("Register:" + await syncRegistry(env)); } catch (e) { log.push("Register-Fehler " + e.message); }
     await env.DB.prepare("DELETE FROM hub_candles WHERE (tf = '5m' OR tf LIKE '%:5m') AND t < ?").bind(Math.floor(Date.now() / 1000) - 75 * 86400).run();
@@ -420,6 +445,7 @@ export default {
     if (url.pathname === "/run") { await tick(env); return new Response("ok"); }
     if (url.pathname === "/cot") { const log = []; await schema(env); await kvPut(env, "cot_check", ""); await cotTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/deriv") { const log = []; await schema(env); await derivTick(env, log); return new Response(log.join(" | ") + "\n" + (await kvGet(env, "cz_markets"))); }
+    if (url.pathname === "/macro") { const log = []; await schema(env); await kvPut(env, "macro_check", ""); await macroTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/export") { await exportDaily(env); return new Response("export ok"); }
     if (url.pathname === "/status") {
       await schema(env);
