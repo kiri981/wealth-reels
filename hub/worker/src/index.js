@@ -8,8 +8,10 @@
 import * as E from "./engine.js";
 import { memeTick, memePage } from "./meme.js";
 import { walletTick, walletAdmin, walletData } from "./wallets.js";
+import { altTick, altPage, mktTick } from "./alts.js";
+import { mpData } from "./mpaper.js";
 
-const VERSION = "1.9";
+const VERSION = "2.0";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -372,7 +374,7 @@ async function syncRegistry(env) {
 //  · je Gruppe (Metalle = Gold+Silber, Krypto = alle Coins) höchstens RISK.maxGroup offen sind (die laufen oft gleich → doppeltes Risiko),
 //  · der Tag (Bukarest) nicht schon RISK.dayStop R im Minus ist (Tages-Stopp).
 // Positionsgröße: jeder Trade riskiert genau 1R (Stop-Abstand nach Volatilität) – das gleicht unterschiedliche Märkte automatisch aus.
-const RISK = { maxOpen: 4, maxGroup: 2, dayStop: -3 };
+const RISK = { maxOpen: 8, maxGroup: 3, dayStop: -3 };   // v2.0: Kevin – mehr gleichzeitige Trades
 const GROUP = (sym) => (["XAUUSD", "XAGUSD"].includes(sym) ? "Metalle" : sym === "BTCUSD" || E.SYMS[sym]?._costp ? "Krypto" : sym);
 const dayStartBuc = (now) => { const d = new Date(now * 1000); const loc = new Date(d.toLocaleString("en-US", { timeZone: "Europe/Bucharest" })); return now - (loc.getHours() * 3600 + loc.getMinutes() * 60 + loc.getSeconds()); };
 async function riskState(env, now) {
@@ -568,6 +570,7 @@ async function memeRun(env) {   // v1.9: Meme-Radar, danach Smart-Wallets
   const out = [];
   try { out.push(await memeTick(env, say, kvGet, kvPut)); } catch (e) { out.push("Meme-Radar-Fehler " + e.message); }
   try { out.push(await walletTick(env, say, kvGet, kvPut)); } catch (e) { out.push("Wallet-Fehler " + e.message); }
+  try { out.push(await mktTick(env, kvGet, kvPut)); } catch (e) { out.push("Marktbreite-Fehler " + e.message); }
   return out.join(" | ");
 }
 
@@ -578,6 +581,12 @@ export default {
     // Meme-Radar + Smart-Wallets als EIGENER Lauf (eigenes Rechenzeit-Budget) über die Selbst-Verbindung SELF – braucht keinen zweiten Zeitplan
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/memerun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Meme-Lauf: " + e.message)));
     else ctx.waitUntil(memeRun(env));
+    // Altcoin-Scanner stündlich (Minute 10–14) als weiterer eigener Lauf
+    const m = new Date().getUTCMinutes();
+    if (m >= 10 && m < 15) {
+      if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/altrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Alt-Lauf: " + e.message)));
+      else ctx.waitUntil(altTick(env, say, kvGet, kvPut).catch((e) => console.log("Alt-Fehler " + e.message)));
+    }
   },
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -586,9 +595,11 @@ export default {
     if (url.pathname === "/cot") { const log = []; await schema(env); await kvPut(env, "cot_check", ""); await cotTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/deriv") { const log = []; await schema(env); await derivTick(env, log); return new Response(log.join(" | ") + "\n" + (await kvGet(env, "cz_markets"))); }
     if (url.pathname === "/czdaily") { const log = []; await schema(env); await czDaily(env, log); return new Response(log.join(" | ")); }
+    if (url.pathname === "/alts") return new Response(await altPage(env), { headers: { "content-type": "text/html; charset=utf-8" } });
+    if (url.pathname === "/altrun") { try { return new Response(await altTick(env, say, kvGet, kvPut, url.searchParams.get("force") === "1")); } catch (e) { return new Response("Alt-Fehler " + e.message); } }
     if (url.pathname === "/wallet") return new Response(await walletAdmin(env, url.searchParams));
     if (url.pathname === "/walletrun") return new Response(await walletTick(env, say, kvGet, kvPut));
-    if (url.pathname === "/memes") return new Response(await memePage(env, url.searchParams.get("key"), await walletData(env).catch(() => null)), { headers: { "content-type": "text/html; charset=utf-8" } });
+    if (url.pathname === "/memes") return new Response(await memePage(env, url.searchParams.get("key"), await walletData(env).catch(() => null), await mpData(env).catch(() => null)), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/memerun") return new Response(await memeRun(env));
     if (url.pathname === "/weekly") { await schema(env); return new Response(await weeklyReport(env, true)); }
     if (url.pathname === "/macro") { const log = []; await schema(env); await kvPut(env, "macro_check", ""); await macroTick(env, log); return new Response(log.join(" | ")); }

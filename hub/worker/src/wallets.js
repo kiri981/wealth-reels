@@ -6,6 +6,7 @@
 // Danach ehrliche Bilanz je Wallet: was wurde aus ihren Käufen 1h/6h/24h später (ab dem Zeitpunkt, an dem der Hub den Kauf sah)?
 // Nur Beobachtung – der Hub kauft nichts.
 import { security } from "./meme.js";
+import { mpOpen } from "./mpaper.js";
 
 const SKIP = new Set(["So11111111111111111111111111111111111111112", "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
   "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So", "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn", "jupSoLaHXQiZZTSfEWMTRRgpnyFm8f6sZdosWBjx93v", "USD1ttGY1N17NEEHLmELoaybftRBUSErhqYiQzvEmuB"]);
@@ -90,7 +91,7 @@ export async function walletTick(env, say, kvGet, kvPut) {
     await say(env, `${head}\nKäufer: ${cluster ? buyers.map((b) => b.label || b.addr.slice(0, 4) + "…").join(", ") : spent}\n` +
       `Marktwert ${usd(N(i?.marketCap) || N(i?.fdv))} · Liquidität ${usd(N(i?.liquidity?.usd))} · 1h ${i?.priceChange?.h1 ?? "?"} % · 24h ${i?.priceChange?.h24 ?? "?"} %\n` +
       `Sicherheit ${amp} ${(sec.flags || []).slice(0, 3).join("; ") || "keine Auffälligkeiten"}\nhttps://dexscreener.com/solana/${i?.pairAddress || mint}\nNur Beobachtung, keine Anlageberatung.`);
-    if (cluster) await kvPut(env, "wclu_" + mint, String(now));
+    if (cluster) { await kvPut(env, "wclu_" + mint, String(now)); if (sec.level !== "danger" && (N(i?.liquidity?.usd) || 0) >= 20000) await mpOpen(env, say, { chain: "solana", token: mint, pool: i?.pairAddress, sym, px: N(i?.priceUsd), src: `Smart-Wallet-Cluster (${buyers.length} Wallets)` }).catch(() => {}); }
     sent++;
   }
   await kvPut(env, hk, sent);

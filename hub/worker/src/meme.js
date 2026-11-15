@@ -1,3 +1,4 @@
+import { mpOpen, mpManage } from "./mpaper.js";
 // WC Trading Hub – Meme-Radar (v1.8)
 // Alle 5 Minuten (eigener Cron-Lauf, damit der Hub-Takt nicht langsamer wird):
 //  · Kandidaten: GeckoTerminal (Trend 5 Min. / 1 Std., neue Pools – alle Ketten + Solana) und DexScreener (neue Token-Profile, Boosts)
@@ -155,6 +156,7 @@ export async function memeTick(env, say, kvGet, kvPut) {
       `https://dexscreener.com/${x.chain}/${x.pool}\nNur Beobachtung, keine Anlageberatung – die meisten Memecoins verlieren fast alles.`);
     await env.DB.prepare("UPDATE hub_meme SET alert_t = ?, alert_px = ? WHERE id = ?").bind(now, x.px, r.id).run();
     sent++;
+    try { await mpOpen(env, say, { chain: x.chain, token: x.token, pool: x.pool, sym: x.sym, px: x.px, src: "Meme-Radar (Heiß-Wert " + m.score + ")" }); } catch (e) { log.push("Papier " + e.message); }
   }
   await kvPut(env, hk, sent);
 
@@ -175,13 +177,14 @@ export async function memeTick(env, say, kvGet, kvPut) {
     await env.DB.prepare("DELETE FROM hub_meme_snap WHERE t < ?").bind(now - 3 * 86400).run();
     await env.DB.prepare("DELETE FROM hub_meme WHERE alert_t IS NULL AND last_t < ?").bind(now - 7 * 86400).run();
   }
+  try { log.push(await mpManage(env, say)); } catch (e) { log.push("Papier-Wallet " + e.message); }
   return `Meme-Radar: ${ids.length} Kandidaten, ${sc} geprüft, ${sent} Hinweise${log.length ? " | " + log.join(" | ") : ""}`;
 }
 
 const usd = (v) => (v == null ? "?" : v >= 1e9 ? (v / 1e9).toFixed(2) + " Mrd $" : v >= 1e6 ? (v / 1e6).toFixed(2) + " Mio $" : v >= 1e3 ? (v / 1e3).toFixed(1) + "k $" : v.toFixed(0) + " $");
 
 // ---------------------------------------------------------------- Seite /memes
-export async function memePage(env, key, WD) {
+export async function memePage(env, key, WD, MPD) {
   await memeSchema(env);
   const now = Math.floor(Date.now() / 1000);
   const R = (await env.DB.prepare("SELECT * FROM hub_meme WHERE last_t > ? ORDER BY score DESC LIMIT 300").bind(now - 1800).all()).results;
@@ -193,7 +196,7 @@ export async function memePage(env, key, WD) {
   const al = A.map((r) => ({ sym: r.sym, chain: r.chain, pool: r.pool, t: r.alert_t, h1: ch(r.alert_px, r.px1h), h6: ch(r.alert_px, r.px6h), h24: ch(r.alert_px, r.px24h) }));
   const done = al.filter((x) => x.h24 != null); const med = (v) => { const s = [...v].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : null; };
   const stats = { n: al.length, n24: done.length, up24: done.filter((x) => x.h24 > 0).length, med24: med(done.map((x) => x.h24)), x2: done.filter((x) => x.h24 >= 100).length, rug: done.filter((x) => x.h24 <= -80).length };
-  const DATA = JSON.stringify({ items, al, stats, t: now, wd: WD || null }).replace(/</g, "\\u003c");
+  const DATA = JSON.stringify({ items, al, stats, t: now, wd: WD || null, mp: MPD || null }).replace(/</g, "\\u003c");
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meme-Radar</title>
 <style>:root{--bg:#0b0b0d;--card:#151518;--line:#26262b;--tx:#ececf0;--mut:#9a9aa3;--gold:#e8b54a;--g:#3ecf8e;--r:#ff6b6b;--y:#f5c451}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;padding:16px;max-width:1280px;margin:auto}
@@ -226,7 +229,7 @@ const ag=(h)=>h==null?"–":h<1?Math.round(h*60)+"m":h<48?h.toFixed(1)+"h":Math.
 const esc=(s)=>String(s??"").replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const scol=(s)=>s>=70?"#3ecf8e":s>=50?"#f5c451":s>=30?"#d9a441":"#666";
 const sec=(x)=>{const i=x.sec==="ok"?"🟢":x.sec==="warn"?"🟡":x.sec==="danger"?"🔴":"⚪";const t=[...(x.secf||[]),...(x.flags||[])].join(" · ")||"noch nicht geprüft";return '<span class="risk" title="'+esc((x.secsrc?x.secsrc+": ":"")+t)+'">'+i+(x.flags&&x.flags.length?" ⚠️"+x.flags.length:"")+'</span>'};
-const TABS=[["hot","🔥 Heiß jetzt",(a,b)=>b.score-a.score,()=>true],["new","🆕 Neu < 24h",(a,b)=>b.score-a.score,(x)=>x.age!=null&&x.age<24],["acc","🚀 Beschleuniger",(a,b)=>(b.acc||0)-(a.acc||0),(x)=>(x.v1h||0)>5000],["c1h","📈 Top 1h",(a,b)=>(b.c1h||-1e9)-(a.c1h||-1e9),()=>true],["c24","📊 Top 24h",(a,b)=>(b.c24||-1e9)-(a.c24||-1e9),()=>true],["al","🔔 Hinweise & Ergebnis"],["w","👛 Smart-Wallets"]];
+const TABS=[["hot","🔥 Heiß jetzt",(a,b)=>b.score-a.score,()=>true],["new","🆕 Neu < 24h",(a,b)=>b.score-a.score,(x)=>x.age!=null&&x.age<24],["acc","🚀 Beschleuniger",(a,b)=>(b.acc||0)-(a.acc||0),(x)=>(x.v1h||0)>5000],["c1h","📈 Top 1h",(a,b)=>(b.c1h||-1e9)-(a.c1h||-1e9),()=>true],["c24","📊 Top 24h",(a,b)=>(b.c24||-1e9)-(a.c24||-1e9),()=>true],["al","🔔 Hinweise & Ergebnis"],["w","👛 Smart-Wallets"],["mp","🤖 Papier-Wallet"]];
 let tab="hot";try{tab=localStorage.getItem("mr_tab")||"hot"}catch(e){}
 [...new Set(D.items.map(x=>x.chain))].sort().forEach(c=>{const o=document.createElement("option");o.value=o.textContent=c;$("fc").appendChild(o)});
 $("sub").textContent="Stand "+new Date(D.t*1000).toLocaleString("de-DE")+" · "+D.items.length+" Coins in Beobachtung";
@@ -235,6 +238,7 @@ function render(){$("tabs").innerHTML=TABS.map(t=>'<button class="'+(t[0]===tab?
  document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;try{localStorage.setItem("mr_tab",tab)}catch(e){}render()});
  $("wbox").style.display=tab==="w"?"block":"none";document.querySelector(".f").style.display=tab==="w"||tab==="al"?"none":"flex";
  if(tab==="w"){renderW();return}
+ if(tab==="mp"){renderMP();return}
  if(tab==="al"){$("th").innerHTML="<tr><th>Coin</th><th>Kette</th><th>Hinweis</th><th>nach 1h</th><th>nach 6h</th><th>nach 24h</th></tr>";
   $("tb").innerHTML=D.al.map(x=>"<tr><td class=sym><a target=_blank rel=noopener href='https://dexscreener.com/"+esc(x.chain)+"/"+esc(x.pool)+"'>"+esc(x.sym)+"</a></td><td>"+esc(x.chain)+"</td><td>"+new Date(x.t*1000).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+"</td><td>"+pc(x.h1)+"</td><td>"+pc(x.h6)+"</td><td>"+pc(x.h24)+"</td></tr>").join("")||"<tr><td colspan=6>Noch keine Hinweise.</td></tr>";$("cnt").textContent="";return}
  const T=TABS.find(t=>t[0]===tab);const fc=$("fc").value,fl=+$("fl").value||0,fs=$("fs").value;
@@ -253,6 +257,12 @@ function renderW(){const W=D.wd;$("cnt").textContent="";
  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{if(confirm("Wallet entfernen?"))api("del="+encodeURIComponent(b.dataset.del))});
  $("th").innerHTML="<tr><th>Zeit</th><th>Wallet</th><th>Aktion</th><th>Coin</th><th>SOL</th><th>Marktwert beim Kauf</th><th>Liquidität</th><th>nach 1h</th><th>nach 6h</th><th>nach 24h</th></tr>";
  $("tb").innerHTML=W.tx.map(x=>{const c=(a,b)=>a&&b?(b/a-1)*100:null;const cl=W.clusters[x.mint];return "<tr><td>"+new Date(x.t*1000).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+"</td><td>"+esc(x.label||sh(x.addr))+"</td><td>"+(x.side>0?"<span class=pos>Kauf</span>":"<span class=neg>Verkauf</span>")+"</td><td class=sym><a target=_blank rel=noopener href='https://dexscreener.com/solana/"+esc(x.pool||x.mint)+"'>"+esc(x.sym||sh(x.mint))+"</a>"+(cl&&x.side>0?"<span class=chip style='color:#3ecf8e'>👛×"+cl+"</span>":"")+"</td><td>"+(x.sol?Math.abs(x.sol).toFixed(2):"–")+"</td><td>"+usd(x.mc)+"</td><td>"+usd(x.liq)+"</td><td>"+(x.side>0?pc(c(x.px,x.px1h)):"")+"</td><td>"+(x.side>0?pc(c(x.px,x.px6h)):"")+"</td><td>"+(x.side>0?pc(c(x.px,x.px24h)):"")+"</td></tr>"}).join("")||"<tr><td colspan=10>Noch keine Transaktionen gesehen.</td></tr>"}
+function renderMP(){const P=D.mp;$("cnt").textContent="";if(!P){$("th").innerHTML="";$("tb").innerHTML="<tr><td>Papier-Wallet startet nach dem Deploy.</td></tr>";return}
+ const f=(v)=>(v>=0?"+":"")+v.toFixed(2)+" $";const R=P.rules;
+ $("th").innerHTML="<tr><th colspan=9 style='text-align:left;font-size:13px;color:var(--tx)'>Kontostand <b>"+P.equity.toFixed(2)+" $</b> (Start "+R.start+" $) · realisiert <span class='"+(P.realized>=0?"pos":"neg")+"'>"+f(P.realized)+"</span> · "+P.closed.length+" Trades, "+P.wins+" im Plus · "+P.open.length+"/"+R.maxOpen+" offen · je Kauf "+R.size+" $, Kosten "+Math.round(R.cost*100)+" % je Richtung · <span style='color:var(--mut)'>simuliert, kein echtes Geld</span></th></tr><tr><th>Coin</th><th>Kette</th><th>Grund</th><th>Kauf</th><th>Einstieg</th><th>aktuell / Ausstieg</th><th>Ergebnis</th><th>Status</th><th>Dauer</th></tr>";
+ const rows=[...P.open,...P.closed].map(p=>{const cur=p.t_close?p.px_close:p.last_px;const val=p.t_close?p.pnl:((p.cash||0)+p.qty*(p.last_px||p.px)*(1-R.cost)-p.cost);const dur=((p.t_close||Math.floor(Date.now()/1000))-p.t)/3600;
+  return "<tr><td class=sym><a target=_blank rel=noopener href='https://dexscreener.com/"+esc(p.chain)+"/"+esc(p.pool||p.token)+"'>"+esc(p.sym)+"</a></td><td>"+esc(p.chain)+"</td><td style='text-align:left'>"+esc(p.src)+"</td><td>"+new Date(p.t*1000).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+"</td><td>"+(p.px<1?p.px.toPrecision(4):p.px.toFixed(4))+"</td><td>"+(cur==null?"–":cur<1?cur.toPrecision(4):cur.toFixed(4))+"</td><td><span class='"+(val>=0?"pos":"neg")+"'>"+f(val)+"</span></td><td>"+(p.t_close?esc(p.why):(p.half?"offen (Hälfte verkauft)":"offen"))+"</td><td>"+dur.toFixed(1)+" h</td></tr>"}).join("");
+ $("tb").innerHTML=rows||"<tr><td colspan=9>Noch keine Papier-Käufe. Der erste kommt beim nächsten Radar-Hinweis oder Smart-Wallet-Cluster.</td></tr>"}
 $("wadd").onclick=()=>{const a=$("wa").value.trim();if(!a)return;api("add="+encodeURIComponent(a)+"&label="+encodeURIComponent($("wn").value.trim())+"&alert="+($("wal").checked?1:0))};
 ["fc","fl","fs"].forEach(i=>$(i).oninput=render);render();setTimeout(()=>{if(tab!=="w")location.reload()},60000);
 </script></body></html>`;
