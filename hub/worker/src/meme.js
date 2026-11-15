@@ -1,4 +1,5 @@
 import { mpOpen, mpManage } from "./mpaper.js";
+import { feats, loadModel, learnedScore, mlSchema } from "./memelearn.js";
 // WC Trading Hub – Meme-Radar (v1.8)
 // Alle 5 Minuten (eigener Cron-Lauf, damit der Hub-Takt nicht langsamer wird):
 //  · Kandidaten: GeckoTerminal (Trend 5 Min. / 1 Std., neue Pools – alle Ketten + Solana) und DexScreener (neue Token-Profile, Boosts)
@@ -155,7 +156,8 @@ export async function memeTick(env, say, kvGet, kvPut) {
   const ids = Object.keys(C);
   if (!ids.length) { let mp = ""; try { mp = await mpManage(env, say); } catch (e) { mp = "Papier-Wallet " + e.message; } return "Meme-Radar: keine Daten " + log.join(" ") + " | " + mp; }
   const old = {}; for (let i = 0; i < ids.length; i += 90) for (const r of (await env.DB.prepare(`SELECT * FROM hub_meme WHERE id IN (${ids.slice(i, i + 90).map(() => "?").join(",")})`).bind(...ids.slice(i, i + 90)).all()).results) old[r.id] = r;
-  const rows = ids.map((id) => { const x = C[id], o = old[id]; const m = metrics(x, now, o); return { id, x, o, m }; }).sort((a, b) => b.m.score - a.m.score);
+  await mlSchema(env); const ML_M = await loadModel(env);   // v2.7: gelernter Heiß-Wert (nur wenn er sich auf neuen Daten bewährt hat)
+  const rows = ids.map((id) => { const x = C[id], o = old[id]; const m = metrics(x, now, o); const s0 = m.score; if (ML_M) m.score = learnedScore(ML_M, feats(x, m, o?.risk ? JSON.parse(o.risk) : null), s0); m.score0 = s0; return { id, x, o, m }; }).sort((a, b) => b.m.score - a.m.score);
 
   // Sicherheitscheck für die 8 besten ohne frischen Check
   let sc = 0;
@@ -168,8 +170,29 @@ export async function memeTick(env, say, kvGet, kvPut) {
       ON CONFLICT(id) DO UPDATE SET pool=excluded.pool, last_t=excluded.last_t, data=excluded.data, score=excluded.score, src=excluded.src, risk=COALESCE(excluded.risk, risk), risk_t=COALESCE(excluded.risk_t, risk_t)`)
       .bind(id, x.chain, x.token, x.pool, x.sym, x.name, x.created, o?.first_seen || now, o?.first_px || x.px, o?.first_mc || x.mc, now, JSON.stringify({ ...x, ...m, flags: basicFlags(x, m) }), m.score, x.src.join(","), risk, sec ? now : null));
     st.push(env.DB.prepare("INSERT OR REPLACE INTO hub_meme_snap (id, t, px, mc, liq, v1h) VALUES (?, ?, ?, ?, ?, ?)").bind(id, Math.floor(now / 300) * 300, x.px, x.mc, x.liq, x.v1h));
+    // v2.7 Lernschleife: Merkmale beim ersten Sehen und beim ersten Heiß-Wert ≥ 50 festhalten
+    const fj = () => JSON.stringify({ ...feats(x, m, sec || (o?.risk ? JSON.parse(o.risk) : null)), score0: m.score0 ?? m.score });
+    if (!o && x.px > 0) st.push(env.DB.prepare("INSERT OR IGNORE INTO hub_meme_feat (id, kind, t, px, liq, f) VALUES (?, 'seen', ?, ?, ?, ?)").bind(id, now, x.px, x.liq, fj()));
+    if (m.score >= 50 && x.px > 0) st.push(env.DB.prepare("INSERT OR IGNORE INTO hub_meme_feat (id, kind, t, px, liq, f) VALUES (?, 'hot', ?, ?, ?, ?)").bind(id, now, x.px, x.liq, fj()));
   }
   for (let i = 0; i < st.length; i += 90) await env.DB.batch(st.slice(i, i + 90));
+
+  // v2.7 Kursverfolgung für die Lernschleife: Coins, die aus den Listen gefallen sind, weiter beobachten („heiß“ alle 5 Min., übrige etwa stündlich)
+  try {
+    const T = (await env.DB.prepare(`SELECT f.id, f.hot, m.chain, m.token, (SELECT MAX(t) FROM hub_meme_snap s WHERE s.id = f.id) ls FROM (SELECT id, MAX(kind = 'hot') hot FROM hub_meme_feat WHERE t > ? GROUP BY id) f JOIN hub_meme m ON m.id = f.id`).bind(now - 26 * 3600).all()).results
+      .filter((r) => !C[r.chain + ":" + r.token] && (r.ls == null || now - r.ls >= (r.hot ? 270 : 3300))).sort((a, b) => b.hot - a.hot || (a.ls || 0) - (b.ls || 0)).slice(0, 150);
+    const by = {}; for (const r of T) (by[r.chain] ||= []).push(r);
+    const ins = [];
+    for (const [chain, L] of Object.entries(by)) for (let i = 0; i < L.length; i += 30) {
+      const part = L.slice(i, i + 30); let A;
+      try { A = await j(`${DS}/tokens/v1/${chain}/${part.map((r) => r.token).join(",")}`, 2); } catch (e) { continue; }
+      if (!Array.isArray(A)) continue;
+      const best = {}; for (const x of A) { const k = x.baseToken?.address; if (k && (!best[k] || (x.liquidity?.usd || 0) > (best[k].liquidity?.usd || 0))) best[k] = x; }
+      for (const r of part) { const x = best[r.token]; ins.push(env.DB.prepare("INSERT OR REPLACE INTO hub_meme_snap (id, t, px, mc, liq, v1h) VALUES (?, ?, ?, ?, ?, ?)").bind(r.id, Math.floor(now / 300) * 300, x ? N(x.priceUsd) : 0, x ? N(x.marketCap) : null, x ? N(x.liquidity?.usd) ?? 0 : 0, x ? N(x.volume?.h1) : 0)); }
+    }
+    for (let i = 0; i < ins.length; i += 90) await env.DB.batch(ins.slice(i, i + 90));
+    if (ins.length) log.push("verfolgt " + ins.length);
+  } catch (e) { log.push("Verfolgung " + e.message); }
 
   // Hinweise an Kevin: Heiß-Wert ≥ 70, Sicherheit nicht „danger“, nicht schon gemeldet; max. 3 pro Stunde
   const hk = "meme_alerts_" + new Date().toISOString().slice(0, 13); let sent = +(await kvGet(env, hk) || 0);
@@ -291,7 +314,7 @@ function renderW(){const W=D.wd;$("cnt").textContent="";
  $("tb").innerHTML=W.tx.map(x=>{const c=(a,b)=>a&&b?(b/a-1)*100:null;const cl=W.clusters[x.mint];return "<tr><td>"+new Date(x.t*1000).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+"</td><td>"+esc(x.label||sh(x.addr))+"</td><td>"+(x.side>0?"<span class=pos>Kauf</span>":"<span class=neg>Verkauf</span>")+"</td><td class=sym><a target=_blank rel=noopener href='https://dexscreener.com/solana/"+esc(x.pool||x.mint)+"'>"+esc(x.sym||sh(x.mint))+"</a>"+(cl&&x.side>0?"<span class=chip style='color:#3ecf8e'>👛×"+cl+"</span>":"")+"</td><td>"+(x.sol?Math.abs(x.sol).toFixed(2):"–")+"</td><td>"+usd(x.mc)+"</td><td>"+usd(x.liq)+"</td><td>"+(x.side>0?pc(c(x.px,x.px1h)):"")+"</td><td>"+(x.side>0?pc(c(x.px,x.px6h)):"")+"</td><td>"+(x.side>0?pc(c(x.px,x.px24h)):"")+"</td></tr>"}).join("")||"<tr><td colspan=10>Noch keine Transaktionen gesehen.</td></tr>"}
 function renderMP(){const P=D.mp;$("cnt").textContent="";if(!P){$("th").innerHTML="";$("tb").innerHTML="<tr><td>Papier-Wallet startet nach dem Deploy.</td></tr>";return}
  const f=(v)=>(v>=0?"+":"")+v.toFixed(2)+" $";const R=P.rules;
- $("th").innerHTML="<tr><th colspan=9 style='text-align:left;font-size:13px;color:var(--tx)'>Kontostand <b>"+P.equity.toFixed(2)+" $</b> (Start "+R.start+" $) · realisiert <span class='"+(P.realized>=0?"pos":"neg")+"'>"+f(P.realized)+"</span> · "+P.closed.length+" Trades, "+P.wins+" im Plus · "+P.open.length+"/"+R.maxOpen+" offen · je Kauf "+R.size+" $, Kosten "+Math.round(R.cost*100)+" % je Richtung · <span style='color:var(--mut)'>simuliert, kein echtes Geld</span></th></tr><tr><th>Coin</th><th>Kette</th><th>Grund</th><th>Kauf</th><th>Einstieg</th><th>aktuell / Ausstieg</th><th>Ergebnis</th><th>Status</th><th>Dauer</th></tr>";
+ $("th").innerHTML="<tr><th colspan=9 style='text-align:left;font-size:13px;color:var(--tx)'>Kontostand <b>"+P.equity.toFixed(2)+" $</b> (Start "+R.start+" $) · realisiert <span class='"+(P.realized>=0?"pos":"neg")+"'>"+f(P.realized)+"</span> · "+P.closed.length+" Trades, "+P.wins+" im Plus · "+P.open.length+"/"+R.maxOpen+" offen · je Kauf "+R.size+" $, Kosten "+Math.round(R.cost*100)+" % je Richtung · Ausstieg"+(R.learned?" (gelernt)":"")+": Hälfte bei +"+Math.round(R.tp*100)+" %, Stop "+Math.round(R.sl*100)+" %, Trailing "+Math.round(R.trail*100)+" %, max. "+R.maxH+" Std. · <a href='/mlearn"+location.search+"' style='color:var(--gold,#e8b54a)'>🧠 Lernschleife</a> · <span style='color:var(--mut)'>simuliert, kein echtes Geld</span></th></tr><tr><th>Coin</th><th>Kette</th><th>Grund</th><th>Kauf</th><th>Einstieg</th><th>aktuell / Ausstieg</th><th>Ergebnis</th><th>Status</th><th>Dauer</th></tr>";
  const rows=[...P.open,...P.closed].map(p=>{const cur=p.t_close?p.px_close:p.last_px;const val=p.t_close?p.pnl:((p.cash||0)+p.qty*(p.last_px||p.px)*(1-R.cost)-p.cost);const dur=((p.t_close||Math.floor(Date.now()/1000))-p.t)/3600;
   return "<tr><td class=sym><a target=_blank rel=noopener href='https://dexscreener.com/"+esc(p.chain)+"/"+esc(p.pool||p.token)+"'>"+esc(p.sym)+"</a></td><td>"+esc(p.chain)+"</td><td style='text-align:left'>"+esc(p.src)+"</td><td>"+new Date(p.t*1000).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+"</td><td>"+(p.px<1?p.px.toPrecision(4):p.px.toFixed(4))+"</td><td>"+(cur==null?"–":cur<1?cur.toPrecision(4):cur.toFixed(4))+"</td><td><span class='"+(val>=0?"pos":"neg")+"'>"+f(val)+"</span></td><td>"+(p.t_close?esc(p.why):(p.half?"offen (Hälfte verkauft)":"offen"))+"</td><td>"+dur.toFixed(1)+" h</td></tr>"}).join("");
  $("tb").innerHTML=rows||"<tr><td colspan=9>Noch keine Papier-Käufe. Der erste kommt beim nächsten Radar-Hinweis oder Smart-Wallet-Cluster.</td></tr>"}

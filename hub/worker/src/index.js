@@ -12,8 +12,10 @@ import { altTick, altPage, mktTick } from "./alts.js";
 import { mpData } from "./mpaper.js";
 import { finderTick, finderData } from "./finder.js";
 import { sigTick, sigPage, sigData } from "./signals.js";
+import { memeLearn, mlPage } from "./memelearn.js";
+import { mpRules } from "./mpaper.js";
 
-const VERSION = "2.6";
+const VERSION = "2.7";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -624,6 +626,7 @@ export default {
       if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/finderrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Finder-Lauf: " + e.message)));
       else ctx.waitUntil(finderTick(env, say, kvGet, kvPut).catch((e) => console.log("Finder-Fehler " + e.message)));
     }
+    if (new Date().getUTCHours() === 0 && m >= 30 && m < 35 && env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/mlearnrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Meme-Lernen: " + e.message)));   // v2.7 nachts 2:30 Uhr (Bukarest, Winterzeit)
     if (m >= 10 && m < 15) {
       if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/altrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Alt-Lauf: " + e.message)));
       else ctx.waitUntil(altTick(env, say, kvGet, kvPut).catch((e) => console.log("Alt-Fehler " + e.message)));
@@ -636,6 +639,8 @@ export default {
     if (url.pathname === "/cot") { const log = []; await schema(env); await kvPut(env, "cot_check", ""); await cotTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/deriv") { const log = []; await schema(env); await derivTick(env, log); return new Response(log.join(" | ") + "\n" + (await kvGet(env, "cz_markets"))); }
     if (url.pathname === "/czdaily") { const log = []; await schema(env); await czDaily(env, log); return new Response(log.join(" | ")); }
+    if (url.pathname === "/mlearnrun") { try { const d0 = await kvGet(env, "mlearn_day"), day = new Date().toISOString().slice(0, 10); if (d0 === day && url.searchParams.get("force") !== "1") return new Response("heute schon gelaufen"); await kvPut(env, "mlearn_day", day); await env.DB.prepare("DELETE FROM hub_meme_snap WHERE t < ?").bind(Math.floor(Date.now() / 1000) - 40 * 86400).run(); const msg = await memeLearn(env, say, kvGet, kvPut, await mpRules(env)); await kvPut(env, "log_mlearn", new Date().toISOString() + " " + msg); return new Response(msg); } catch (e) { await kvPut(env, "log_mlearn", new Date().toISOString() + " Fehler " + e.message); return new Response("Meme-Lernen-Fehler " + e.message); } }
+    if (url.pathname === "/mlearn") return new Response(await mlPage(env), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/sigrun") { try { return new Response(await sigTick(env, say, kvGet, kvPut)); } catch (e) { return new Response("Fremd-Ideen-Fehler " + e.message); } }
     if (url.pathname === "/sig") return new Response(await sigPage(env), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/sigjson") return Response.json(await sigData(env));
