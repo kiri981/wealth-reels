@@ -275,13 +275,28 @@ async function cotTick(env, log) {
 async function macroTick(env, log) {
   const today = new Date().toISOString().slice(0, 10);
   if ((await kvGet(env, "macro_check")) === today) return; await kvPut(env, "macro_check", today);
-  const from = new Date(Date.now() - 400 * 86400000).toISOString().slice(0, 10);
-  const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFII10,DGS10,DTWEXBGS,T10YIE&cosd=${from}`, { headers: { "User-Agent": "Mozilla/5.0 wc-hub" } });
-  if (!r.ok) { log.push("FRED " + r.status); await kvPut(env, "macro_check", ""); return; }
-  const L = (await r.text()).trim().split(/\r?\n/); const head = L[0].split(","); const st = [];
-  for (const l of L.slice(1)) { const c = l.split(","); for (let k = 1; k < c.length; k++) { const v = parseFloat(c[k]); if (!isNaN(v)) st.push(env.DB.prepare("INSERT OR REPLACE INTO hub_macro (series, d, v) VALUES (?, ?, ?)").bind(head[k], c[0], v)); } }
+  const st = []; const put = (series, d, v) => { if (!isNaN(v)) st.push(env.DB.prepare("INSERT OR REPLACE INTO hub_macro (series, d, v) VALUES (?, ?, ?)").bind(series, d, v)); };
+  // 1) FRED (blockt Cloudflare oft mit 520) – 2) Fallback: US-Finanzministerium (Quelle der FRED-Reihen DFII10/DGS10)
+  try {
+    const from = new Date(Date.now() - 400 * 86400000).toISOString().slice(0, 10);
+    const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFII10,DGS10,DTWEXBGS,T10YIE&cosd=${from}`, { headers: { "User-Agent": "Mozilla/5.0 wc-hub" } });
+    if (r.ok) { const L = (await r.text()).trim().split(/\r?\n/); const head = L[0].split(","); for (const l of L.slice(1)) { const c = l.split(","); for (let k = 1; k < c.length; k++) put(head[k], c[0], parseFloat(c[k])); } }
+    else log.push("FRED " + r.status);
+  } catch (e) { log.push("FRED-Fehler " + e.message.slice(0, 60)); }
+  if (!st.length) {
+    const y = new Date().getUTCFullYear();
+    for (const [type, series, col] of [["daily_treasury_real_yield_curve", "DFII10", "10 YR"], ["daily_treasury_yield_curve", "DGS10", "10 Yr"]]) for (const yr of [y - 1, y]) {
+      const r = await fetch(`https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/${yr}/all?type=${type}&field_tdr_date_value=${yr}&page&_format=csv`, { headers: { "User-Agent": "Mozilla/5.0 wc-hub" } });
+      if (!r.ok) { log.push(`Treasury ${series} ${yr}: ${r.status}`); continue; }
+      const L = (await r.text()).trim().split(/\r?\n/); const head = L[0].split(",").map((x) => x.replace(/"/g, "").trim()); const k = head.findIndex((x) => x.toUpperCase() === col.toUpperCase());
+      if (k < 0) continue;
+      for (const l of L.slice(1)) { const c = l.split(","); const m = c[0].match(/(\d{2})\/(\d{2})\/(\d{4})/); if (m) put(series, `${m[3]}-${m[1]}-${m[2]}`, parseFloat(c[k])); }
+    }
+    if (st.length) log.push("Treasury");
+  }
+  if (!st.length) { await kvPut(env, "macro_check", ""); return; }
   for (let i = 0; i < st.length; i += 90) await env.DB.batch(st.slice(i, i + 90));
-  log.push(`FRED:${st.length}`);
+  log.push(`Zinsen:${st.length}`);
 }
 
 // ---------------------------------------------------------------- Postausgang (Welcome-Bot schickt an Kevin)
