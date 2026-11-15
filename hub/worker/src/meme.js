@@ -88,6 +88,7 @@ function basicFlags(x, m) {
   if (m.age != null && m.age < 0.5) f.push("jünger als 30 Min.");
   if (m.buyPct != null && m.buyPct < 0.4) f.push("mehr Verkäufe als Käufe");
   if ((x.c1h ?? 0) > 300) f.push("+300 % in 1 Std. (Spätkäufer-Gefahr)");
+  if ((x.src || []).some((s) => /^Pump\.fun(?! abgeschlossen)/.test(s))) f.push("noch auf der Pump.fun-Kurve (Liquidität = Kurve, Abschluss ungewiss)");
   return f;
 }
 export async function security(x) {   // → { level: "ok"|"warn"|"danger"|"unknown", flags: [] }
@@ -130,6 +131,26 @@ export async function memeTick(env, say, kvGet, kvPut) {
     const by = {}; for (const [x, s] of P) if (x.chainId && x.tokenAddress) (by[x.chainId] ||= {})[x.tokenAddress] = s;
     for (const [chain, M] of Object.entries(by)) { const pairs = await dsPairs(chain, Object.keys(M).slice(0, 30)); for (const [addr, x] of Object.entries(pairs)) add(fromDS(x, M[addr])); }
   } catch (e) { log.push("DS " + e.message); }
+  try {   // Pump.fun (Solana-Startrampe): Coins kurz vor dem Abschluss der Bonding-Kurve, frisch abgeschlossene und „König des Hügels“ – Kennzahlen dann über DexScreener
+    const PF = "https://frontend-api-v3.pump.fun", M = {}; let ok = 0;
+    for (const [path, tag] of [["/coins?offset=0&limit=50&sort=market_cap&order=DESC&includeNsfw=false", "Pump.fun"], ["/coins?offset=0&limit=50&sort=last_trade_timestamp&order=DESC&includeNsfw=false", "Pump.fun aktiv"], ["/coins/king-of-the-hill?includeNsfw=false", "Pump.fun König"]]) {
+      try {
+        const r = await j(PF + path, 2); ok++;
+        for (const c of Array.isArray(r) ? r : r && r.mint ? [r] : r?.coins || []) {
+          if (!c.mint || (c.created_timestamp && now - c.created_timestamp / 1000 > 3 * 86400)) continue;   // nur die letzten 3 Tage
+          M[c.mint] = c.complete ? "Pump.fun abgeschlossen" : (c.usd_market_cap || 0) > 35000 ? "Pump.fun kurz vor Abschluss" : tag;
+        }
+      } catch (e) { log.push("PF " + e.message); }
+    }
+    if (!ok) {   // Ausweichweg: GeckoTerminal-Pools der Pump-Börsen auf Solana
+      for (const dex of ["pump-fun", "pumpswap"]) {
+        try { const r = await j(`${GT}/networks/solana/dexes/${dex}/pools?include=base_token&sort=h24_tx_count_desc`, 2); await wait(1200); const T = Object.fromEntries((r.included || []).map((t) => [t.id, t.attributes])); for (const p of r.data || []) add(fromGT(p, T, dex === "pumpswap" ? "Pump.fun abgeschlossen" : "Pump.fun")); }
+        catch (e) { log.push("GT-" + dex + " " + e.message); }
+      }
+    }
+    const mints = Object.keys(M).slice(0, 60);
+    if (mints.length) { const pairs = await dsPairs("solana", mints); for (const [addr, x] of Object.entries(pairs)) add(fromDS(x, M[addr])); log.push("PF " + mints.length); }
+  } catch (e) { log.push("PF " + e.message); }
 
   const ids = Object.keys(C);
   if (!ids.length) { let mp = ""; try { mp = await mpManage(env, say); } catch (e) { mp = "Papier-Wallet " + e.message; } return "Meme-Radar: keine Daten " + log.join(" ") + " | " + mp; }
@@ -255,7 +276,7 @@ function render(){$("tabs").innerHTML=TABS.map(t=>'<button class="'+(t[0]===tab?
  const L=D.items.filter(T[3]).filter(x=>(!fc||x.chain===fc)&&(x.liq||0)>=fl&&(fs===""||(fs==="nodanger"?x.sec!=="danger":x.sec==="ok"))).sort(T[2]).slice(0,120);
  $("cnt").textContent=L.length+" Treffer";
  $("th").innerHTML="<tr><th>Coin</th><th>Kette</th><th>Heiß</th><th>Alter</th><th>Marktwert</th><th>Liquidität</th><th>Vol 1h</th><th>Beschl. 1h</th><th>5m</th><th>1h</th><th>6h</th><th>24h</th><th>Käufe 1h</th><th>seit Entdeckung</th><th>Sicherheit</th><th>Links</th></tr>";
- $("tb").innerHTML=L.map(x=>"<tr><td><span class=sym><a target=_blank rel=noopener href='https://dexscreener.com/"+esc(x.chain)+"/"+esc(x.pool)+"'>"+esc(x.sym)+"</a></span>"+(x.alerted?"<span class=chip>🔔</span>":"")+(NC[String(x.sym).toUpperCase()]>1?"<span class=chip title='Mehrere Coins mit diesem Namen – oft Nachahmer. Adresse prüfen!' style='color:#f5c451'>Doppelname</span>":"")+(String(x.src).includes("Boost")?"<span class=chip title='bezahlte Werbung auf DexScreener'>Boost</span>":"")+"<span class=nm>"+esc(x.name)+"</span></td><td>"+esc(x.chain)+"</td><td><span class=sc style='background:"+scol(x.score)+"'>"+x.score+"</span></td><td>"+ag(x.age)+"</td><td>"+usd(x.mc)+"</td><td>"+usd(x.liq)+"</td><td>"+usd(x.v1h)+"</td><td>"+(x.acc==null?"–":x.acc.toFixed(1)+"×")+"</td><td>"+pc(x.c5)+"</td><td>"+pc(x.c1h)+"</td><td>"+pc(x.c6h)+"</td><td>"+pc(x.c24)+"</td><td>"+(x.buy==null?"–":Math.round(x.buy*100)+"%")+"</td><td>"+pc(x.grow==null?null:x.grow*100)+"</td><td>"+sec(x)+"</td><td class=lk><a target=_blank rel=noopener href='https://dexscreener.com/"+esc(x.chain)+"/"+esc(x.pool)+"'>DS</a>"+(x.chain==="solana"?"<a target=_blank rel=noopener href='https://rugcheck.xyz/tokens/"+esc(x.token)+"'>Rug</a>":GP[x.chain]?"<a target=_blank rel=noopener href='https://gopluslabs.io/token-security/"+GP[x.chain]+"/"+esc(x.token)+"'>Sec</a>":"")+"</td></tr>").join("")||"<tr><td colspan=16>Keine Treffer mit diesen Filtern.</td></tr>"}
+ $("tb").innerHTML=L.map(x=>"<tr><td><span class=sym><a target=_blank rel=noopener href='https://dexscreener.com/"+esc(x.chain)+"/"+esc(x.pool)+"'>"+esc(x.sym)+"</a></span>"+(x.alerted?"<span class=chip>🔔</span>":"")+(NC[String(x.sym).toUpperCase()]>1?"<span class=chip title='Mehrere Coins mit diesem Namen – oft Nachahmer. Adresse prüfen!' style='color:#f5c451'>Doppelname</span>":"")+(String(x.src).includes("Boost")?"<span class=chip title='bezahlte Werbung auf DexScreener'>Boost</span>":"")+(String(x.src).includes("Pump")||(x.chain==="solana"&&/pump$/.test(x.token||""))?"<span class=chip title='auf Pump.fun gestartet"+(String(x.src).includes("kurz vor")?" – kurz vor dem Abschluss der Bonding-Kurve":String(x.src).includes("abgeschlossen")?" – Bonding-Kurve abgeschlossen, jetzt frei handelbar":"")+"' style='color:#7ee0a6'>💊 Pump</span>":"")+"<span class=nm>"+esc(x.name)+"</span></td><td>"+esc(x.chain)+"</td><td><span class=sc style='background:"+scol(x.score)+"'>"+x.score+"</span></td><td>"+ag(x.age)+"</td><td>"+usd(x.mc)+"</td><td>"+usd(x.liq)+"</td><td>"+usd(x.v1h)+"</td><td>"+(x.acc==null?"–":x.acc.toFixed(1)+"×")+"</td><td>"+pc(x.c5)+"</td><td>"+pc(x.c1h)+"</td><td>"+pc(x.c6h)+"</td><td>"+pc(x.c24)+"</td><td>"+(x.buy==null?"–":Math.round(x.buy*100)+"%")+"</td><td>"+pc(x.grow==null?null:x.grow*100)+"</td><td>"+sec(x)+"</td><td class=lk><a target=_blank rel=noopener href='https://dexscreener.com/"+esc(x.chain)+"/"+esc(x.pool)+"'>DS</a>"+(x.chain==="solana"?"<a target=_blank rel=noopener href='https://rugcheck.xyz/tokens/"+esc(x.token)+"'>Rug</a>":GP[x.chain]?"<a target=_blank rel=noopener href='https://gopluslabs.io/token-security/"+GP[x.chain]+"/"+esc(x.token)+"'>Sec</a>":"")+"</td></tr>").join("")||"<tr><td colspan=16>Keine Treffer mit diesen Filtern.</td></tr>"}
 const Q=location.search;const api=async(p)=>{const r=await fetch("/wallet"+Q+"&"+p);const t=await r.text();if(t!=="ok")alert(t);location.reload()};
 const sh=(a)=>a.slice(0,4)+"…"+a.slice(-4);
 function renderW(){const W=D.wd;$("cnt").textContent="";

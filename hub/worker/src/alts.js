@@ -98,15 +98,21 @@ export function scan(D, H4, btcD, ctx = {}) {
   const longBias = (s50 && last > s50 ? 1 : 0) + (s200 && last > s200 ? 1 : 0) + (stD.trend === "bull" ? 1 : 0) + (st4.trend === "bull" ? 1 : 0) + ((rs30 ?? 0) > 0 ? 1 : 0);
   const shortBias = (s50 && last < s50 ? 1 : 0) + (s200 && last < s200 ? 1 : 0) + (stD.trend === "bear" ? 1 : 0) + (st4.trend === "bear" ? 1 : 0) + ((rs30 ?? 0) < 0 ? 1 : 0);
   const brokeUp = D.slice(n - 4, n).some((x, k) => x.c > Math.max(...D.slice(n - 24 + k, n - 4 + k).map((y) => y.h)));
-  if (dUp <= 1.5 && longBias >= shortBias) {
+  // v2.6 strenger: klare Richtung (≥ 3 von 5 Trendmerkmalen), nah am Level, und entweder Kompression (vor dem Ausbruch) oder Volumen (Ausbruch läuft), nicht schon weit gelaufen
+  const comp = rng20 < 7 || atrRel < 0.85, volOk = (vx ?? 0) >= 1.3;
+  const okL = longBias >= 3 && longBias > shortBias && (rs30 ?? 0) > 0.08 && (rs7 ?? 0) > 0 && (dUp >= 0 ? dUp <= 1 && comp : dUp >= -1.2 && volOk);
+  const brokeDn = D.slice(n - 4, n).some((x, k) => x.c < Math.min(...D.slice(n - 24 + k, n - 4 + k).map((y) => y.l)));
+  const okS = shortBias >= 3 && shortBias > longBias && (rs30 ?? 0) < -0.08 && (rs7 ?? 0) < 0 && (dDn >= 0 ? dDn <= 1 && comp : dDn >= -1.2 && volOk);
+  if (okL) {
     scen = dUp < 0 ? (brokeUp && last < hh20 + 0.5 * atr ? "Retest nach Ausbruch" : "Ausbruch läuft") : "vor Ausbruch (long)";
     lvl = hh20; stop = Math.max(ll20, hh20 - 1.5 * atr); { const R = hh20 - stop; tgt = hh20 + Math.max(1.5 * R, Math.min(hh20 - ll20, 3 * R)); }   // Ziel: gemessene Bewegung der Spanne, 1,5R bis 3R
     s = 25 * cl(1.5 - Math.max(dUp, 0), 0, 1.5) + 20 * cl(3.5 - Math.min(atrRel, 3.5), 2, 3) + 10 * cl(10 - Math.min(rng20, 10), 3, 7) + 15 * (longBias / 5) + 10 * cl(vx ?? 1, 1, 2.5) + 10 * cl(rs30 ?? 0, 0, 0.3) + 10 * cl(ctx.oi7 ?? 0, 0, 0.25);
-  } else if (dDn <= 1.5 && shortBias > longBias) {
+  } else if (okS) {
     scen = dDn < 0 ? "Bruch nach unten läuft" : "vor Bruch (short)";
     lvl = ll20; stop = Math.min(hh20, ll20 + 1.5 * atr); { const R = stop - ll20; tgt = ll20 - Math.max(1.5 * R, Math.min(hh20 - ll20, 3 * R)); }
     s = 25 * cl(1.5 - Math.max(dDn, 0), 0, 1.5) + 20 * cl(3.5 - Math.min(atrRel, 3.5), 2, 3) + 10 * cl(10 - Math.min(rng20, 10), 3, 7) + 15 * (shortBias / 5) + 10 * cl(vx ?? 1, 1, 2.5) + 10 * cl(-(rs30 ?? 0), 0, 0.3) + 10 * cl(ctx.oi7 ?? 0, 0, 0.25);
   }
+  if (scen && s < 50) { scen = null; lvl = stop = tgt = null; }   // v2.6: schwache Szenarien nicht anzeigen
   if ((ctx.fr ?? 0) > 0.05 && scen && !/short|unten/.test(scen)) { s *= 0.8; why.push("Funding hoch (viele Longs)"); }
   if (rng20 < 5) why.push("enge Spanne (" + rng20.toFixed(1) + " ATR)"); if (atrRel < 0.8) why.push("Volatilität gedrückt");
   if ((vx ?? 0) > 1.8) why.push("Volumen " + vx.toFixed(1) + "× Schnitt"); if ((rs30 ?? 0) > 0.1) why.push("stärker als BTC (30T)"); if ((rs30 ?? 0) < -0.1) why.push("schwächer als BTC (30T)");
