@@ -1,0 +1,23 @@
+{
+ "cover": {"kicker": "MARKT", "title": "Gold-Woche: Die *Fed* spricht", "chart": "down"},
+ "music": "drive",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 3.0, "text": "Gold: fast –4,5 % in einer Woche.", "accent": "Und jetzt redet die Fed.", "icon": "alert"},
+  {"type": "counter", "dur": 3.6, "label": "Gold Freitagabend (Spot)", "from": 4071, "to": 3879, "decimals": 0, "suffix": " $", "color": "red", "sub": "Jahrestief Do.: 3.852 $"},
+  {"type": "counter", "dur": 3.4, "label": "Fed-Zinserhöhung am 9. Dez.?", "from": 0, "to": 90, "decimals": 0, "prefix": "ca. ", "suffix": " %", "color": "red", "sub": "Wahrscheinlichkeit laut CME FedWatch"},
+  {"type": "cards", "dur": 4.6, "title": "Die Termine der Woche", "items": [
+    {"left": "Mo 18:00", "right": "Fed-Chef Warsh spricht"},
+    {"left": "Di 14:30", "right": "US-Einzelhandelsumsätze", "hot": true},
+    {"left": "Mi 20:00", "right": "Fed-Protokoll (Oktober)"},
+    {"left": "Do 14:30", "right": "US-Arbeitslosenanträge"}
+  ]},
+  {"type": "words", "dur": 4.0, "kicker": "ZWEI SZENARIEN", "text": "Starke Daten: mehr Zinsdruck auf Gold. Schwache Daten: Luft für eine Erholung."},
+  {"type": "notify", "dur": 3.8, "title": "Keine Zeit, den Markt *selbst* zu analysieren?", "items": [
+    {"text": "Wochenausblick: 4 Termine", "time": "jetzt"},
+    {"text": "Retail-Sales-Check: Di 14:30", "time": "1 Min.", "color": "gold"},
+    {"text": "Live-Updates in der Gruppe", "time": "2 Min."}
+  ]},
+  {"type": "cta", "dur": 3.0, "title": "Erst die Daten. Dann der Trade.", "button": "Kommentiere GOLD"}
+ ]
+}
