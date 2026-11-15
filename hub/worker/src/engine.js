@@ -1,3 +1,4 @@
+import { runLearn } from "./learn.js";
 // WC Trading Hub – Live-Engine (JavaScript). 1:1 zur Python-Engine hub/engine.py.
 // Kerzen: Arrays von {t (Unix-Sek. UTC), o, h, l, c}. Trades: {t, dr, e, sl, r, why, tx, open}
 export const COST = 0.35;
@@ -232,6 +233,7 @@ export function trades(fam, p, data) {
   if (fam === "rbo") return runRbo(p.tf === "15m" ? data.F15 : data.F5, p);
   if (fam === "swing") return data.D1 ? runSwing(data.D1, p) : [];
   if (fam === "deriv") return data.DD ? runDeriv(data.DD, p) : [];
+  if (fam === "learn") return data.C5 && data.C5.length > 3000 ? runLearn(data.C5, p) : [];   // v2.1: Lernmodell (15m aus 5m)
   return [];
 }
 export function resample(C, sec) {

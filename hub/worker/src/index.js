@@ -11,7 +11,7 @@ import { walletTick, walletAdmin, walletData } from "./wallets.js";
 import { altTick, altPage, mktTick } from "./alts.js";
 import { mpData } from "./mpaper.js";
 
-const VERSION = "2.0";
+const VERSION = "2.1";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -404,7 +404,7 @@ async function paper(env) {
     const p = E.withSym(JSON.parse(s.params)); const sym = p.sym || "XAUUSD";
     if (!DATA[sym]) {
       const C5 = await load(env, TK(sym, "5m"), now - 30 * 86400);
-      DATA[sym] = C5.length >= 500 ? { DAYS: E.days(C5), F5: E.feats(C5), F15: E.feats(E.resample(C5, 900)) } : {};
+      DATA[sym] = C5.length >= 500 ? { DAYS: E.days(C5), F5: E.feats(C5), F15: E.feats(E.resample(C5, 900)), C5 } : {};
       DATA[sym].px = C5.length ? C5.slice(-8640).map((k) => k.c).sort((a, b) => a - b)[Math.floor(Math.min(C5.length, 8640) / 2)] : null;
       if (strats.some((x) => x.family === "swing")) DATA[sym].D1 = await load(env, TK(sym, "1d"), 0);
     }
