@@ -15,9 +15,14 @@ import numpy as np, pandas as pd
 
 COST = 0.35
 # Handelskosten (Spread/Kommission, in Preis-Einheiten) und Mindestrisiko je Symbol
-SYMS = {"XAUUSD": dict(_cost=0.35, _minr=0.3, name="Gold"), "XAGUSD": dict(_cost=0.03, _minr=0.02, name="Silber"), "BTCUSD": dict(_cost=20.0, _minr=20.0, name="Bitcoin")}
-def with_sym(p):
-    c = SYMS.get(p.get("sym", "XAUUSD"), SYMS["XAUUSD"]); return {**p, "_cost": c["_cost"], "_minr": c["_minr"]}
+SYMS = {"XAUUSD": dict(_cost=0.35, _minr=0.3, name="Gold"), "XAGUSD": dict(_cost=0.03, _minr=0.02, name="Silber"), "BTCUSD": dict(_cost=20.0, _minr=20.0, name="Bitcoin"),
+        # Krypto über Coinalyze-Perp-Kurse (v1.6): Kosten relativ zum Kurs (0,12 % hin+zurück inkl. Schlupf), Mindestrisiko 0,1 %
+        "ETHUSD": dict(_costp=0.0012, _minrp=0.001, name="Ethereum"), "SOLUSD": dict(_costp=0.0012, _minrp=0.001, name="Solana"),
+        "XRPUSD": dict(_costp=0.0012, _minrp=0.001, name="XRP"), "BNBUSD": dict(_costp=0.0012, _minrp=0.001, name="BNB"), "DOGEUSD": dict(_costp=0.0015, _minrp=0.001, name="Dogecoin")}
+def with_sym(p, price=None):
+    c = SYMS.get(p.get("sym", "XAUUSD"), SYMS["XAUUSD"])
+    if "_costp" in c: return {**p, "_costp": c["_costp"], "_cost": c["_costp"] * (price or 0), "_minr": c["_minrp"] * (price or 0)}
+    return {**p, "_cost": c["_cost"], "_minr": c["_minr"]}
 
 def load(path):
     d = pd.read_csv(path)
@@ -171,7 +176,7 @@ def run_swing(d1, p):
             if j > j0 + 1 and c[j] < ll[j] and j + 1 < n: ex = o[j + 1]; j += 1; break
             j += 1
         if ex is None: ex = c[-1]; j = n - 1
-        out.append(dict(t=int(t[j0]), dr=1, e=float(e), sl=float(e - R), r=float((ex - e - p.get("_cost", 0.5)) / R), why="exit", tx=int(t[j])))
+        out.append(dict(t=int(t[j0]), dr=1, e=float(e), sl=float(e - R), r=float((ex - e - (p["_costp"] * e if "_costp" in p else p.get("_cost", 0.5))) / R), why="exit", tx=int(t[j])))
         i = j + 1
     return out
 

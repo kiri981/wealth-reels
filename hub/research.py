@@ -63,6 +63,8 @@ class SymData:
             d1 = L if d1 is None else pd.concat([L[L.index < d1.index[0] - pd.Timedelta(hours=12)], d1])
         self.d1 = d1 if d1 is not None and len(d1) >= 260 else None
         self.filt = {}
+        src = self.m5 if self.m5 is not None else self.d1
+        self.px = float(src.c.iloc[-8640:].median()) if src is not None else None   # Kurs-Niveau für relative Kosten (Krypto)
 
 class Data:
     def __init__(self):
@@ -76,7 +78,7 @@ class Data:
     def has(self, fam, sym):
         x = self.S[sym]; return (x.d1 is not None) if fam == "swing" else (x.m5 is not None)
     def trades(self, fam, p):
-        x = self.S[p.get("sym", "XAUUSD")]; q = with_sym(p)
+        x = self.S[p.get("sym", "XAUUSD")]; q = with_sym(p, x.px)
         if not self.has(fam, p.get("sym", "XAUUSD")): return []
         if fam == "sess": return run_sess(x.DAYS, q)
         if fam == "rbo": return run_rbo(x.F[p["tf"]], q)

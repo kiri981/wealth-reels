@@ -2,8 +2,14 @@
 // Kerzen: Arrays von {t (Unix-Sek. UTC), o, h, l, c}. Trades: {t, dr, e, sl, r, why, tx, open}
 export const COST = 0.35;
 // Handelskosten und Mindestrisiko je Symbol (wie hub/engine.py SYMS)
-export const SYMS = { XAUUSD: { _cost: 0.35, _minr: 0.3, name: "Gold" }, XAGUSD: { _cost: 0.03, _minr: 0.02, name: "Silber" }, BTCUSD: { _cost: 20, _minr: 20, name: "Bitcoin" } };
-export const withSym = (p) => ({ ...p, ...(SYMS[p.sym || "XAUUSD"] || SYMS.XAUUSD) });
+export const SYMS = { XAUUSD: { _cost: 0.35, _minr: 0.3, name: "Gold" }, XAGUSD: { _cost: 0.03, _minr: 0.02, name: "Silber" }, BTCUSD: { _cost: 20, _minr: 20, name: "Bitcoin" },
+  ETHUSD: { _costp: 0.0012, _minrp: 0.001, name: "Ethereum" }, SOLUSD: { _costp: 0.0012, _minrp: 0.001, name: "Solana" }, XRPUSD: { _costp: 0.0012, _minrp: 0.001, name: "XRP" },
+  BNBUSD: { _costp: 0.0012, _minrp: 0.001, name: "BNB" }, DOGEUSD: { _costp: 0.0015, _minrp: 0.001, name: "Dogecoin" } };
+export const withSym = (p, price) => {
+  const c = SYMS[p.sym || "XAUUSD"] || SYMS.XAUUSD;
+  if (c._costp) return { ...p, name: c.name, _costp: c._costp, _cost: c._costp * (price || 0), _minr: c._minrp * (price || 0) };
+  return { ...p, ...c };
+};
 
 const fmtBuc = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bucharest", year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" });
 const fmtNy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
@@ -142,7 +148,7 @@ export function runSwing(C, p) {
       j++;
     }
     const open = ex === null; if (open) { ex = c[n - 1]; j = n - 1; }
-    out.push({ t: t[j0], dr: 1, e, sl: e - R, r: (ex - e - (p._cost ?? 0.5)) / R, why: open ? "offen" : "exit", tx: t[j], open });
+    out.push({ t: t[j0], dr: 1, e, sl: e - R, r: (ex - e - (p._costp ? p._costp * e : (p._cost ?? 0.5))) / R, why: open ? "offen" : "exit", tx: t[j], open });
     i = j + 1;
   }
   return out;

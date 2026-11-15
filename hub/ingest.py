@@ -34,6 +34,9 @@ def main(files):
             new.index.name = "observation_date"
             old = pd.read_csv(p, index_col=0) if os.path.exists(p) else new.iloc[:0]
             m = new.combine_first(old).sort_index(); m.to_csv(p); print(p, len(m), "Tage"); continue
+        if rows and "fr" in rows[0] and "d" in rows[0]:   # hub_deriv_d (Coinalyze Tageshistorie) -> data/deriv_d.csv
+            p = os.path.join(HUB, "data/deriv_d.csv"); df = pd.DataFrame(rows); old = pd.read_csv(p) if os.path.exists(p) else df.iloc[:0]
+            m = pd.concat([old, df]).drop_duplicates(["sym", "d"], keep="last").sort_values(["sym", "d"]); m.to_csv(p, index=False); print(p, len(m), "Zeilen"); continue
         if rows and any(k in rows[0] for k in ("mm_l", "tonnes", "fr", "liq_l", "impact", "score")):   # Zusatzdaten (COT, ETF, Derivate, Termine, Nachrichten)
             kind = "cot" if "mm_l" in rows[0] else "etf" if "tonnes" in rows[0] else "deriv" if ("fr" in rows[0] or "liq_l" in rows[0]) else "events" if "impact" in rows[0] else "news"
             key = {"cot": ["sym", "d"], "etf": ["sym", "d"], "deriv": ["sym", "t"], "events": ["id"], "news": ["id"]}[kind]

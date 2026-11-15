@@ -7,12 +7,12 @@
 // Secrets: META_TOKEN, META_ACCOUNT, (META_REGION), GH_TOKEN, HUB_KEY
 import * as E from "./engine.js";
 
-const VERSION = "1.5";
+const VERSION = "1.6";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
 const NAME = (sym) => (E.SYMS[sym]?.name || sym);
-const DIG = (sym) => (sym === "XAGUSD" ? 3 : 2);
+const DIG = (sym) => ({ XAGUSD: 3, XRPUSD: 4, DOGEUSD: 5 }[sym] ?? 2);
 const REPO = (env) => env.GH_REPO || "kiri981/wealth-reels";
 
 // ---------------------------------------------------------------- MetaApi
@@ -54,6 +54,7 @@ async function schema(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_news (id TEXT PRIMARY KEY, t INTEGER, src TEXT, title TEXT, url TEXT, score INTEGER, dir TEXT, summary TEXT, sent INTEGER DEFAULT 0)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_deriv (sym TEXT, t INTEGER, oi REAL, fr REAL, liq_l REAL, liq_s REAL, ls REAL, PRIMARY KEY (sym, t))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_cot (sym TEXT, d TEXT, mm_l REAL, mm_s REAL, pm_l REAL, pm_s REAL, sd_l REAL, sd_s REAL, oi REAL, PRIMARY KEY (sym, d))"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_deriv_d (sym TEXT, d TEXT, o REAL, h REAL, l REAL, c REAL, oi REAL, fr REAL, liq_l REAL, liq_s REAL, ls REAL, PRIMARY KEY (sym, d))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_macro (series TEXT, d TEXT, v REAL, PRIMARY KEY (series, d))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_etf (sym TEXT, d TEXT, tonnes REAL, PRIMARY KEY (sym, d))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_events (id TEXT PRIMARY KEY, t INTEGER, cur TEXT, title TEXT, impact TEXT, forecast TEXT, previous TEXT, actual TEXT, note TEXT)"),
@@ -234,6 +235,50 @@ async function derivTick(env, log) {
   log.push(`Coinalyze:${st.length}`);
 }
 
+// ---------------------------------------------------------------- Krypto-Kerzen über Coinalyze (v1.6): ETH, SOL, XRP, BNB, DOGE als ETHUSD … (Perp-Kurse, ohne MetaApi)
+const CZ_CANDLES = ["ETH", "SOL", "XRP", "BNB", "DOGE"];
+async function czCandles(env, log) {
+  if (!env.COINALYZE_KEY) return;
+  const M = await czMarkets(env); const bases = CZ_CANDLES.filter((b) => M[b]); if (!bases.length) return;
+  const now = Math.floor(Date.now() / 1000);
+  const last = await env.DB.prepare("SELECT MIN(m) a FROM (SELECT MAX(t) m FROM hub_candles WHERE tf IN (" + bases.map(() => "?").join(",") + ") GROUP BY tf)").bind(...bases.map((b) => b + "USD:5m")).first();
+  const have = (await env.DB.prepare("SELECT COUNT(DISTINCT tf) n FROM hub_candles WHERE tf LIKE '%USD:5m' AND tf IN (" + bases.map(() => "?").join(",") + ")").bind(...bases.map((b) => b + "USD:5m")).first()).n;
+  const from = have < bases.length || !last?.a ? now - 7 * 86400 : last.a - 600;   // erster Lauf: so weit zurück, wie Coinalyze 5-Min-Kerzen hergibt
+  const back = Object.fromEntries(bases.map((b) => [M[b], b]));
+  const L = await cz(env, "ohlcv-history", { symbols: bases.map((b) => M[b]).join(","), interval: "5min", from, to: now });
+  let n = 0;
+  for (const x of L) { const C = (x.history || []).filter((h) => h.t < now - 300).map((h) => ({ t: h.t, o: h.o, h: h.h, l: h.l, c: h.c })); if (C.length) { await store(env, back[x.symbol] + "USD:5m", C); n += C.length; } }
+  log.push(`Krypto-5m:${n}`);
+}
+
+// Tageshistorie seit 2021 je Markt (Kurs, Open Interest, Funding, Liquidationen, Long/Short) – beim ersten Start ein Markt pro 5-Min-Lauf (≈45 Min.), danach täglich die letzten 10 Tage
+async function czDaily(env, log) {
+  if (!env.COINALYZE_KEY) return;
+  const M = await czMarkets(env); const bases = CZ_BASES.filter((b) => M[b]);
+  const nx = await kvGet(env, "czd_next"); const idx = nx === "done" ? 99 : +(nx || 0); const now = Math.floor(Date.now() / 1000);
+  let todo, from;
+  if (idx < bases.length) { todo = [bases[idx]]; from = Math.floor(Date.UTC(2021, 0, 1) / 1000); }
+  else { if ((await kvGet(env, "czd_check")) === new Date().toISOString().slice(0, 10)) return; todo = bases; from = now - 10 * 86400; }
+  const q = { symbols: todo.map((b) => M[b]).join(","), interval: "daily", from, to: now };
+  const rows = {}; const add = (sym, t, k, v) => { ((rows[sym] ||= {})[t] ||= {})[k] = v; };
+  for (const x of await cz(env, "ohlcv-history", q)) for (const h of x.history || []) { add(x.symbol, h.t, "o", h.o); add(x.symbol, h.t, "h", h.h); add(x.symbol, h.t, "l", h.l); add(x.symbol, h.t, "c", h.c); }
+  for (const x of await cz(env, "open-interest-history", { ...q, convert_to_usd: "true" })) for (const h of x.history || []) add(x.symbol, h.t, "oi", h.c);
+  for (const x of await cz(env, "funding-rate-history", q)) for (const h of x.history || []) add(x.symbol, h.t, "fr", h.c);
+  for (const x of await cz(env, "liquidation-history", { ...q, convert_to_usd: "true" })) for (const h of x.history || []) { add(x.symbol, h.t, "liq_l", h.l); add(x.symbol, h.t, "liq_s", h.s); }
+  try { for (const x of await cz(env, "long-short-ratio-history", q)) for (const h of x.history || []) add(x.symbol, h.t, "ls", h.r); } catch (e) { log.push("LS-d " + e.message.slice(0, 40)); }
+  const base = Object.fromEntries(Object.entries(M).map(([b, s]) => [s, b]));
+  const st = [];
+  for (const [sym, T] of Object.entries(rows)) for (const [t, v] of Object.entries(T)) {
+    const b = base[sym] || sym, d = new Date(+t * 1000).toISOString().slice(0, 10);
+    st.push(env.DB.prepare("INSERT OR REPLACE INTO hub_deriv_d (sym, d, o, h, l, c, oi, fr, liq_l, liq_s, ls) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .bind(b, d, v.o ?? null, v.h ?? null, v.l ?? null, v.c ?? null, v.oi ?? null, v.fr ?? null, v.liq_l ?? null, v.liq_s ?? null, v.ls ?? null));
+    if (CZ_CANDLES.includes(b) && v.c != null && +t < now - 86400) st.push(env.DB.prepare("INSERT OR REPLACE INTO hub_candles (tf, t, o, h, l, c) VALUES (?, ?, ?, ?, ?, ?)").bind(b + "USD:1d", +t, v.o, v.h, v.l, v.c));
+  }
+  for (let i = 0; i < st.length; i += 90) await env.DB.batch(st.slice(i, i + 90));
+  if (idx < bases.length) await kvPut(env, "czd_next", idx + 1 >= bases.length ? "done" : String(idx + 1)); else await kvPut(env, "czd_check", new Date().toISOString().slice(0, 10));
+  log.push(`Coinalyze-Tag ${todo.join("/")}:${st.length}`);
+}
+
 // ---------------------------------------------------------------- COMEX-Positionierung (CFTC Commitments of Traders, v1.4)
 // Disaggregated Futures Only: Managed Money (Fonds), Producer/Merchant, Swap Dealer. Gold 088691, Silber 084691. Wöchentlich, Historie seit 2006.
 async function cotTick(env, log) {
@@ -328,9 +373,11 @@ async function paper(env) {
     if (!DATA[sym]) {
       const C5 = await load(env, TK(sym, "5m"), now - 30 * 86400);
       DATA[sym] = C5.length >= 500 ? { DAYS: E.days(C5), F5: E.feats(C5), F15: E.feats(E.resample(C5, 900)) } : {};
+      DATA[sym].px = C5.length ? C5.slice(-8640).map((k) => k.c).sort((a, b) => a - b)[Math.floor(Math.min(C5.length, 8640) / 2)] : null;
       if (strats.some((x) => x.family === "swing")) DATA[sym].D1 = await load(env, TK(sym, "1d"), 0);
     }
     const data = DATA[sym];
+    if (E.SYMS[sym]?._costp) Object.assign(p, E.withSym(JSON.parse(s.params), data.px || (data.D1 && data.D1.length ? data.D1[data.D1.length - 1].c : 0)));
     if (s.family !== "swing" && !data.DAYS) continue;
     if (s.family === "swing" && p.filt && p.filt !== "none" && data.D1) {   // COT/Realzins-Filter (v1.5)
       const cot = (await env.DB.prepare("SELECT d, mm_l, mm_s, oi FROM hub_cot WHERE sym = ? ORDER BY d").bind(sym).all()).results;
@@ -443,6 +490,8 @@ async function tick(env) {
     try { log.push("Register:" + await syncRegistry(env)); } catch (e) { log.push("Register-Fehler " + e.message); }
     await env.DB.prepare("DELETE FROM hub_candles WHERE (tf = '5m' OR tf LIKE '%:5m') AND t < ?").bind(Math.floor(Date.now() / 1000) - 75 * 86400).run();
   }
+  try { await czCandles(env, log); } catch (e) { log.push("Krypto-Fehler " + e.message.slice(0, 80)); }
+  if ((min >= 30 && min < 35) || (await kvGet(env, "czd_next") || "0") !== "done") { try { await czDaily(env, log); } catch (e) { log.push("Coinalyze-Tag-Fehler " + e.message.slice(0, 80)); } }
   if (min % 10 < 5) { try { await newsTick(env, log); } catch (e) { log.push("Nachrichten-Fehler " + e.message); } }
   try { await fxTick(env, log); } catch (e) { log.push("FX-Fehler " + e.message); }
   try { log.push("News:" + await newsAlerts(env)); } catch (e) { log.push("News-Fehler " + e.message); }
@@ -460,6 +509,7 @@ export default {
     if (url.pathname === "/run") { await tick(env); return new Response("ok"); }
     if (url.pathname === "/cot") { const log = []; await schema(env); await kvPut(env, "cot_check", ""); await cotTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/deriv") { const log = []; await schema(env); await derivTick(env, log); return new Response(log.join(" | ") + "\n" + (await kvGet(env, "cz_markets"))); }
+    if (url.pathname === "/czdaily") { const log = []; await schema(env); await czDaily(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/macro") { const log = []; await schema(env); await kvPut(env, "macro_check", ""); await macroTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/export") { await exportDaily(env); return new Response("export ok"); }
     if (url.pathname === "/status") {
