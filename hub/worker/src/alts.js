@@ -172,14 +172,14 @@ async function cz(env, path, q, tries = 4) {   // Coinalyze: max. 40 Abfragen/Mi
     throw new Error(`Coinalyze ${path} ${r.status}`);
   }
 }
-async function czMap(env, kvGet, kvPut) {   // Basis-Symbol → bestes USDT-Perp (bevorzugt Binance „.A“), täglich neu
+export async function czMap(env, kvGet, kvPut) {   // Basis-Symbol → bestes USDT-Perp (bevorzugt Binance „.A“), täglich neu
   const day = new Date().toISOString().slice(0, 10); const c = await kvGet(env, "czmap_" + day); if (c) return JSON.parse(c);
   const L = await cz(env, "future-markets", {}); const m = {};
   for (const x of L) { if (!x.is_perpetual) continue; const b = String(x.base_asset).toUpperCase(); const sc = /USDT_PERP\.A$/.test(x.symbol) ? 3 : /USDT_PERP/.test(x.symbol) ? 2 : /USD_PERP/.test(x.symbol) ? 1 : 0; if (sc && (!m[b] || sc > m[b][1])) m[b] = [x.symbol, sc]; }
   const out = Object.fromEntries(Object.entries(m).map(([b, [s]]) => [b, s]));
   await kvPut(env, "czmap_" + day, JSON.stringify(out)); return out;
 }
-async function hist(env, path, syms, interval, from, to, extra = {}) {
+export async function hist(env, path, syms, interval, from, to, extra = {}) {
   const out = {};
   for (let i = 0; i < syms.length; i += 20) {
     const L = await cz(env, path, { symbols: syms.slice(i, i + 20).join(","), interval, from, to, ...extra }).catch((e) => { hist.err = (hist.err || 0) + 1; hist.last = e.message; return []; });
@@ -219,15 +219,22 @@ export async function altTick(env, say, kvGet, kvPut, force) {
     const oi7 = oi.length > 6 && oi[0].c ? oi[oi.length - 1].c / oi[0].c - 1 : null, f = fr.length ? fr[fr.length - 1].c : null;
     const s = scan(D, h4, btcD, { oi7, fr: f }); if (!s) continue;
     s.livePx = x.px ?? null;
-    res.push({ x, s });
+    res.push({ x, s, D, ctx: { oi7, fr: f } });
     st.push(env.DB.prepare("INSERT OR REPLACE INTO hub_alts (sym, name, rank, mcap, px, t, score, scen, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(x.sym, x.name, x.rank, x.mcap ?? null, x.px ?? s.px, now, s.score, s.scen, JSON.stringify(s)));
   }
   for (let i = 0; i < st.length; i += 90) await env.DB.batch(st.slice(i, i + 90));
 
   // Bestätigte Ausbrüche (Tagesschluss über/unter dem 20-Tage-Level, Punktzahl ≥ 60) merken + melden (max. 3 je Stunde, je Coin max. 1 pro 5 Tage)
-  let sent = 0;
-  for (const { x, s } of res.sort((a, b) => b.s.score - a.s.score)) {
-    if (!s.scen || s.score < 60 || !/läuft/.test(s.scen)) continue;
+  let sent = 0, paused = 0;
+  const AM = await kvGet(env, "alt_model").then((v) => (v ? JSON.parse(v) : null)).catch(() => null);   // v2.8: gelernt (altlearn.js) – je Richtung an/aus, Mindestpunktzahl, Ziel in R
+  for (const { x, s, D, ctx } of res.sort((a, b) => b.s.score - a.s.score)) {
+    if (!s.scen || !/läuft/.test(s.scen)) continue;
+    const dn = /short|unten/.test(s.scen) ? "short" : "long", G = AM?.dirs?.[dn];
+    if (G) {
+      if (!G.on) { paused++; continue; }   // diese Richtung hat im Nachtest nicht bestanden
+      const sD = scan(D, null, btcD, ctx); if (!sD || sD.score < G.minScore) continue;   // gleiche Tages-Punktzahl wie im Nachtest
+      const e0 = x.px ?? s.px, R0 = Math.abs(e0 - s.stop); if (R0 > 0) { s.tgt = e0 + (dn === "long" ? 1 : -1) * G.k * R0; s.rr = G.k; s.why.unshift(`gelernt: ab ${G.minScore} Pkt., Ziel ${G.k}R`); }
+    } else if (s.score < 60) continue;
     const prev = await env.DB.prepare("SELECT t FROM hub_altsig WHERE sym = ? AND t > ?").bind(x.sym, now - 5 * 86400).first(); if (prev) continue;
     await env.DB.prepare("INSERT OR IGNORE INTO hub_altsig (sym, t, scen, px, lvl, stop, tgt, score) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(x.sym, now, s.scen, x.px ?? s.px, s.lvl, s.stop, s.tgt, s.score).run();
     const opened = await apOpen(env, say, x, s, now).catch(() => false);
@@ -250,7 +257,7 @@ export async function altTick(env, say, kvGet, kvPut, force) {
     const col = dt >= 7 * 86400 ? "px7d" : dt >= 3 * 86400 && g.px3d == null ? "px3d" : g.px1d == null ? "px1d" : null;
     if (col || hit !== g.hit) await env.DB.prepare(`UPDATE hub_altsig SET ${col || "hit"} = ?, hit = ? WHERE sym = ? AND t = ?`).bind(col ? px : hit, hit || null, g.sym, g.t).run();
   }
-  const msg = `Altcoins (${msrc}${hist.err ? ", " + hist.err + " Coinalyze-Abrufe fehlgeschlagen: " + hist.last : ""}): ${coins.length} mit Perp, ${res.length} gescannt, ${res.filter((r) => r.s.scen).length} mit Szenario, ${sent} Hinweise · ${apMsg}`;
+  const msg = `Altcoins (${msrc}${hist.err ? ", " + hist.err + " Coinalyze-Abrufe fehlgeschlagen: " + hist.last : ""}): ${coins.length} mit Perp, ${res.length} gescannt, ${res.filter((r) => r.s.scen).length} mit Szenario, ${sent} Hinweise${paused ? `, ${paused} pausiert (gelernt)` : ""} · ${apMsg}`;
   await kvPut(env, "log_alt", new Date().toISOString() + " " + msg);
   return msg;
 }
