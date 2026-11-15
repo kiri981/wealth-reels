@@ -1,0 +1,380 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "LEARN",
+  "title": "Break of Structure *made simple*",
+  "chart": "up"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Is the trend over –",
+   "accent": "or will it continue?",
+   "icon": "up",
+   "say": "Is the trend over, or will it continue? One line tells you."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "BREAK OF STRUCTURE",
+   "text": "Price closes above the last high – the trend continues.",
+   "say": "Break of Structure: a close above the last high. The trend continues."
+  },
+  {
+   "type": "candles",
+   "dur": 5.4,
+   "step": "STEP 01",
+   "title": "Mark the *last high*",
+   "caption": "That's the line the market has to break.",
+   "say": "Step one: mark the last high.",
+   "candles": [
+    [
+     100.0,
+     101.02,
+     99.64,
+     100.86
+    ],
+    [
+     100.86,
+     101.83,
+     100.61,
+     101.52
+    ],
+    [
+     101.52,
+     102.47,
+     101.4,
+     102.16
+    ],
+    [
+     102.16,
+     103.24,
+     102.03,
+     103.11
+    ],
+    [
+     103.11,
+     103.54,
+     102.25,
+     102.4
+    ],
+    [
+     102.4,
+     102.75,
+     101.31,
+     101.79
+    ],
+    [
+     101.79,
+     103.11,
+     101.3,
+     102.85
+    ],
+    [
+     102.85,
+     103.93,
+     102.63,
+     103.49
+    ],
+    [
+     103.49,
+     104.35,
+     103.26,
+     104.2
+    ],
+    [
+     104.2,
+     105.63,
+     103.87,
+     105.45
+    ],
+    [
+     105.45,
+     105.7,
+     104.32,
+     104.63
+    ],
+    [
+     104.63,
+     104.76,
+     103.92,
+     104.1
+    ],
+    [
+     104.1,
+     104.37,
+     103.04,
+     103.26
+    ],
+    [
+     103.26,
+     104.85,
+     103.04,
+     104.57
+    ],
+    [
+     104.57,
+     106.41,
+     104.37,
+     106.03
+    ],
+    [
+     106.03,
+     107.64,
+     105.58,
+     107.33
+    ],
+    [
+     107.33,
+     108.36,
+     106.84,
+     108.14
+    ],
+    [
+     108.14,
+     108.79,
+     107.74,
+     108.52
+    ],
+    [
+     108.52,
+     109.23,
+     108.41,
+     108.93
+    ]
+   ],
+   "tags": [
+    {
+     "i": 10,
+     "price": 105.7,
+     "text": "HH",
+     "color": "white"
+    },
+    {
+     "i": 5,
+     "price": 101.31,
+     "text": "HL",
+     "color": "white"
+    },
+    {
+     "i": 12,
+     "price": 103.04,
+     "text": "HL",
+     "color": "white"
+    },
+    {
+     "i": 15,
+     "price": 107.64,
+     "text": "BREAK OF STRUCTURE",
+     "color": "gold"
+    }
+   ],
+   "levels": [
+    {
+     "price": 105.7,
+     "text": "",
+     "color": "gold",
+     "from_i": 10
+    }
+   ],
+   "footer": "Example illustration"
+  },
+  {
+   "type": "candles",
+   "dur": 5.4,
+   "step": "STEP 02",
+   "title": "Wait for a *candle close* above it",
+   "caption": "A wick alone is not a break.",
+   "say": "Step two: wait for a candle close above it. A wick isn't enough.",
+   "candles": [
+    [
+     100.0,
+     101.29,
+     99.53,
+     100.96
+    ],
+    [
+     100.96,
+     102.24,
+     100.63,
+     101.93
+    ],
+    [
+     101.93,
+     102.99,
+     101.58,
+     102.68
+    ],
+    [
+     102.68,
+     104.05,
+     102.46,
+     103.92
+    ],
+    [
+     103.92,
+     104.34,
+     102.99,
+     103.37
+    ],
+    [
+     103.37,
+     103.86,
+     102.36,
+     102.85
+    ],
+    [
+     102.85,
+     104.32,
+     102.69,
+     103.97
+    ],
+    [
+     103.97,
+     104.9,
+     103.85,
+     104.59
+    ],
+    [
+     104.59,
+     105.53,
+     104.47,
+     105.34
+    ],
+    [
+     105.34,
+     106.58,
+     104.9,
+     106.31
+    ],
+    [
+     106.31,
+     106.66,
+     105.25,
+     105.55
+    ],
+    [
+     105.55,
+     105.83,
+     104.51,
+     104.72
+    ],
+    [
+     104.72,
+     105.22,
+     103.28,
+     103.72
+    ],
+    [
+     103.72,
+     105.34,
+     103.53,
+     105.11
+    ],
+    [
+     105.11,
+     106.34,
+     104.71,
+     106.22
+    ],
+    [
+     106.22,
+     107.84,
+     105.96,
+     107.4
+    ],
+    [
+     107.4,
+     109.41,
+     107.3,
+     108.97
+    ],
+    [
+     108.97,
+     109.88,
+     108.68,
+     109.41
+    ],
+    [
+     109.41,
+     110.66,
+     109.29,
+     110.4
+    ],
+    [
+     110.4,
+     111.55,
+     110.19,
+     111.14
+    ]
+   ],
+   "tags": [
+    {
+     "i": 10,
+     "price": 106.66,
+     "text": "HH",
+     "color": "white"
+    },
+    {
+     "i": 5,
+     "price": 102.36,
+     "text": "HL",
+     "color": "white"
+    },
+    {
+     "i": 12,
+     "price": 103.28,
+     "text": "HL",
+     "color": "white"
+    },
+    {
+     "i": 16,
+     "price": 109.41,
+     "text": "BREAK OF STRUCTURE",
+     "color": "gold"
+    }
+   ],
+   "levels": [
+    {
+     "price": 106.66,
+     "text": "",
+     "color": "gold",
+     "from_i": 10
+    }
+   ],
+   "footer": "Example illustration"
+  },
+  {
+   "type": "words",
+   "dur": 3.4,
+   "kicker": "STEP 03",
+   "text": "Enter on the pullback – not on the breakout candle.",
+   "say": "Step three: enter on the pullback, not on the breakout candle."
+  },
+  {
+   "type": "words",
+   "dur": 3.4,
+   "kicker": "COMMON MISTAKE",
+   "text": "Trading every break on M1. Check H4 first.",
+   "say": "Common mistake: trading every break on M1. Check H4 first."
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Close first. Then trade.",
+   "button": "Comment GOLD",
+   "say": "I share setups like this live in my free group. Comment GOLD.",
+   "sub": "Gold trade ideas live on Telegram",
+   "disclaimer": "Not financial advice. Trading involves risk of loss."
+  }
+ ],
+ "voice_speed": 1.1,
+ "lang": "en",
+ "footer": "Not financial advice · Trading involves risk of loss"
+}
