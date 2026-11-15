@@ -11,7 +11,7 @@ import { walletTick, walletAdmin, walletData } from "./wallets.js";
 import { altTick, altPage, mktTick } from "./alts.js";
 import { mpData } from "./mpaper.js";
 
-const VERSION = "2.1";
+const VERSION = "2.2";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -571,7 +571,11 @@ async function memeRun(env) {   // v1.9: Meme-Radar, danach Smart-Wallets
   try { out.push(await memeTick(env, say, kvGet, kvPut)); } catch (e) { out.push("Meme-Radar-Fehler " + e.message); }
   try { out.push(await walletTick(env, say, kvGet, kvPut)); } catch (e) { out.push("Wallet-Fehler " + e.message); }
   try { out.push(await mktTick(env, kvGet, kvPut)); } catch (e) { out.push("Marktbreite-Fehler " + e.message); }
-  return out.join(" | ");
+  // ab und zu nachholen: Altcoin-Scan, falls der stündliche Lauf ausfiel (z. B. nach einem Deploy)
+  try { if (!(await kvGet(env, "alt_hr")) || +(await kvGet(env, "alt_hr")) < Math.floor(Date.now() / 3600000) - 1) out.push(await altTick(env, say, kvGet, kvPut)); } catch (e) { out.push("Alt-Fehler " + e.message); }
+  const msg = out.filter(Boolean).join(" | ");
+  try { await kvPut(env, "log_memerun", new Date().toISOString() + " " + msg.slice(0, 900)); } catch (e) {}
+  return msg;
 }
 
 export default {

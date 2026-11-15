@@ -24,13 +24,21 @@ export async function mktTick(env, kvGet, kvPut) {
   await altSchema(env);
   const now = Math.floor(Date.now() / 1000); const slot = Math.floor(now / 900) * 900;
   if ((await kvGet(env, "mkt_slot")) === String(slot)) return "";
-  const r = await fetch(`${CG}/global`, { headers: UA }); if (!r.ok) return "CoinGecko global " + r.status;
-  const g = (await r.json()).data || {}; const tot = N(g.total_market_cap?.usd), p = g.market_cap_percentage || {};
-  const stab = ["usdt", "usdc", "usds", "dai", "usde"].reduce((a, k) => a + (N(p[k]) || 0), 0);
-  const btcd = N(p.btc), ethd = N(p.eth);
-  if (!tot || btcd == null) return "CoinGecko global: leer";
+  let tot = null, btcd = null, ethd = null, stab = null, vol = null, src = "";
+  try {   // 1) CoinGecko
+    const r = await fetch(`${CG}/global`, { headers: UA });
+    if (r.ok) { const g = (await r.json()).data || {}; const p = g.market_cap_percentage || {}; tot = N(g.total_market_cap?.usd); btcd = N(p.btc); ethd = N(p.eth); vol = N(g.total_volume?.usd); stab = ["usdt", "usdc", "usds", "dai", "usde"].reduce((a, k) => a + (N(p[k]) || 0), 0); src = "CoinGecko"; }
+    else src = "CoinGecko " + r.status;
+  } catch (e) { src = "CoinGecko " + e.message; }
+  if (!tot || btcd == null) {   // 2) Ausweichquelle CoinLore (kein Schlüssel)
+    const r = await fetch("https://api.coinlore.net/api/global/", { headers: UA });
+    if (r.ok) { const g = (await r.json())[0] || {}; tot = N(g.total_mcap); btcd = N(g.btc_d); ethd = N(g.eth_d); vol = N(g.total_volume); src += " → CoinLore"; }
+    else src += " → CoinLore " + r.status;
+  }
+  if (!tot || btcd == null) { await kvPut(env, "log_mkt", new Date().toISOString() + " Fehler: " + src); return "Marktbreite: keine Daten (" + src + ")"; }
   await env.DB.prepare("INSERT OR REPLACE INTO hub_mkt (t, total, btcd, ethd, total2, total3, stabled, vol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-    .bind(slot, tot, btcd, ethd, tot * (1 - btcd / 100), tot * (1 - (btcd + (ethd || 0)) / 100), stab, N(g.total_volume?.usd)).run();
+    .bind(slot, tot, btcd, ethd, tot * (1 - btcd / 100), tot * (1 - (btcd + (ethd || 0)) / 100), stab, vol).run();
+  await kvPut(env, "log_mkt", new Date().toISOString() + " ok " + src);
   await kvPut(env, "mkt_slot", String(slot));
   return `Marktbreite: BTC.D ${btcd.toFixed(2)} %`;
 }
@@ -134,9 +142,15 @@ export async function altTick(env, say, kvGet, kvPut, force) {
   const now = Math.floor(Date.now() / 1000); const hr = Math.floor(now / 3600);
   if (!force && (await kvGet(env, "alt_hr")) === String(hr)) return "";
   await kvPut(env, "alt_hr", String(hr));
-  const r = await fetch(`${CG}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=120&page=1`, { headers: UA });
-  if (!r.ok) return "CoinGecko markets " + r.status;
-  const M = (await r.json()).filter((x) => !SKIP.test(x.symbol) && !(Math.abs((x.current_price || 0) - 1) < 0.03 && Math.abs(x.price_change_percentage_24h || 0) < 0.6)).slice(0, 100);
+  let raw = null, msrc = "";
+  try { const r = await fetch(`${CG}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=120&page=1`, { headers: UA }); if (r.ok) { raw = await r.json(); msrc = "CoinGecko"; } else msrc = "CoinGecko " + r.status; } catch (e) { msrc = "CoinGecko " + e.message; }
+  if (!Array.isArray(raw) || !raw.length) {   // Ausweichquelle CoinLore
+    const r = await fetch("https://api.coinlore.net/api/tickers/?start=0&limit=120", { headers: UA });
+    if (!r.ok) { await kvPut(env, "log_alt", new Date().toISOString() + " Fehler: " + msrc + " → CoinLore " + r.status); return "Altcoins: keine Coin-Liste"; }
+    raw = ((await r.json()).data || []).map((x) => ({ symbol: String(x.symbol).toLowerCase(), name: x.name, market_cap_rank: +x.rank, market_cap: N(x.market_cap_usd), current_price: N(x.price_usd), price_change_percentage_24h: N(x.percent_change_24h) }));
+    msrc += " → CoinLore";
+  }
+  const M = raw.filter((x) => !SKIP.test(x.symbol) && !(Math.abs((x.current_price || 0) - 1) < 0.03 && Math.abs(x.price_change_percentage_24h || 0) < 0.6)).slice(0, 100);
   const map = await czMap(env, kvGet, kvPut);
   const coins = M.map((x) => ({ sym: x.symbol.toUpperCase(), name: x.name, rank: x.market_cap_rank, mcap: x.market_cap, px: x.current_price, cz: map[x.symbol.toUpperCase()] })).filter((x) => x.cz);
   if (!coins.find((x) => x.sym === "BTC") && map.BTC) coins.unshift({ sym: "BTC", name: "Bitcoin", rank: 1, cz: map.BTC });
@@ -181,7 +195,9 @@ export async function altTick(env, say, kvGet, kvPut, force) {
     const col = dt >= 7 * 86400 ? "px7d" : dt >= 3 * 86400 && g.px3d == null ? "px3d" : g.px1d == null ? "px1d" : null;
     if (col || hit !== g.hit) await env.DB.prepare(`UPDATE hub_altsig SET ${col || "hit"} = ?, hit = ? WHERE sym = ? AND t = ?`).bind(col ? px : hit, hit || null, g.sym, g.t).run();
   }
-  return `Altcoins: ${res.length} gescannt, ${res.filter((r) => r.s.scen).length} mit Szenario, ${sent} Hinweise`;
+  const msg = `Altcoins (${msrc}): ${res.length} gescannt, ${res.filter((r) => r.s.scen).length} mit Szenario, ${sent} Hinweise`;
+  await kvPut(env, "log_alt", new Date().toISOString() + " " + msg);
+  return msg;
 }
 
 // ---------------------------------------------------------------- Seite /alts
