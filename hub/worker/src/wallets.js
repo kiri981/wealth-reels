@@ -20,6 +20,8 @@ export async function walletSchema(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_wtx (sig TEXT, addr TEXT, mint TEXT, t INTEGER, seen INTEGER, side INTEGER, amt REAL, sol REAL, sym TEXT, pool TEXT, px REAL, mc REAL, liq REAL, px1h REAL, px6h REAL, px24h REAL, PRIMARY KEY (sig, mint))"),
   ]);
 }
+let _mig = false;
+async function walletMig(env) { if (_mig) return; _mig = true; for (const col of ["status TEXT DEFAULT 'manual'", "found INTEGER", "score REAL"]) { try { await env.DB.prepare("ALTER TABLE hub_wallet ADD COLUMN " + col).run(); } catch (e) {} } }
 async function rpc(env, body) {
   const r = await fetch(`https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_KEY}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   if (!r.ok) throw new Error("Helius " + r.status + " " + (await r.text()).slice(0, 80));
@@ -51,7 +53,7 @@ export function parseTx(tx, addr) {
 
 export async function walletTick(env, say, kvGet, kvPut) {
   if (!env.HELIUS_KEY) return "Wallets: kein HELIUS_KEY";
-  await walletSchema(env);
+  await walletSchema(env); await walletMig(env);
   const W = (await env.DB.prepare("SELECT * FROM hub_wallet").all()).results; if (!W.length) return "Wallets: keine eingetragen";
   const now = Math.floor(Date.now() / 1000);
   const sres = await rpc(env, W.map((w, i) => ({ jsonrpc: "2.0", id: i, method: "getSignaturesForAddress", params: [w.addr, w.last_sig ? { limit: 25, until: w.last_sig } : { limit: 10 }] })));
@@ -80,7 +82,7 @@ export async function walletTick(env, say, kvGet, kvPut) {
   for (const mint of [...new Set(fresh.map((x) => x.mint))]) {
     if (sent >= 6) break;
     const i = info[mint]; const sym = i?.baseToken?.symbol || mint.slice(0, 6);
-    const buyers = (await env.DB.prepare("SELECT DISTINCT w.addr, w.label FROM hub_wtx x JOIN hub_wallet w ON w.addr = x.addr WHERE x.mint = ? AND x.side = 1 AND x.t > ?").bind(mint, now - 6 * 3600).all()).results;
+    const buyers = (await env.DB.prepare("SELECT DISTINCT w.addr, w.label FROM hub_wtx x JOIN hub_wallet w ON w.addr = x.addr WHERE x.mint = ? AND x.side = 1 AND x.t > ? AND COALESCE(w.status, 'manual') != 'probe'").bind(mint, now - 6 * 3600).all()).results;
     const cluster = buyers.length >= 2 && !(await kvGet(env, "wclu_" + mint));
     const solo = fresh.filter((x) => x.mint === mint && x.w.alert);
     if (!cluster && !solo.length) continue;
@@ -123,11 +125,11 @@ export async function walletAdmin(env, q) {
   return "nichts zu tun";
 }
 export async function walletData(env) {
-  await walletSchema(env);
+  await walletSchema(env); await walletMig(env);
   const now = Math.floor(Date.now() / 1000);
-  const W = (await env.DB.prepare("SELECT addr, label, added, alert FROM hub_wallet ORDER BY added").all()).results;
+  const W = (await env.DB.prepare("SELECT addr, label, added, alert, COALESCE(status, 'manual') status, found, score, note FROM hub_wallet ORDER BY CASE COALESCE(status,'manual') WHEN 'manual' THEN 0 WHEN 'active' THEN 1 ELSE 2 END, added").all()).results;
   const T = (await env.DB.prepare("SELECT x.*, w.label FROM hub_wtx x LEFT JOIN hub_wallet w ON w.addr = x.addr WHERE x.t > ? ORDER BY x.t DESC LIMIT 200").bind(now - 7 * 86400).all()).results;
-  const S = (await env.DB.prepare("SELECT addr, COUNT(*) n, SUM(CASE WHEN px24h IS NOT NULL THEN 1 ELSE 0 END) n24, SUM(CASE WHEN px24h > px THEN 1 ELSE 0 END) up24, AVG(CASE WHEN px24h IS NOT NULL AND px > 0 THEN px24h / px - 1 END) avg24, SUM(CASE WHEN px24h <= px * 0.2 THEN 1 ELSE 0 END) rug FROM hub_wtx WHERE side = 1 GROUP BY addr").all()).results;
-  const cl = (await env.DB.prepare("SELECT mint, COUNT(DISTINCT addr) n FROM hub_wtx WHERE side = 1 AND t > ? GROUP BY mint HAVING n >= 2").bind(now - 6 * 3600).all()).results;
+  const S = (await env.DB.prepare("SELECT x.addr, COUNT(*) n, SUM(CASE WHEN px24h IS NOT NULL THEN 1 ELSE 0 END) n24, SUM(CASE WHEN px24h > px THEN 1 ELSE 0 END) up24, AVG(CASE WHEN px24h IS NOT NULL AND px > 0 THEN px24h / px - 1 END) avg24, SUM(CASE WHEN px24h <= px * 0.2 THEN 1 ELSE 0 END) rug FROM hub_wtx x LEFT JOIN hub_wallet w ON w.addr = x.addr WHERE side = 1 AND x.t >= COALESCE(w.found, 0) GROUP BY x.addr").all()).results;
+  const cl = (await env.DB.prepare("SELECT x.mint, COUNT(DISTINCT x.addr) n FROM hub_wtx x JOIN hub_wallet w ON w.addr = x.addr WHERE x.side = 1 AND x.t > ? AND COALESCE(w.status, 'manual') != 'probe' GROUP BY x.mint HAVING n >= 2").bind(now - 6 * 3600).all()).results;
   return { wallets: W, tx: T, stats: Object.fromEntries(S.map((s) => [s.addr, s])), clusters: Object.fromEntries(cl.map((c) => [c.mint, c.n])), helius: !!env.HELIUS_KEY };
 }

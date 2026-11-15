@@ -10,8 +10,9 @@ import { memeTick, memePage } from "./meme.js";
 import { walletTick, walletAdmin, walletData } from "./wallets.js";
 import { altTick, altPage, mktTick } from "./alts.js";
 import { mpData } from "./mpaper.js";
+import { finderTick, finderData } from "./finder.js";
 
-const VERSION = "2.2";
+const VERSION = "2.4";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -587,6 +588,10 @@ export default {
     else ctx.waitUntil(memeRun(env));
     // Altcoin-Scanner stündlich (Minute 10–14) als weiterer eigener Lauf
     const m = new Date().getUTCMinutes();
+    if (m >= 20 && m < 25) {   // Wallet-Finder stündlich als eigener Lauf
+      if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/finderrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Finder-Lauf: " + e.message)));
+      else ctx.waitUntil(finderTick(env, say, kvGet, kvPut).catch((e) => console.log("Finder-Fehler " + e.message)));
+    }
     if (m >= 10 && m < 15) {
       if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/altrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Alt-Lauf: " + e.message)));
       else ctx.waitUntil(altTick(env, say, kvGet, kvPut).catch((e) => console.log("Alt-Fehler " + e.message)));
@@ -599,11 +604,12 @@ export default {
     if (url.pathname === "/cot") { const log = []; await schema(env); await kvPut(env, "cot_check", ""); await cotTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/deriv") { const log = []; await schema(env); await derivTick(env, log); return new Response(log.join(" | ") + "\n" + (await kvGet(env, "cz_markets"))); }
     if (url.pathname === "/czdaily") { const log = []; await schema(env); await czDaily(env, log); return new Response(log.join(" | ")); }
+    if (url.pathname === "/finderrun") { try { return new Response(await finderTick(env, say, kvGet, kvPut, url.searchParams.get("force") === "1")); } catch (e) { return new Response("Finder-Fehler " + e.message); } }
     if (url.pathname === "/alts") return new Response(await altPage(env), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/altrun") { try { return new Response(await altTick(env, say, kvGet, kvPut, url.searchParams.get("force") === "1")); } catch (e) { return new Response("Alt-Fehler " + e.message); } }
     if (url.pathname === "/wallet") return new Response(await walletAdmin(env, url.searchParams));
     if (url.pathname === "/walletrun") return new Response(await walletTick(env, say, kvGet, kvPut));
-    if (url.pathname === "/memes") return new Response(await memePage(env, url.searchParams.get("key"), await walletData(env).catch(() => null), await mpData(env).catch(() => null)), { headers: { "content-type": "text/html; charset=utf-8" } });
+    if (url.pathname === "/memes") return new Response(await memePage(env, url.searchParams.get("key"), await walletData(env).then(async (w) => ({ ...w, finder: await finderData(env).catch(() => null) })).catch(() => null), await mpData(env).catch(() => null)), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/memerun") return new Response(await memeRun(env));
     if (url.pathname === "/weekly") { await schema(env); return new Response(await weeklyReport(env, true)); }
     if (url.pathname === "/macro") { const log = []; await schema(env); await kvPut(env, "macro_check", ""); await macroTick(env, log); return new Response(log.join(" | ")); }
