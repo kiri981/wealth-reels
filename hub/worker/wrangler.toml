@@ -24,6 +24,7 @@ META_REGION = "london"
 #   META_TOKEN, META_ACCOUNT  – wie beim Copy-Trader (nur lesend genutzt)
 #   (GH_TOKEN optional – nicht nötig: der nächtliche Forschungs-Agent holt die Daten selbst aus D1)
 #   HUB_KEY   – frei gewähltes Passwort fürs Dashboard
+#   COINALYZE_KEY – API-Schlüssel von coinalyze.net (Konto → API Key), für Funding/Open Interest/Liquidationen
 
 # Workers AI: bewertet Nachrichten (kostenloses Tageskontingent)
 [ai]

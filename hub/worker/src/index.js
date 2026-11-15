@@ -7,7 +7,7 @@
 // Secrets: META_TOKEN, META_ACCOUNT, (META_REGION), GH_TOKEN, HUB_KEY
 import * as E from "./engine.js";
 
-const VERSION = "1.3";
+const VERSION = "1.4";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -52,6 +52,9 @@ async function schema(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_strats (id TEXT PRIMARY KEY, name TEXT, family TEXT, params TEXT, status TEXT, backtest TEXT, live TEXT, created TEXT)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_kv (k TEXT PRIMARY KEY, v TEXT)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_news (id TEXT PRIMARY KEY, t INTEGER, src TEXT, title TEXT, url TEXT, score INTEGER, dir TEXT, summary TEXT, sent INTEGER DEFAULT 0)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_deriv (sym TEXT, t INTEGER, oi REAL, fr REAL, liq_l REAL, liq_s REAL, ls REAL, PRIMARY KEY (sym, t))"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_cot (sym TEXT, d TEXT, mm_l REAL, mm_s REAL, pm_l REAL, pm_s REAL, sd_l REAL, sd_s REAL, oi REAL, PRIMARY KEY (sym, d))"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_etf (sym TEXT, d TEXT, tonnes REAL, PRIMARY KEY (sym, d))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_events (id TEXT PRIMARY KEY, t INTEGER, cur TEXT, title TEXT, impact TEXT, forecast TEXT, previous TEXT, actual TEXT, note TEXT)"),
   ]);
   await env.STATE?.put?.("hub:schema1", "1");
@@ -188,6 +191,84 @@ async function newsTick(env, log) {
   log.push(`News neu:${found} gemeldet:${sent}`);
 }
 
+// ---------------------------------------------------------------- Futures-Positionierung Krypto & Gold/Silber-Perps (Coinalyze, v1.4)
+// Stündlich: Open Interest, Funding, Liquidationen, Long/Short-Verhältnis je Markt. Schlüssel: Secret COINALYZE_KEY.
+const CZ_BASES = ["BTC", "ETH", "SOL", "XRP", "BNB", "DOGE", "XAU", "XAG", "PAXG"];
+async function cz(env, path, q) {
+  const r = await fetch(`https://api.coinalyze.net/v1/${path}?${new URLSearchParams(q)}`, { headers: { api_key: env.COINALYZE_KEY } });
+  if (!r.ok) throw new Error(`Coinalyze ${path} ${r.status}: ${(await r.text()).slice(0, 120)}`);
+  return r.json();
+}
+async function czMarkets(env) {
+  const c = await kvGet(env, "cz_markets"); if (c) return JSON.parse(c);
+  const L = await cz(env, "future-markets", {}); const pick = {};
+  for (const b of CZ_BASES) {
+    const m = L.filter((x) => String(x.base_asset).toUpperCase() === b && x.is_perpetual);
+    const best = m.find((x) => /USDT_PERP\.A$/.test(x.symbol)) || m.find((x) => /USDT?_PERP/.test(x.symbol)) || m[0];
+    if (best) pick[b] = best.symbol;
+  }
+  await kvPut(env, "cz_markets", JSON.stringify(pick));
+  return pick;
+}
+async function derivTick(env, log) {
+  if (!env.COINALYZE_KEY) return;
+  const M = await czMarkets(env); const syms = Object.values(M).join(",");
+  if (!syms) return;
+  const now = Math.floor(Date.now() / 1000);
+  const first = !(await kvGet(env, "cz_backfill"));
+  const q = { symbols: syms, interval: "1hour", from: now - (first ? 60 : 1) * 86400, to: now };
+  const rows = {};
+  const add = (sym, t, k, v) => { ((rows[sym] ||= {})[t] ||= {})[k] = v; };
+  for (const x of await cz(env, "open-interest-history", { ...q, convert_to_usd: "true" })) for (const h of x.history || []) add(x.symbol, h.t, "oi", h.c);
+  for (const x of await cz(env, "funding-rate-history", q)) for (const h of x.history || []) add(x.symbol, h.t, "fr", h.c);
+  for (const x of await cz(env, "liquidation-history", { ...q, convert_to_usd: "true" })) for (const h of x.history || []) { add(x.symbol, h.t, "liq_l", h.l); add(x.symbol, h.t, "liq_s", h.s); }
+  try { for (const x of await cz(env, "long-short-ratio-history", q)) for (const h of x.history || []) add(x.symbol, h.t, "ls", h.r); } catch (e) { log.push("LS " + e.message.slice(0, 40)); }
+  const base = Object.fromEntries(Object.entries(M).map(([b, s]) => [s, b]));
+  const st = [];
+  for (const [sym, T] of Object.entries(rows)) for (const [t, v] of Object.entries(T))
+    st.push(env.DB.prepare("INSERT INTO hub_deriv (sym, t, oi, fr, liq_l, liq_s, ls) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(sym, t) DO UPDATE SET oi=COALESCE(excluded.oi, oi), fr=COALESCE(excluded.fr, fr), liq_l=COALESCE(excluded.liq_l, liq_l), liq_s=COALESCE(excluded.liq_s, liq_s), ls=COALESCE(excluded.ls, ls)")
+      .bind(base[sym] || sym, Number(t), v.oi ?? null, v.fr ?? null, v.liq_l ?? null, v.liq_s ?? null, v.ls ?? null));
+  for (let i = 0; i < st.length; i += 90) await env.DB.batch(st.slice(i, i + 90));
+  if (first) await kvPut(env, "cz_backfill", "1");
+  log.push(`Coinalyze:${st.length}`);
+}
+
+// ---------------------------------------------------------------- COMEX-Positionierung (CFTC Commitments of Traders, v1.4)
+// Disaggregated Futures Only: Managed Money (Fonds), Producer/Merchant, Swap Dealer. Gold 088691, Silber 084691. Wöchentlich, Historie seit 2006.
+async function cotTick(env, log) {
+  const last = await kvGet(env, "cot_check"); const today = new Date().toISOString().slice(0, 10);
+  if (last === today) return; await kvPut(env, "cot_check", today);
+  const first = !(await env.DB.prepare("SELECT 1 FROM hub_cot LIMIT 1").first());
+  let n = 0;
+  for (const [sym, code] of [["XAUUSD", "088691"], ["XAGUSD", "084691"]]) {
+    const url = `https://publicreporting.cftc.gov/resource/72hh-3qpy.json?cftc_contract_market_code=${code}&$order=report_date_as_yyyy_mm_dd%20DESC&$limit=${first ? 1000 : 8}`;
+    const r = await fetch(url, { headers: { "User-Agent": "wc-hub" } }); if (!r.ok) { log.push("COT " + r.status); continue; }
+    const L = await r.json(); const st = [];
+    for (const x of L) st.push(env.DB.prepare("INSERT OR REPLACE INTO hub_cot (sym, d, mm_l, mm_s, pm_l, pm_s, sd_l, sd_s, oi) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .bind(sym, String(x.report_date_as_yyyy_mm_dd).slice(0, 10), +x.m_money_positions_long_all || 0, +x.m_money_positions_short_all || 0, +x.prod_merc_positions_long || +x.prod_merc_positions_long_all || 0, +x.prod_merc_positions_short || +x.prod_merc_positions_short_all || 0, +x.swap_positions_long_all || 0, +x.swap__positions_short_all || +x.swap_positions_short_all || 0, +x.open_interest_all || 0));
+    for (let i = 0; i < st.length; i += 90) await env.DB.batch(st.slice(i, i + 90));
+    n += st.length;
+  }
+  // GLD-Bestand (Tonnen) – Archiv des Anbieters
+  try {
+    const r = await fetch("https://www.spdrgoldshares.com/assets/dynamic/GLD/GLD_US_archive_EN.csv", { headers: { "User-Agent": "Mozilla/5.0" } });
+    if (r.ok) {
+      const all = (await r.text()).split(/\r?\n/);
+      const hi = all.findIndex((l) => /date/i.test(l) && /tonnes/i.test(l));
+      const col = hi >= 0 ? all[hi].split(",").findIndex((c) => /tonnes/i.test(c)) : -1;
+      const lines = all.slice(hi + 1).filter((l) => /^\s*\d{1,2}-[A-Za-z]{3}-\d{4}/.test(l));
+      const st = [];
+      if (col > 0) for (const l of (first ? lines : lines.slice(-10))) {
+        const c = l.split(","); const d = new Date(c[0].trim() + " UTC"); const tonnes = parseFloat(String(c[col]).replace(/[^0-9.]/g, ""));
+        if (!isNaN(d) && !isNaN(tonnes)) st.push(env.DB.prepare("INSERT OR REPLACE INTO hub_etf (sym, d, tonnes) VALUES ('GLD', ?, ?)").bind(d.toISOString().slice(0, 10), tonnes));
+      }
+      for (let i = 0; i < st.length; i += 90) await env.DB.batch(st.slice(i, i + 90));
+      n += st.length;
+    } else log.push("GLD " + r.status);
+  } catch (e) { log.push("GLD-Fehler " + e.message.slice(0, 60)); }
+  log.push(`COT/ETF:${n}`);
+}
+
 // ---------------------------------------------------------------- Postausgang (Welcome-Bot schickt an Kevin)
 const say = (env, text) => env.DB.prepare("INSERT INTO outbox (kind, text) VALUES ('admin', ?)").bind(text).run();
 
@@ -316,6 +397,8 @@ async function tick(env) {
     if (min < 5) { try { const c = await candles(env, sym, "1d", 1000); await store(env, TK(sym, "1d"), c); log.push(`${sym} 1d:${c.length}`); } catch (e) { log.push(sym + " 1d-Fehler " + e.message); } }
   }
   if (min < 5) {   // stündlich
+    try { await derivTick(env, log); } catch (e) { log.push("Coinalyze-Fehler " + e.message); }
+    if (hr === 21) { try { await cotTick(env, log); } catch (e) { log.push("COT-Fehler " + e.message); } }
     try { log.push("Kalender:" + await syncCalendar(env)); } catch (e) { log.push("Kalender-Fehler " + e.message); }
     try { log.push("Register:" + await syncRegistry(env)); } catch (e) { log.push("Register-Fehler " + e.message); }
     await env.DB.prepare("DELETE FROM hub_candles WHERE (tf = '5m' OR tf LIKE '%:5m') AND t < ?").bind(Math.floor(Date.now() / 1000) - 75 * 86400).run();
@@ -335,6 +418,8 @@ export default {
     const url = new URL(req.url);
     if (url.searchParams.get("key") !== env.HUB_KEY || !env.HUB_KEY) return new Response("WC Trading Hub", { status: 403 });
     if (url.pathname === "/run") { await tick(env); return new Response("ok"); }
+    if (url.pathname === "/cot") { const log = []; await schema(env); await kvPut(env, "cot_check", ""); await cotTick(env, log); return new Response(log.join(" | ")); }
+    if (url.pathname === "/deriv") { const log = []; await schema(env); await derivTick(env, log); return new Response(log.join(" | ") + "\n" + (await kvGet(env, "cz_markets"))); }
     if (url.pathname === "/export") { await exportDaily(env); return new Response("export ok"); }
     if (url.pathname === "/status") {
       await schema(env);
