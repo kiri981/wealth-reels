@@ -3,12 +3,13 @@
 // erkennt Trade-Ideen (Coin, Richtung, Einstieg, Ziele, Stopp) und schreibt sie auf PAPIER mit – mit echten Börsenkursen.
 // Ziel: ehrliche Trefferquote je Gruppe, weil jeder Beitrag in dem Moment gespeichert wird, in dem er erscheint
 // (später gelöschte Verlierer bleiben in der Statistik). Inhalte nur für Kevin – nicht an Partner/Community weiterleiten.
-// Regeln (für alle Gruppen gleich): 50 % bei Ziel 1 + Stopp auf Einstand, 25 % bei Ziel 2 + Stopp auf Ziel 1, Rest bei Ziel 3.
+// Regeln (für alle Gruppen gleich): 50 % bei Ziel 1 + Stopp auf Einstand, 25 % bei Ziel 2 + Stopp auf Ziel 1; das letzte Viertel läuft bis zum LETZTEN Ziel,
+// der Stopp wird dabei immer ein Ziel hinterhergezogen. Wartezeit auf den Einstieg und Laufzeit je Gruppe (Binance Killers = längere Swing-Trades).
 // Liegen in einer Kerze Stopp und Ziel, zählt der Stopp (vorsichtig). Kosten 0,1 % pro Trade. Ohne Stopp kein R → nicht gewertet.
 
 export const SRC = [
-  { id: "bk", ch: "binancekillers_freesignal", name: "Binance Killers" },
-  { id: "cx", ch: "ChainXl", name: "ChainX" },
+  { id: "bk", ch: "binancekillers_freesignal", name: "Binance Killers", waitH: 168, maxDays: 60 },   // längere Swing-Trades: 7 Tage auf den Einstieg warten, bis 60 Tage laufen lassen,
+  { id: "cx", ch: "ChainXl", name: "ChainX", waitH: 48, maxDays: 21 },
 ];
 const SP = { cost: 0.001, waitH: 48, maxDays: 21, perRun: 14, backPages: 4 };
 const UA = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36", Accept: "text/html,application/json" };
@@ -105,13 +106,14 @@ async function klines(sym, fromMs, iv) {   // → { ex, C: [{t,o,h,l,c}] aufstei
 }
 
 // ---------------------------------------------------------------- Papier-Verwaltung einer Idee
-const PLAN = (n) => (n >= 3 ? [0.5, 0.25, 0.25] : n === 2 ? [0.5, 0.5] : [1]);
-export function step(p, C, nowS) {   // verarbeitet Kerzen der Reihe nach; verändert p; gibt Text bei Abschluss zurück
+const PLAN = (n) => (n >= 4 ? [0.5, 0.25, ...Array(n - 3).fill(0), 0.25] : n === 3 ? [0.5, 0.25, 0.25] : n === 2 ? [0.5, 0.5] : [1]);
+export function step(p, C, nowS) {
+  const G = SRC.find((s) => s.id === p.src) || {}, waitH = G.waitH || SP.waitH, maxDays = G.maxDays || SP.maxDays;   // verarbeitet Kerzen der Reihe nach; verändert p; gibt Text bei Abschluss zurück
   const tps = JSON.parse(p.tps), plan = PLAN(tps.length), dir = p.dir;
   for (const k of C) {
     const ts = Math.floor(k.t / 1000);
     if (p.status === "wait") {
-      if (ts - p.t > SP.waitH * 3600) { p.status = "expired"; p.why = "Einstieg nie erreicht (48 Std.)"; p.t_close = ts; return null; }
+      if (ts - p.t > waitH * 3600) { p.status = "expired"; p.why = `Einstieg nie erreicht (${waitH >= 72 ? waitH / 24 + " Tage" : waitH + " Std."})`; p.t_close = ts; return null; }
       let fill = null;
       if (p.mkt) fill = k.o;
       else if (dir > 0 ? k.l <= p.hi : k.h >= p.lo) fill = dir > 0 ? Math.min(k.o, p.hi) : Math.max(k.o, p.lo);
@@ -131,7 +133,7 @@ export function step(p, C, nowS) {   // verarbeitet Kerzen der Reihe nach; verä
       p.sl = p.hits === 1 ? p.e : tps[p.hits - 2];
     }
     p.last_t = k.t;
-    if (ts - p.t_open > SP.maxDays * 86400) return close(p, k.c, ts, `Zeitlimit ${SP.maxDays} Tage`);
+    if (ts - p.t_open > maxDays * 86400) return close(p, k.c, ts, `Zeitlimit ${maxDays} Tage`);
   }
   return null;
 }
@@ -230,12 +232,12 @@ h1{font-size:20px;color:var(--au);margin:4px 0 4px}.mu{color:var(--mu);font-size
 .tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{color:var(--mu);font-weight:500}td:nth-child(-n+4),th:nth-child(-n+4){text-align:left}
 .pos{color:var(--up)}.neg{color:var(--dn)}a{color:var(--au)}</style></head><body>
 <h1>📥 Fremd-Ideen · Papier-Prüfung</h1>
-<div class=mu>Liest die öffentlichen Kanäle alle 5 Minuten und handelt jede erkannte Idee auf Papier mit echten Futures-Kursen – nach festen, gleichen Regeln: 50 % bei Ziel 1 und Stopp auf Einstand, 25 % bei Ziel 2, Rest bei Ziel 3. Ergebnis in R (1R = Abstand Einstieg–Stopp), Prozent ohne Hebel. Nur für dich – nicht weiterleiten. Keine Anlageberatung.</div>
+<div class=mu>Liest die öffentlichen Kanäle alle 5 Minuten und handelt jede erkannte Idee auf Papier mit echten Futures-Kursen – nach festen, gleichen Regeln: 50 % bei Ziel 1 und Stopp auf Einstand, 25 % bei Ziel 2, das letzte Viertel läuft bis zum letzten Ziel (Stopp wird nachgezogen). Binance Killers: 7 Tage Wartezeit auf den Einstieg, bis 60 Tage Laufzeit · ChainX: 48 Std. / 21 Tage. Ergebnis in R (1R = Abstand Einstieg–Stopp), Prozent ohne Hebel. Nur für dich – nicht weiterleiten. Keine Anlageberatung.</div>
 <div class=g>${D.stats.map((s) => `<div class=c><h2>${esc(s.name)} <a class=mu href="https://t.me/s/${esc(s.ch)}" target=_blank rel=noopener>t.me/${esc(s.ch)}</a></h2>
 <div class=k><div><b>${s.closed}</b><span>beendet (${s.liveClosed} live)</span></div><div><b>${pct(s.win)}</b><span>im Plus</span></div><div><b class="${(s.avgR || 0) >= 0 ? "pos" : "neg"}">${f(s.avgR)}R</b><span>Ø je Idee</span></div>
 <div><b class="${s.sumR >= 0 ? "pos" : "neg"}">${f(s.sumR, 1)}R</b><span>Summe</span></div><div><b>${s.pf == null ? "–" : s.pf.toFixed(2)}</b><span>Gewinnfaktor</span></div><div><b>${pct(s.tp1)}</b><span>Ziel 1 erreicht</span></div></div>
 <div class=mu style="margin-top:8px">${s.posts} Beiträge gelesen · ${s.ideas} Ideen · ${s.open} offen · ${s.wait} warten · ${s.missed} verpasst/verfallen${s.nodata ? " · " + s.nodata + " ohne Kurs" : ""}</div></div>`).join("")}</div>
 <div class="c tw"><table><thead><tr><th>Beitrag</th><th>Gruppe</th><th>Coin</th><th>Status</th><th>Einstieg</th><th>Stopp</th><th>Ziele erreicht</th><th>Ergebnis</th><th>% o. Hebel</th></tr></thead><tbody>
-${D.rows.map((p) => `<tr><td>${dt(p.t)}</td><td>${esc((SRC.find((s) => s.id === p.src) || {}).name)}${p.live ? "" : ' <span class=mu title="vor dem Start eingelesen – Verlierer könnten gelöscht worden sein">(rückwirkend)</span>'}</td><td><a href="https://t.me/${esc((SRC.find((s) => s.id === p.src) || {}).ch)}/${p.pid}" target=_blank rel=noopener>${esc(p.sym)}</a> ${p.dir > 0 ? "Long" : "Short"}</td><td title="${esc(p.why || "")}">${esc(st[p.status] || p.status)}${p.why && p.status !== "open" ? " · " + esc(p.why) : ""}</td><td>${p.e != null ? d(p.e) : p.mkt ? "Markt" : d(p.lo) + "–" + d(p.hi)}</td><td>${d(p.sl0)}</td><td>${p.hits}/${Math.min(3, JSON.parse(p.tps).length)}</td><td class="${(p.r || 0) >= 0 ? "pos" : "neg"}">${p.r == null ? (p.status === "open" ? f(p.part) + "R real." : "–") : f(p.r) + "R"}</td><td>${p.pct == null ? "–" : f(p.pct, 1) + " %"}</td></tr>`).join("") || "<tr><td colspan=9>Noch nichts eingelesen.</td></tr>"}
+${D.rows.map((p) => `<tr><td>${dt(p.t)}</td><td>${esc((SRC.find((s) => s.id === p.src) || {}).name)}${p.live ? "" : ' <span class=mu title="vor dem Start eingelesen – Verlierer könnten gelöscht worden sein">(rückwirkend)</span>'}</td><td><a href="https://t.me/${esc((SRC.find((s) => s.id === p.src) || {}).ch)}/${p.pid}" target=_blank rel=noopener>${esc(p.sym)}</a> ${p.dir > 0 ? "Long" : "Short"}</td><td title="${esc(p.why || "")}">${esc(st[p.status] || p.status)}${p.why && p.status !== "open" ? " · " + esc(p.why) : ""}</td><td>${p.e != null ? d(p.e) : p.mkt ? "Markt" : d(p.lo) + "–" + d(p.hi)}</td><td>${d(p.sl0)}</td><td>${p.hits}/${JSON.parse(p.tps).length}</td><td class="${(p.r || 0) >= 0 ? "pos" : "neg"}">${p.r == null ? (p.status === "open" ? f(p.part) + "R real." : "–") : f(p.r) + "R"}</td><td>${p.pct == null ? "–" : f(p.pct, 1) + " %"}</td></tr>`).join("") || "<tr><td colspan=9>Noch nichts eingelesen.</td></tr>"}
 </tbody></table></div><p class=mu>Letzter Lauf: ${esc(D.log)}</p></body></html>`;
 }
