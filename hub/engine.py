@@ -18,6 +18,11 @@ COST = 0.35
 SYMS = {"XAUUSD": dict(_cost=0.35, _minr=0.3, name="Gold"), "XAGUSD": dict(_cost=0.03, _minr=0.02, name="Silber"), "BTCUSD": dict(_cost=20.0, _minr=20.0, name="Bitcoin"),
         # Krypto über Coinalyze-Perp-Kurse (v1.6): Kosten relativ zum Kurs (0,12 % hin+zurück inkl. Schlupf), Mindestrisiko 0,1 %
         "ETHUSD": dict(_costp=0.0012, _minrp=0.001, name="Ethereum"), "SOLUSD": dict(_costp=0.0012, _minrp=0.001, name="Solana"),
+        # Devisen (v2.5): Kosten = typischer Spread beim Broker in Kurs-Einheiten, Mindestrisiko ≈ 5 Pips
+        "EURUSD": dict(_cost=0.00008, _minr=0.0005, name="EUR/USD"), "GBPUSD": dict(_cost=0.00012, _minr=0.0005, name="GBP/USD"), "AUDUSD": dict(_cost=0.0001, _minr=0.0005, name="AUD/USD"),
+        "NZDUSD": dict(_cost=0.00015, _minr=0.0005, name="NZD/USD"), "USDJPY": dict(_cost=0.012, _minr=0.05, name="USD/JPY"), "USDCAD": dict(_cost=0.00015, _minr=0.0005, name="USD/CAD"),
+        "USDCHF": dict(_cost=0.00015, _minr=0.0005, name="USD/CHF"), "EURJPY": dict(_cost=0.02, _minr=0.05, name="EUR/JPY"), "GBPJPY": dict(_cost=0.03, _minr=0.05, name="GBP/JPY"),
+        "EURGBP": dict(_cost=0.0001, _minr=0.0005, name="EUR/GBP"),
         "XRPUSD": dict(_costp=0.0012, _minrp=0.001, name="XRP"), "BNBUSD": dict(_costp=0.0012, _minrp=0.001, name="BNB"), "DOGEUSD": dict(_costp=0.0015, _minrp=0.001, name="Dogecoin")}
 def with_sym(p, price=None):
     c = SYMS.get(p.get("sym", "XAUUSD"), SYMS["XAUUSD"])
@@ -249,6 +254,42 @@ def run_deriv(D, p):
         cost = p.get("_costp", 0.0012) * e
         out.append(dict(t=int(t[j0]), dr=int(dr), e=float(e), sl=float(stop), r=float((dr * (ex - e) - cost) / R), why=why, tx=int(t[j]), open=why == "offen"))
         i = j + 1
+    return out
+
+
+# ---------------------------------------------------------------- Familie fxs (v2.5): Währungsstärke über 8 Währungen (28 Kreuzpaare)
+# cur: DataFrame (Index Tag) mit log-Wert je Währung gegen USD (EUR, GBP, AUD, NZD = log Kurs; JPY, CAD, CHF = −log Kurs; USD = 0).
+# Stärke = Veränderung über N Tage minus Durchschnitt aller Währungen. mode "rev": schwächste kaufen / stärkste verkaufen, "mom": umgekehrt.
+# Gehandelt wird das Kreuzpaar in Marktkonvention (z. B. GBPJPY), Einstieg Schlusskurs am nächsten Tag, Stop k·σ·√H (σ = 60-Tage-Streuung
+# der Tagesrenditen des Paares), Prüfung auf Tagesschluss, Ausstieg nach H Tagen. Kosten 0,03 %.
+FX_ORDER = ["EUR", "GBP", "AUD", "NZD", "USD", "CAD", "CHF", "JPY"]
+def fx_cur(closes):   # closes: dict Paar -> Series (Index Tag)
+    C = pd.DataFrame(closes).dropna(); lg = np.log(C); cur = pd.DataFrame(index=C.index)
+    for x in ["EUR", "GBP", "AUD", "NZD"]: cur[x] = lg[x + "USD"]
+    for x in ["JPY", "CAD", "CHF"]: cur[x] = -lg["USD" + x]
+    cur["USD"] = 0.0
+    return cur[FX_ORDER]
+def run_fxs(cur, p):
+    V = cur.values; n = len(V); N, H, k = p["N"], p["H"], p["k"]; t = cur.index.values.astype("datetime64[s]").astype(np.int64)
+    out = []; i = max(N, 61)
+    while i < n - 2:
+        raw = V[i] - V[i - N]; st = raw - raw.mean()
+        a, b = int(np.argmax(st)), int(np.argmin(st))
+        lo, hi = (b, a) if p["mode"] == "rev" else (a, b)            # lo = kaufen, hi = verkaufen
+        f, s = (lo, hi) if lo < hi else (hi, lo)                     # Paar in Marktkonvention: frühere Währung zuerst
+        dr = 1 if f == lo else -1
+        px = np.exp(V[:, f] - V[:, s])
+        lr = np.diff(np.log(px[i - 60: i + 1])); sig = lr.std(ddof=1)
+        j0 = i + 1; e = px[j0]; R = k * sig * np.sqrt(H) * e; stop = e - dr * R
+        ex = None; j = j0 + 1
+        while j < n and j <= j0 + H:
+            if (dr > 0 and px[j] <= stop) or (dr < 0 and px[j] >= stop): ex = px[j]; why = "Stop"; break
+            j += 1
+        if ex is None:
+            if j0 + H < n: j = j0 + H; ex = px[j]; why = "Zeit"
+            else: j = n - 1; ex = px[j]; why = "offen"
+        out.append(dict(t=int(t[j0]), dr=dr, e=float(e), sl=float(stop), r=float((dr * (ex - e) - 0.0003 * e) / R), why=why, tx=int(t[j]), pair=FX_ORDER[f] + FX_ORDER[s], open=why == "offen"))
+        i = j
     return out
 
 # ---------------------------------------------------------------- Kennzahlen

@@ -5,7 +5,11 @@ export const COST = 0.35;
 // Handelskosten und Mindestrisiko je Symbol (wie hub/engine.py SYMS)
 export const SYMS = { XAUUSD: { _cost: 0.35, _minr: 0.3, name: "Gold" }, XAGUSD: { _cost: 0.03, _minr: 0.02, name: "Silber" }, BTCUSD: { _cost: 20, _minr: 20, name: "Bitcoin" },
   ETHUSD: { _costp: 0.0012, _minrp: 0.001, name: "Ethereum" }, SOLUSD: { _costp: 0.0012, _minrp: 0.001, name: "Solana" }, XRPUSD: { _costp: 0.0012, _minrp: 0.001, name: "XRP" },
-  BNBUSD: { _costp: 0.0012, _minrp: 0.001, name: "BNB" }, DOGEUSD: { _costp: 0.0015, _minrp: 0.001, name: "Dogecoin" } };
+  BNBUSD: { _costp: 0.0012, _minrp: 0.001, name: "BNB" }, DOGEUSD: { _costp: 0.0015, _minrp: 0.001, name: "Dogecoin" },
+  EURUSD: { _cost: 0.00008, _minr: 0.0005, name: "EUR/USD" }, GBPUSD: { _cost: 0.00012, _minr: 0.0005, name: "GBP/USD" }, AUDUSD: { _cost: 0.0001, _minr: 0.0005, name: "AUD/USD" },
+  NZDUSD: { _cost: 0.00015, _minr: 0.0005, name: "NZD/USD" }, USDJPY: { _cost: 0.012, _minr: 0.05, name: "USD/JPY" }, USDCAD: { _cost: 0.00015, _minr: 0.0005, name: "USD/CAD" },
+  USDCHF: { _cost: 0.00015, _minr: 0.0005, name: "USD/CHF" }, EURJPY: { _cost: 0.02, _minr: 0.05, name: "EUR/JPY" }, GBPJPY: { _cost: 0.03, _minr: 0.05, name: "GBP/JPY" },
+  EURGBP: { _cost: 0.0001, _minr: 0.0005, name: "EUR/GBP" }, FX: { _cost: 0, _minr: 0, name: "Devisen" } };
 export const withSym = (p, price) => {
   const c = SYMS[p.sym || "XAUUSD"] || SYMS.XAUUSD;
   if (c._costp) return { ...p, name: c.name, _costp: c._costp, _cost: c._costp * (price || 0), _minr: c._minrp * (price || 0) };
@@ -228,11 +232,42 @@ export function runDeriv(D, p) {
   return out;
 }
 
+// ---------------------------------------------------------------- Familie fxs (v2.5) – 1:1 wie run_fxs() in engine.py
+export const FX_ORDER = ["EUR", "GBP", "AUD", "NZD", "USD", "CAD", "CHF", "JPY"];
+export const FX_LEGS = ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDJPY", "USDCAD", "USDCHF"];
+export function fxCur(D) {   // D: {EURUSD: [{t,c}], …} Tageskerzen → [{t, v:[8 log-Werte in FX_ORDER]}] nur Tage mit allen Paaren
+  const day = (t) => Math.floor(t / 86400) * 86400; const M = {};
+  for (const s of FX_LEGS) for (const k of D[s] || []) (M[day(k.t)] ||= {})[s] = k.c;
+  return Object.keys(M).map(Number).sort((a, b) => a - b).filter((t) => FX_LEGS.every((s) => M[t][s] > 0)).map((t) => {
+    const m = M[t], L = (x) => Math.log(x);
+    const v = { EUR: L(m.EURUSD), GBP: L(m.GBPUSD), AUD: L(m.AUDUSD), NZD: L(m.NZDUSD), USD: 0, CAD: -L(m.USDCAD), CHF: -L(m.USDCHF), JPY: -L(m.USDJPY) };
+    return { t, v: FX_ORDER.map((c) => v[c]) };
+  });
+}
+export function runFxs(cur, p) {
+  const n = cur.length, N = p.N, H = p.H, k = p.k, out = []; let i = Math.max(N, 61);
+  while (i < n - 2) {
+    const raw = cur[i].v.map((x, q) => x - cur[i - N].v[q]); const m = raw.reduce((a, b) => a + b, 0) / raw.length; const st = raw.map((x) => x - m);
+    let a = 0, b = 0; for (let q = 1; q < st.length; q++) { if (st[q] > st[a]) a = q; if (st[q] < st[b]) b = q; }
+    const [lo, hi] = p.mode === "rev" ? [b, a] : [a, b]; const [f, s] = lo < hi ? [lo, hi] : [hi, lo]; const dr = f === lo ? 1 : -1;
+    const px = (j) => Math.exp(cur[j].v[f] - cur[j].v[s]);
+    const lr = []; for (let q = i - 59; q <= i; q++) lr.push(Math.log(px(q) / px(q - 1)));
+    const mu = lr.reduce((x, y) => x + y, 0) / lr.length, sig = Math.sqrt(lr.reduce((x, y) => x + (y - mu) ** 2, 0) / (lr.length - 1));
+    const j0 = i + 1, e = px(j0), R = k * sig * Math.sqrt(H) * e, stop = e - dr * R; let ex = null, why = "", j = j0 + 1;
+    while (j < n && j <= j0 + H) { const v = px(j); if ((dr > 0 && v <= stop) || (dr < 0 && v >= stop)) { ex = v; why = "Stop"; break; } j++; }
+    if (ex === null) { if (j0 + H < n) { j = j0 + H; ex = px(j); why = "Zeit"; } else { j = n - 1; ex = px(j); why = "offen"; } }
+    out.push({ t: cur[j0].t, dr, e, sl: stop, r: (dr * (ex - e) - 0.0003 * e) / R, why, tx: cur[j].t, pair: FX_ORDER[f] + FX_ORDER[s], open: why === "offen" });
+    i = j;
+  }
+  return out;
+}
+
 export function trades(fam, p, data) {
   if (fam === "sess") return runSess(data.DAYS, p);
   if (fam === "rbo") return runRbo(p.tf === "15m" ? data.F15 : data.F5, p);
   if (fam === "swing") return data.D1 ? runSwing(data.D1, p) : [];
   if (fam === "deriv") return data.DD ? runDeriv(data.DD, p) : [];
+  if (fam === "fxs") return data.FXCUR ? runFxs(data.FXCUR, p) : [];
   if (fam === "learn") return data.C5 && data.C5.length > 3000 ? runLearn(data.C5, p) : [];   // v2.1: Lernmodell (15m aus 5m)
   return [];
 }

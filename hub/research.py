@@ -16,7 +16,7 @@ Aufruf: python3 hub/research.py [--budget 300]
 import json, os, sys, time, hashlib, random, datetime as dt
 import numpy as np, pandas as pd
 sys.path.insert(0, os.path.dirname(__file__))
-from engine import load, resample, days, run_sess, feats, run_rbo, run_swing, stats, with_sym, SYMS, swing_filter, FILTERS, run_deriv
+from engine import load, resample, days, run_sess, feats, run_rbo, run_swing, stats, with_sym, SYMS, swing_filter, FILTERS, run_deriv, fx_cur, run_fxs
 
 HUB = os.path.dirname(os.path.abspath(__file__))
 REG = os.path.join(HUB, "registry.json")
@@ -29,6 +29,7 @@ SPACE = {
     "rbo": dict(sym=list(SYMS), N=[12, 24, 36, 48, 72, 96], body=[0.5, 0.75, 1.0, 1.5], trend=[0, 1], tp=[1.5, 2.0, 3.0], be=[0, 1.0], tf=["5m", "15m"]),
     "deriv": dict(sym=["BTCUSD", "ETHUSD", "SOLUSD", "XRPUSD", "BNBUSD", "DOGEUSD", "XAUUSD", "XAGUSD"], sig=["liqL", "liqS", "frHi", "frLo", "oiUpPxDn", "oiUpPxUp"],
                   z=[1.5, 2.0, 2.5], dr=[1, -1], hold=[1, 3, 5, 10], k=[1.5, 2.5], tf=["1d"]),
+    "fxs": dict(sym=["FX"], N=[10, 20, 40, 60, 120], H=[5, 10, 20], mode=["rev", "mom"], k=[2, 3], tf=["1d"]),
     "swing": dict(sym=list(SYMS), entry=["A", "B", "AB"], k=[1.5, 2.0, 3.0], exitN=[10, 20, 40], brkN=[20, 55, 100], filt=FILTERS, tf=["1d"]),
 }
 def key(fam, p): return fam + ":" + hashlib.md5(json.dumps(p, sort_keys=True).encode()).hexdigest()[:10]
@@ -74,6 +75,16 @@ class Data:
         pc, pm = os.path.join(HUB, "data/cot.csv"), os.path.join(HUB, "data/macro_fred.csv")
         self.cot = pd.read_csv(pc) if os.path.exists(pc) else None
         self.ry = None
+        self.FXCUR = None   # v2.5: Währungsstärke – 7 Hauptpaare, lange Historie (seit 2010) + Live-Tageskerzen
+        try:
+            legs = ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDJPY", "USDCAD", "USDCHF"]; cl = {}
+            for s in legs:
+                parts = [pd.read_csv(os.path.join(HUB, f)) for f in (f"data/{s.lower()}_d1_long.csv", f"data/{s.lower()}_d1.csv") if os.path.exists(os.path.join(HUB, f))]
+                if not parts: raise FileNotFoundError(s)
+                d = pd.concat(parts); d["day"] = (d.t // 86400) * 86400; d = d.drop_duplicates("day", keep="last").sort_values("day"); d.index = pd.to_datetime(d.day, unit="s"); cl[s] = d.c
+            self.FXCUR = fx_cur(cl)
+        except Exception as e:
+            print("Devisen-Historie fehlt:", e)
         pd_ = os.path.join(HUB, "data/deriv_d.csv"); self.DD = {}   # Coinalyze-Tageshistorie je Basis (BTC, ETH, …, XAU, XAG)
         if os.path.exists(pd_):
             dd = pd.read_csv(pd_)
@@ -85,8 +96,10 @@ class Data:
         g = self.S["XAUUSD"]; self.m5, self.DAYS, self.d1 = g.m5, g.DAYS, g.d1
     def has(self, fam, sym):
         if fam == "deriv": return sym in self.DD
+        if fam == "fxs": return self.FXCUR is not None and len(self.FXCUR) > 300
         x = self.S[sym]; return (x.d1 is not None) if fam == "swing" else (x.m5 is not None)
     def trades(self, fam, p):
+        if fam == "fxs": return run_fxs(self.FXCUR, p) if self.FXCUR is not None else []
         if fam == "deriv":
             sym = p.get("sym"); return run_deriv(self.DD[sym], {**p, "_costp": 0.0006 if sym in ("XAUUSD", "XAGUSD") else SYMS.get(sym, {}).get("_costp", 0.0012)}) if sym in self.DD else []
         x = self.S[p.get("sym", "XAUUSD")]; q = with_sym(p, x.px)
@@ -103,6 +116,7 @@ class Data:
         return []
     def span(self, fam, sym="XAUUSD"):
         if fam == "deriv": g = self.DD[sym]; return int(g.index[0].timestamp()), int(g.index[-1].timestamp())
+        if fam == "fxs": return int(self.FXCUR.index[0].timestamp()), int(self.FXCUR.index[-1].timestamp())
         x = self.S[sym]
         if fam == "swing" and x.d1 is not None: return int(x.d1.index[0].timestamp()), int(x.d1.index[-1].timestamp())
         return x.t0, x.t1
@@ -113,7 +127,7 @@ def evaluate(D, fam, p, K, cache):
     tr = D.trades(fam, p); a, b = D.span(fam, p.get("sym", "XAUUSD"))
     r = np.array([x["r"] for x in tr]); t = np.array([x["t"] for x in tr])
     res = dict(n=len(r), ok=False, why="")
-    min_n = 15 if fam in ("swing", "deriv") else 40
+    min_n = 15 if fam in ("swing", "deriv", "fxs") else 40
     if len(r) < min_n:
         res["why"] = f"zu wenige Trades ({len(r)})"; cache[k] = res; return res
     cut = a + 0.7 * (b - a)
@@ -127,7 +141,7 @@ def evaluate(D, fam, p, K, cache):
     res.update(s, tdev=float(tdev), thr=float(thr), hold_mean=float(hold.mean()) if len(hold) else None, hold_n=int(len(hold)),
                blocks_pos=bpos, mfe05=float(np.mean([x.get("mfe", 0) >= 0.5 for x in tr])) if fam == "sess" else None)
     if tdev < thr: res["why"] = f"t {tdev:.1f} < Schwelle {thr:.1f}"
-    elif len(hold) < (5 if fam in ("swing", "deriv") else 12) or hold.mean() <= 0: res["why"] = "Holdout nicht positiv"
+    elif len(hold) < (5 if fam in ("swing", "deriv", "fxs") else 12) or hold.mean() <= 0: res["why"] = "Holdout nicht positiv"
     elif bpos < 3: res["why"] = f"nur {bpos}/4 Zeitblöcke positiv"
     else: res["ok"] = True
     cache[k] = res
@@ -185,10 +199,10 @@ def main(budget=300, seed=None):
 
     # 2) Suche nach neuen Strategien
     report += ["", "## Suche nach neuen Strategien"]
-    fams = ["sess", "rbo"] + (["swing"] if any(D.has("swing", x) for x in SYMS) else []) + (["deriv"] if D.DD else [])
+    fams = ["sess", "rbo"] + (["swing"] if any(D.has("swing", x) for x in SYMS) else []) + (["deriv"] if D.DD else []) + (["fxs"] if D.has("fxs", "FX") else [])
     found = []
     for fam in fams:
-        share = {"sess": 0.6, "rbo": 0.15, "swing": 0.1, "deriv": 0.15}[fam]
+        share = {"sess": 0.5, "rbo": 0.15, "swing": 0.1, "deriv": 0.15, "fxs": 0.1}[fam]
         n_new = int(budget * share); tested = 0; passed = 0; tries = 0
         # Nachbarschaft der aktuell besten Kandidaten zuerst (gezielte Weiterentwicklung)
         seeds = [s["params"] for s in reg["strategies"] if s["family"] == fam and s["status"] in ("paper", "approved")]
@@ -214,6 +228,7 @@ def main(budget=300, seed=None):
         if a[0] == "sess": return abs(a[1]["anchor"] - b["params"]["anchor"]) <= 30
         if a[0] == "rbo": return a[1]["tf"] == b["params"]["tf"] and abs(a[1]["N"] - b["params"]["N"]) <= 12
         if a[0] == "deriv": return a[1]["sig"] == b["params"]["sig"] and a[1]["dr"] == b["params"]["dr"]
+        if a[0] == "fxs": return a[1]["mode"] == b["params"]["mode"]
         return True
     found.sort(key=lambda x: -x[2]["tdev"])
     active = [s for s in reg["strategies"] if s["status"] in ("paper", "approved")]
@@ -246,7 +261,7 @@ def hm(m):
     return f"{b // 60:02d}:{b % 60:02d} Uhr (≈ {m // 60:02d}:{m % 60:02d} NY{s})"
 
 def describe(fam, p):
-    return SYMS[p.get("sym", "XAUUSD")]["name"] + " · " + _describe(fam, p)
+    return SYMS.get(p.get("sym", "XAUUSD"), {}).get("name", "Devisen") + " · " + _describe(fam, p)
 
 def _describe(fam, p):
     if fam == "sess":
@@ -254,6 +269,8 @@ def _describe(fam, p):
         return f"Session-Ausbruch {hm(p['anchor'])}, Range {p['rl']}m, Fenster {p['win']}m, Ziel {p['tp']}R{', BE 1R' if p['be'] else ''}, SL {'Gegenseite' if p['slm'] == 'opp' else 'Mitte'}{f}"
     if fam == "rbo":
         return f"Ausbruch+Retest {p['tf']} N={p['N']}, Körper {p['body']}·ATR{', mit 1h-Trend' if p['trend'] else ''}, Ziel {p['tp']}R{', BE 1R' if p['be'] else ''}"
+    if fam == "fxs":
+        return f"Währungsstärke ({'schwächste kaufen / stärkste verkaufen' if p['mode'] == 'rev' else 'stärkste kaufen / schwächste verkaufen'}) über {p['N']} Tage, {p['H']} Tage halten, Stop {p['k']}·σ – 28 Kreuzpaare"
     if fam == "deriv":
         S = {"liqL": "nach Welle von Long-Liquidationen", "liqS": "nach Welle von Short-Liquidationen", "frHi": "bei extrem hohem Funding", "frLo": "bei extrem niedrigem Funding",
              "oiUpPxDn": "wenn Open Interest stark steigt und Preis fällt", "oiUpPxUp": "wenn Open Interest stark steigt und Preis steigt"}

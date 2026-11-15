@@ -12,12 +12,12 @@ import { altTick, altPage, mktTick } from "./alts.js";
 import { mpData } from "./mpaper.js";
 import { finderTick, finderData } from "./finder.js";
 
-const VERSION = "2.4";
+const VERSION = "2.5";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
 const NAME = (sym) => (E.SYMS[sym]?.name || sym);
-const DIG = (sym) => ({ XAGUSD: 3, XRPUSD: 4, DOGEUSD: 5 }[sym] ?? 2);
+const DIG = (sym) => ({ XAGUSD: 3, XRPUSD: 4, DOGEUSD: 5 }[sym] ?? (/^[A-Z]{6}$/.test(sym) && !/^(XAU|XAG|BTC|ETH|SOL|BNB)/.test(sym) ? (/JPY$/.test(sym) ? 3 : 5) : 2));
 const REPO = (env) => env.GH_REPO || "kiri981/wealth-reels";
 
 // ---------------------------------------------------------------- MetaApi
@@ -132,10 +132,33 @@ async function newsWindows(env, from) {   // Zeitfenster ±30 Min. um rote US-Te
 
 // ---------------------------------------------------------------- Dollar & Devisen (v1.3)
 // DXY-Näherung aus den 6 Währungspaaren des Dollar-Index (offizielle Formel), dazu Sprung-Warnungen für Dollar und Gold/Silber/Bitcoin.
-const FX = ["EURUSD", "USDJPY", "GBPUSD", "USDCAD", "USDSEK", "USDCHF"];
+const FX = ["EURUSD", "USDJPY", "GBPUSD", "USDCAD", "USDSEK", "USDCHF"];   // für den Dollar-Index
+// v2.5: Devisen zum Handeln (Papier) – 7 Hauptpaare + 3 Kreuze; Kerzen vom Broker (MetaApi), eigener Lauf /fxrun
+const FX_TRADE = ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDJPY", "USDCAD", "USDCHF", "EURJPY", "GBPJPY", "EURGBP"];
+const FX_ALL = [...new Set([...FX, ...FX_TRADE])];
+async function fxRun(env) {   // sparsam mit Datenbank-Abfragen: alle Paare in einem Schub speichern, Nachladen nur 1 Paar je Lauf
+  const now = new Date(), min = now.getUTCMinutes(), out = [], st = [];
+  const put = (tf, C) => { for (const k of C) st.push(env.DB.prepare("INSERT INTO hub_candles (tf, t, o, h, l, c) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(tf, t) DO UPDATE SET o=excluded.o, h=excluded.h, l=excluded.l, c=excluded.c").bind(tf, k.t, k.o, k.h, k.l, k.c)); };
+  for (const s of FX_ALL) { try { put(`${s}:5m`, await candles(env, s, "5m", 24)); } catch (e) { out.push(s + " " + e.message.slice(0, 50)); } }
+  const state = JSON.parse((await kvGet(env, "fx_state")) || "{}");   // {bf: {EURUSD: 1, …}, d1: {…}}
+  state.bf ||= {}; state.d1 ||= {};
+  const nbf = FX_ALL.find((s) => !state.bf[s]);
+  if (nbf) try {
+    const o = await env.DB.prepare("SELECT MIN(t) a FROM hub_candles WHERE tf = ?").bind(`${nbf}:5m`).first();
+    if (o?.a && o.a > Date.now() / 1000 - 45 * 86400) { const c = (await candles(env, nbf, "5m", 1000, o.a)).filter((k) => k.t < o.a); if (c.length) put(`${nbf}:5m`, c); else state.bf[nbf] = 1; } else if (o?.a) state.bf[nbf] = 1;
+  } catch (e) { out.push(nbf + " Nachladen " + e.message.slice(0, 40)); }
+  const nd = FX_TRADE.find((s) => !state.d1[s]);
+  if (nd) { try { put(`${nd}:1d`, await candles(env, nd, "1d", 1000)); state.d1[nd] = 1; } catch (e) { out.push(nd + " 1d " + e.message.slice(0, 40)); } }
+  else if (min < 5) for (const s of FX_TRADE) { try { put(`${s}:1d`, await candles(env, s, "1d", 5)); } catch (e) {} }
+  for (let k = 0; k < st.length; k += 90) await env.DB.batch(st.slice(k, k + 90));
+  await kvPut(env, "fx_state", JSON.stringify(state));
+  const msg = `Devisen: ${FX_ALL.length} Paare, ${st.length} Kerzen, nachgeladen ${Object.keys(state.bf).length}/${FX_ALL.length}, Tageshistorie ${Object.keys(state.d1).length}/${FX_TRADE.length}${out.length ? " | " + out.join(" | ") : ""}`;
+  await kvPut(env, "log_fx", new Date().toISOString() + " " + msg.slice(0, 600));
+  return msg;
+}
 const DXYW = { EURUSD: -0.576, USDJPY: 0.136, GBPUSD: -0.119, USDCAD: 0.091, USDSEK: 0.042, USDCHF: 0.036 };
 async function fxTick(env, log) {
-  for (const s2 of FX) {
+  if (!(env.SELF && env.HUB_KEY)) for (const s2 of FX) {   // v2.5: sonst holt /fxrun die Kerzen
     try { const c = await candles(env, s2, "5m", 60); await store(env, `${s2}:5m`, c); } catch (e) { log.push(s2 + " Fehler " + e.message.slice(0, 60)); }
   }
   // DXY für die letzten ~2 Stunden berechnen
@@ -376,7 +399,7 @@ async function syncRegistry(env) {
 //  · der Tag (Bukarest) nicht schon RISK.dayStop R im Minus ist (Tages-Stopp).
 // Positionsgröße: jeder Trade riskiert genau 1R (Stop-Abstand nach Volatilität) – das gleicht unterschiedliche Märkte automatisch aus.
 const RISK = { maxOpen: 8, maxGroup: 3, dayStop: -3 };   // v2.0: Kevin – mehr gleichzeitige Trades
-const GROUP = (sym) => (["XAUUSD", "XAGUSD"].includes(sym) ? "Metalle" : sym === "BTCUSD" || E.SYMS[sym]?._costp ? "Krypto" : sym);
+const GROUP = (sym) => (["XAUUSD", "XAGUSD"].includes(sym) ? "Metalle" : sym === "BTCUSD" || E.SYMS[sym]?._costp ? "Krypto" : /^(EUR|GBP|AUD|NZD|USD|CAD|CHF|JPY){2}$/.test(sym || "") ? "Devisen" : sym);
 const dayStartBuc = (now) => { const d = new Date(now * 1000); const loc = new Date(d.toLocaleString("en-US", { timeZone: "Europe/Bucharest" })); return now - (loc.getHours() * 3600 + loc.getMinutes() * 60 + loc.getSeconds()); };
 async function riskState(env, now) {
   const open = (await env.DB.prepare("SELECT sym FROM hub_trades WHERE closed = 0 AND pf = 1").all()).results.map((x) => x.sym);
@@ -403,6 +426,10 @@ async function paper(env) {
   const RS = await riskState(env, now);
   for (const s of strats) {
     const p = E.withSym(JSON.parse(s.params)); const sym = p.sym || "XAUUSD";
+    if (s.family === "fxs" && !DATA.FX) {   // v2.5: Währungsstärke – Tageskerzen aller 7 Hauptpaare
+      const D = {}; for (const leg of E.FX_LEGS) D[leg] = await load(env, `${leg}:1d`, 0);
+      DATA.FX = { FXCUR: E.fxCur(D) };
+    }
     if (!DATA[sym]) {
       const C5 = await load(env, TK(sym, "5m"), now - 30 * 86400);
       DATA[sym] = C5.length >= 500 ? { DAYS: E.days(C5), F5: E.feats(C5), F15: E.feats(E.resample(C5, 900)), C5 } : {};
@@ -416,7 +443,8 @@ async function paper(env) {
       p._costp = ["XAUUSD", "XAGUSD"].includes(sym) ? 0.0006 : (E.SYMS[sym]?._costp ?? 0.0012);
     }
     if (s.family !== "deriv" && E.SYMS[sym]?._costp) Object.assign(p, E.withSym(JSON.parse(s.params), data.px || (data.D1 && data.D1.length ? data.D1[data.D1.length - 1].c : 0)));
-    if (s.family !== "swing" && s.family !== "deriv" && !data.DAYS) continue;
+    if (!["swing", "deriv", "fxs"].includes(s.family) && !data.DAYS) continue;
+    const daily = ["swing", "deriv", "fxs"].includes(s.family);
     if (s.family === "swing" && p.filt && p.filt !== "none" && data.D1) {   // COT/Realzins-Filter (v1.5)
       const cot = (await env.DB.prepare("SELECT d, mm_l, mm_s, oi FROM hub_cot WHERE sym = ? ORDER BY d").bind(sym).all()).results;
       const ry = (await env.DB.prepare("SELECT d, v FROM hub_macro WHERE series = 'DFII10' ORDER BY d").all()).results;
@@ -425,19 +453,20 @@ async function paper(env) {
     let tr; try { tr = E.trades(s.family, p, data); } catch (e) { console.log("Engine", s.id, e.message); continue; }
     const born = Math.floor(new Date((s.created || "2000-01-01") + "T00:00:00Z").getTime() / 1000) + 86400;   // nur Trades NACH der Aufnahme zählen (echter Vorwärtstest)
     for (const x of tr.filter((x) => (x.t >= recent || x.open) && x.t >= born && !inNews(x.t))) {
+      const tsym = x.pair || sym;   // Währungsstärke: das gehandelte Kreuzpaar
       const old = await env.DB.prepare("SELECT closed, notified, pf FROM hub_trades WHERE sid = ? AND t = ?").bind(s.id, x.t).first();
-      const block = old ? "" : riskCheck(RS, sym); const pf = old ? (old.pf ?? 1) : block ? 0 : 1;
-      if (!old && pf && x.open) RS.open.push(sym);
+      const block = old ? "" : riskCheck(RS, tsym); const pf = old ? (old.pf ?? 1) : block ? 0 : 1;
+      if (!old && pf && x.open) RS.open.push(tsym);
       if (!old && pf && !x.open) RS.day += x.r;
       await env.DB.prepare("INSERT INTO hub_trades (sid, t, dr, e, sl, tp, r, why, tx, closed, pf, sym) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(sid, t) DO UPDATE SET r=excluded.r, why=excluded.why, tx=excluded.tx, closed=excluded.closed, sl=excluded.sl, sym=excluded.sym")
-        .bind(s.id, x.t, x.dr, x.e, x.sl, x.tp ?? null, x.r, x.why, x.tx, x.open ? 0 : 1, pf, sym).run();
+        .bind(s.id, x.t, x.dr, x.e, x.sl, x.tp ?? null, x.r, x.why, x.tx, x.open ? 0 : 1, pf, tsym).run();
       const dir = x.dr > 0 ? "LONG" : "SHORT";
-      if (!old && now - x.t < 3 * 3600) {   // neu eröffnet (nur frische melden)
-        const d = DIG(sym);
-        await say(env, `🧪 Hub-Papiertrade eröffnet – ${NAME(sym)}\n${s.name}\n${dir} ${sym} @ ${x.e.toFixed(d)} · SL ${x.sl.toFixed(d)}${x.tp ? " · Ziel " + x.tp.toFixed(d) : ""}\n${fmtT(x.t)} Uhr · Status: ${s.status === "approved" ? "freigabereif" : "Papier"}${block ? "\n🛡 Risikomanager: fürs Portfolio übersprungen – " + block + " (Strategie wird trotzdem weiter getestet)" : ""}\n(Lern-/Testzwecke, keine Anlageberatung)`); n++;
+      if (!old && now - x.t < (daily ? 26 : 3) * 3600) {   // neu eröffnet (nur frische melden)
+        const d = DIG(tsym);
+        await say(env, `🧪 Hub-Papiertrade eröffnet – ${NAME(tsym)}\n${s.name}\n${dir} ${tsym} @ ${x.e.toFixed(d)} · SL ${x.sl.toFixed(d)}${x.tp ? " · Ziel " + x.tp.toFixed(d) : ""}\n${fmtT(x.t)} Uhr · Status: ${s.status === "approved" ? "freigabereif" : "Papier"}${block ? "\n🛡 Risikomanager: fürs Portfolio übersprungen – " + block + " (Strategie wird trotzdem weiter getestet)" : ""}\n(Lern-/Testzwecke, keine Anlageberatung)`); n++;
       }
-      if (!x.open && (!old || !old.closed) && now - x.tx < 3 * 3600) {
-        await say(env, `${x.r > 0.05 ? "✅" : x.r < -0.05 ? "❌" : "➖"} Hub-Papiertrade beendet: ${x.r >= 0 ? "+" : ""}${x.r.toFixed(2)}R (${x.why})\n${s.name}\n${dir} ${sym} @ ${x.e.toFixed(DIG(sym))} → ${fmtT(x.tx)} Uhr`); n++;
+      if (!x.open && (!old || !old.closed) && now - x.tx < (daily ? 26 : 3) * 3600) {
+        await say(env, `${x.r > 0.05 ? "✅" : x.r < -0.05 ? "❌" : "➖"} Hub-Papiertrade beendet: ${x.r >= 0 ? "+" : ""}${x.r.toFixed(2)}R (${x.why})\n${s.name}\n${dir} ${tsym} @ ${x.e.toFixed(DIG(tsym))} → ${fmtT(x.tx)} Uhr`); n++;
       }
     }
   }
@@ -588,6 +617,7 @@ export default {
     else ctx.waitUntil(memeRun(env));
     // Altcoin-Scanner stündlich (Minute 10–14) als weiterer eigener Lauf
     const m = new Date().getUTCMinutes();
+    if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/fxrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("FX-Lauf: " + e.message)));   // v2.5 Devisen
     if (m >= 20 && m < 25) {   // Wallet-Finder stündlich als eigener Lauf
       if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/finderrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Finder-Lauf: " + e.message)));
       else ctx.waitUntil(finderTick(env, say, kvGet, kvPut).catch((e) => console.log("Finder-Fehler " + e.message)));
@@ -604,6 +634,7 @@ export default {
     if (url.pathname === "/cot") { const log = []; await schema(env); await kvPut(env, "cot_check", ""); await cotTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/deriv") { const log = []; await schema(env); await derivTick(env, log); return new Response(log.join(" | ") + "\n" + (await kvGet(env, "cz_markets"))); }
     if (url.pathname === "/czdaily") { const log = []; await schema(env); await czDaily(env, log); return new Response(log.join(" | ")); }
+    if (url.pathname === "/fxrun") return new Response(await fxRun(env));
     if (url.pathname === "/finderrun") { try { return new Response(await finderTick(env, say, kvGet, kvPut, url.searchParams.get("force") === "1")); } catch (e) { return new Response("Finder-Fehler " + e.message); } }
     if (url.pathname === "/alts") return new Response(await altPage(env), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/altrun") { try { return new Response(await altTick(env, say, kvGet, kvPut, url.searchParams.get("force") === "1")); } catch (e) { return new Response("Alt-Fehler " + e.message); } }
