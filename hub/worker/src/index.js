@@ -6,8 +6,9 @@
 // Dashboard: https://<worker>/?key=HUB_KEY
 // Secrets: META_TOKEN, META_ACCOUNT, (META_REGION), GH_TOKEN, HUB_KEY
 import * as E from "./engine.js";
+import { memeTick, memePage } from "./meme.js";
 
-const VERSION = "1.7";
+const VERSION = "1.8";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -563,7 +564,10 @@ async function tick(env) {
 }
 
 export default {
-  async scheduled(ev, env, ctx) { ctx.waitUntil(tick(env)); },
+  async scheduled(ev, env, ctx) {
+    if (String(ev.cron).startsWith("2-59")) ctx.waitUntil(memeTick(env, say, kvGet, kvPut).then((m) => console.log(m)).catch((e) => console.log("Meme-Radar-Fehler " + e.message)));   // eigener Lauf (v1.8)
+    else ctx.waitUntil(tick(env));
+  },
   async fetch(req, env) {
     const url = new URL(req.url);
     if (url.searchParams.get("key") !== env.HUB_KEY || !env.HUB_KEY) return new Response("WC Trading Hub", { status: 403 });
@@ -571,6 +575,8 @@ export default {
     if (url.pathname === "/cot") { const log = []; await schema(env); await kvPut(env, "cot_check", ""); await cotTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/deriv") { const log = []; await schema(env); await derivTick(env, log); return new Response(log.join(" | ") + "\n" + (await kvGet(env, "cz_markets"))); }
     if (url.pathname === "/czdaily") { const log = []; await schema(env); await czDaily(env, log); return new Response(log.join(" | ")); }
+    if (url.pathname === "/memes") return new Response(await memePage(env, url.searchParams.get("key")), { headers: { "content-type": "text/html; charset=utf-8" } });
+    if (url.pathname === "/memerun") return new Response(await memeTick(env, say, kvGet, kvPut));
     if (url.pathname === "/weekly") { await schema(env); return new Response(await weeklyReport(env, true)); }
     if (url.pathname === "/macro") { const log = []; await schema(env); await kvPut(env, "macro_check", ""); await macroTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/export") { await exportDaily(env); return new Response("export ok"); }

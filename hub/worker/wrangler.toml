@@ -5,7 +5,7 @@ workers_dev = true
 
 # Alle 5 Minuten: Kerzen holen, Papierhandel, (stündlich) Register, (täglich) GitHub-Export + Bericht
 [triggers]
-crons = ["*/5 * * * *"]
+crons = ["*/5 * * * *", "2-59/5 * * * *"]   # zweiter Takt (2, 7, 12 …): Meme-Radar
 
 # Gleiche Datenbank wie der Welcome-Bot (Postausgang an Kevin läuft über dessen Tabelle "outbox")
 [[d1_databases]]
