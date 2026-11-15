@@ -7,7 +7,7 @@
 // Secrets: META_TOKEN, META_ACCOUNT, (META_REGION), GH_TOKEN, HUB_KEY
 import * as E from "./engine.js";
 
-const VERSION = "1.6";
+const VERSION = "1.7";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -60,6 +60,11 @@ async function schema(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_events (id TEXT PRIMARY KEY, t INTEGER, cur TEXT, title TEXT, impact TEXT, forecast TEXT, previous TEXT, actual TEXT, note TEXT)"),
   ]);
   await env.STATE?.put?.("hub:schema1", "1");
+  if ((await kvGet(env, "mig17")) !== "1") {   // v1.7: Portfolio-Kennzeichen + Symbol je Papier-Trade
+    for (const col of ["pf INTEGER DEFAULT 1", "sym TEXT"]) { try { await env.DB.prepare("ALTER TABLE hub_trades ADD COLUMN " + col).run(); } catch (e) { /* Spalte existiert schon */ } }
+    await env.DB.prepare("UPDATE hub_trades SET sym = COALESCE((SELECT COALESCE(json_extract(params, '$.sym'), 'XAUUSD') FROM hub_strats WHERE id = hub_trades.sid), 'XAUUSD') WHERE sym IS NULL").run();
+    await kvPut(env, "mig17", "1");
+  }
 }
 const kvGet = async (env, k) => (await env.DB.prepare("SELECT v FROM hub_kv WHERE k = ?").bind(k).first())?.v ?? null;
 const kvPut = (env, k, v) => env.DB.prepare("INSERT INTO hub_kv (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").bind(k, String(v)).run();
@@ -359,6 +364,28 @@ async function syncRegistry(env) {
   return st.length;
 }
 
+// ---------------------------------------------------------------- Risiko-Steuerung über alle Strategien (v1.7)
+// Jede Strategie wird weiter einzeln vorwärts getestet (für ihre Freigabe). Das PORTFOLIO (pf = 1) nimmt einen neuen Trade aber nur, wenn
+//  · höchstens RISK.maxOpen Trades gleichzeitig offen sind,
+//  · je Gruppe (Metalle = Gold+Silber, Krypto = alle Coins) höchstens RISK.maxGroup offen sind (die laufen oft gleich → doppeltes Risiko),
+//  · der Tag (Bukarest) nicht schon RISK.dayStop R im Minus ist (Tages-Stopp).
+// Positionsgröße: jeder Trade riskiert genau 1R (Stop-Abstand nach Volatilität) – das gleicht unterschiedliche Märkte automatisch aus.
+const RISK = { maxOpen: 4, maxGroup: 2, dayStop: -3 };
+const GROUP = (sym) => (["XAUUSD", "XAGUSD"].includes(sym) ? "Metalle" : sym === "BTCUSD" || E.SYMS[sym]?._costp ? "Krypto" : sym);
+const dayStartBuc = (now) => { const d = new Date(now * 1000); const loc = new Date(d.toLocaleString("en-US", { timeZone: "Europe/Bucharest" })); return now - (loc.getHours() * 3600 + loc.getMinutes() * 60 + loc.getSeconds()); };
+async function riskState(env, now) {
+  const open = (await env.DB.prepare("SELECT sym FROM hub_trades WHERE closed = 0 AND pf = 1").all()).results.map((x) => x.sym);
+  const day = (await env.DB.prepare("SELECT COALESCE(SUM(r), 0) s FROM hub_trades WHERE pf = 1 AND closed = 1 AND tx >= ?").bind(dayStartBuc(now)).first()).s;
+  return { open, day };
+}
+function riskCheck(st, sym) {
+  if (st.day <= RISK.dayStop) return `Tages-Stopp erreicht (${st.day.toFixed(1)}R heute)`;
+  if (st.open.length >= RISK.maxOpen) return `schon ${st.open.length} Trades offen (max. ${RISK.maxOpen})`;
+  const g = GROUP(sym); const ng = st.open.filter((s) => GROUP(s) === g).length;
+  if (ng >= RISK.maxGroup) return `schon ${ng} offene Trades in der Gruppe ${g} (max. ${RISK.maxGroup})`;
+  return "";
+}
+
 // ---------------------------------------------------------------- Papierhandel
 const fmtT = (t) => new Date(t * 1000).toLocaleString("de-DE", { timeZone: "Europe/Bucharest", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 async function paper(env) {
@@ -368,6 +395,7 @@ async function paper(env) {
   const recent = now - 4 * 86400; let n = 0; const DATA = {};
   const NW = await newsWindows(env, now - 5 * 86400).catch(() => []);
   const inNews = (t) => NW.some(([a, b]) => t >= a && t <= b);
+  const RS = await riskState(env, now);
   for (const s of strats) {
     const p = E.withSym(JSON.parse(s.params)); const sym = p.sym || "XAUUSD";
     if (!DATA[sym]) {
@@ -392,13 +420,16 @@ async function paper(env) {
     let tr; try { tr = E.trades(s.family, p, data); } catch (e) { console.log("Engine", s.id, e.message); continue; }
     const born = Math.floor(new Date((s.created || "2000-01-01") + "T00:00:00Z").getTime() / 1000) + 86400;   // nur Trades NACH der Aufnahme zählen (echter Vorwärtstest)
     for (const x of tr.filter((x) => (x.t >= recent || x.open) && x.t >= born && !inNews(x.t))) {
-      const old = await env.DB.prepare("SELECT closed, notified FROM hub_trades WHERE sid = ? AND t = ?").bind(s.id, x.t).first();
-      await env.DB.prepare("INSERT INTO hub_trades (sid, t, dr, e, sl, tp, r, why, tx, closed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(sid, t) DO UPDATE SET r=excluded.r, why=excluded.why, tx=excluded.tx, closed=excluded.closed, sl=excluded.sl")
-        .bind(s.id, x.t, x.dr, x.e, x.sl, x.tp ?? null, x.r, x.why, x.tx, x.open ? 0 : 1).run();
+      const old = await env.DB.prepare("SELECT closed, notified, pf FROM hub_trades WHERE sid = ? AND t = ?").bind(s.id, x.t).first();
+      const block = old ? "" : riskCheck(RS, sym); const pf = old ? (old.pf ?? 1) : block ? 0 : 1;
+      if (!old && pf && x.open) RS.open.push(sym);
+      if (!old && pf && !x.open) RS.day += x.r;
+      await env.DB.prepare("INSERT INTO hub_trades (sid, t, dr, e, sl, tp, r, why, tx, closed, pf, sym) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(sid, t) DO UPDATE SET r=excluded.r, why=excluded.why, tx=excluded.tx, closed=excluded.closed, sl=excluded.sl, sym=excluded.sym")
+        .bind(s.id, x.t, x.dr, x.e, x.sl, x.tp ?? null, x.r, x.why, x.tx, x.open ? 0 : 1, pf, sym).run();
       const dir = x.dr > 0 ? "LONG" : "SHORT";
       if (!old && now - x.t < 3 * 3600) {   // neu eröffnet (nur frische melden)
         const d = DIG(sym);
-        await say(env, `🧪 Hub-Papiertrade eröffnet – ${NAME(sym)}\n${s.name}\n${dir} ${sym} @ ${x.e.toFixed(d)} · SL ${x.sl.toFixed(d)}${x.tp ? " · Ziel " + x.tp.toFixed(d) : ""}\n${fmtT(x.t)} Uhr · Status: ${s.status === "approved" ? "freigabereif" : "Papier"}\n(Lern-/Testzwecke, keine Anlageberatung)`); n++;
+        await say(env, `🧪 Hub-Papiertrade eröffnet – ${NAME(sym)}\n${s.name}\n${dir} ${sym} @ ${x.e.toFixed(d)} · SL ${x.sl.toFixed(d)}${x.tp ? " · Ziel " + x.tp.toFixed(d) : ""}\n${fmtT(x.t)} Uhr · Status: ${s.status === "approved" ? "freigabereif" : "Papier"}${block ? "\n🛡 Risikomanager: fürs Portfolio übersprungen – " + block + " (Strategie wird trotzdem weiter getestet)" : ""}\n(Lern-/Testzwecke, keine Anlageberatung)`); n++;
       }
       if (!x.open && (!old || !old.closed) && now - x.tx < 3 * 3600) {
         await say(env, `${x.r > 0.05 ? "✅" : x.r < -0.05 ? "❌" : "➖"} Hub-Papiertrade beendet: ${x.r >= 0 ? "+" : ""}${x.r.toFixed(2)}R (${x.why})\n${s.name}\n${dir} ${sym} @ ${x.e.toFixed(DIG(sym))} → ${fmtT(x.tx)} Uhr`); n++;
@@ -438,6 +469,29 @@ async function reportPush(env) {
   await kvPut(env, "last_report", first);
   const clean = txt.replace(/\*\*/g, "").replace(/^#+\s*/gm, "").replace(/_/g, "").slice(0, 3500);
   await say(env, "🧠 " + clean);
+}
+
+// ---------------------------------------------------------------- Wochenbericht (v1.7): sonntags 18 Uhr Bukarest – Papier gegen Backtest je Strategie, mit Ampel
+async function weeklyReport(env, force) {
+  const now = Math.floor(Date.now() / 1000); const wk = new Date().toISOString().slice(0, 10);
+  if (!force && (await kvGet(env, "weekly_" + wk))) return; await kvPut(env, "weekly_" + wk, "1");
+  const strats = (await env.DB.prepare("SELECT id, name, status, backtest, created FROM hub_strats WHERE status IN ('paper', 'approved')").all()).results;
+  const T = (await env.DB.prepare("SELECT sid, t, r, closed, pf FROM hub_trades WHERE closed = 1").all()).results;
+  const f = (v) => (v >= 0 ? "+" : "") + v.toFixed(2);
+  const L = ["📊 Hub-Wochenbericht (Papierhandel)", ""];
+  for (const s of strats) {
+    const born = Math.floor(Date.parse((s.created || "2000-01-01") + "T00:00:00Z") / 1000) + 86400;
+    const all = T.filter((x) => x.sid === s.id && x.t >= born), wk7 = all.filter((x) => x.t >= now - 7 * 86400);
+    const bt = JSON.parse(s.backtest || "{}").mean ?? null; const m = all.length ? all.reduce((a, x) => a + x.r, 0) / all.length : null;
+    const amp = all.length < 5 ? "⚪" : bt != null && m >= 0.5 * bt ? "🟢" : m > 0 ? "🟡" : "🔴";
+    L.push(`${amp} ${s.name}`, `   Woche: ${wk7.length} Trades, ${f(wk7.reduce((a, x) => a + x.r, 0))}R · gesamt: ${all.length} Trades${m != null ? ", Ø " + f(m) + "R" : ""} · Backtest Ø ${bt != null ? f(bt) + "R" : "–"}`);
+  }
+  if (!strats.length) L.push("Keine aktiven Strategien.");
+  const W = T.filter((x) => x.t >= now - 7 * 86400); const P = W.filter((x) => x.pf !== 0);
+  L.push("", `Portfolio (mit Risikomanager): ${P.length} Trades, ${f(P.reduce((a, x) => a + x.r, 0))}R · übersprungen: ${W.length - P.length}`,
+    "⚪ zu wenig Trades · 🟢 hält, was der Backtest verspricht · 🟡 positiv, aber schwächer · 🔴 verliert", "Lern-/Testzwecke, keine Anlageberatung.");
+  await say(env, L.join("\n").slice(0, 3800));
+  return L.join("\n");
 }
 
 // ---------------------------------------------------------------- Dashboard
@@ -502,6 +556,8 @@ async function tick(env) {
   try { log.push("News:" + await newsAlerts(env)); } catch (e) { log.push("News-Fehler " + e.message); }
   try { log.push("Papier:" + await paper(env)); } catch (e) { log.push("Papier-Fehler " + e.message); }
   if (hr === 22 && min >= 30 && min < 35) { try { await exportDaily(env); log.push("Export ok"); } catch (e) { log.push("Export-Fehler " + e.message); await say(env, "⚠️ Hub-Export nach GitHub: " + e.message.slice(0, 200)); } }
+  { const loc = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Bucharest" }));
+    if (loc.getDay() === 0 && loc.getHours() === 18 && loc.getMinutes() < 5) { try { await weeklyReport(env); log.push("Wochenbericht"); } catch (e) { log.push("Wochenbericht-Fehler " + e.message); } } }
   if (hr >= 4 && hr < 7 && min % 15 < 5) { try { await reportPush(env); } catch (e) { log.push("Bericht-Fehler " + e.message); } }
   console.log(log.join(" | "));
 }
@@ -515,6 +571,7 @@ export default {
     if (url.pathname === "/cot") { const log = []; await schema(env); await kvPut(env, "cot_check", ""); await cotTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/deriv") { const log = []; await schema(env); await derivTick(env, log); return new Response(log.join(" | ") + "\n" + (await kvGet(env, "cz_markets"))); }
     if (url.pathname === "/czdaily") { const log = []; await schema(env); await czDaily(env, log); return new Response(log.join(" | ")); }
+    if (url.pathname === "/weekly") { await schema(env); return new Response(await weeklyReport(env, true)); }
     if (url.pathname === "/macro") { const log = []; await schema(env); await kvPut(env, "macro_check", ""); await macroTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/export") { await exportDaily(env); return new Response("export ok"); }
     if (url.pathname === "/status") {
