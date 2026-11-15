@@ -564,13 +564,20 @@ async function tick(env) {
   console.log(log.join(" | "));
 }
 
+async function memeRun(env) {   // v1.9: Meme-Radar, danach Smart-Wallets
+  const out = [];
+  try { out.push(await memeTick(env, say, kvGet, kvPut)); } catch (e) { out.push("Meme-Radar-Fehler " + e.message); }
+  try { out.push(await walletTick(env, say, kvGet, kvPut)); } catch (e) { out.push("Wallet-Fehler " + e.message); }
+  return out.join(" | ");
+}
+
 export default {
   async scheduled(ev, env, ctx) {
-    if (String(ev.cron).startsWith("2-59")) ctx.waitUntil((async () => {   // eigener Lauf (v1.8): Meme-Radar + Smart-Wallets (v1.9)
-      try { console.log(await memeTick(env, say, kvGet, kvPut)); } catch (e) { console.log("Meme-Radar-Fehler " + e.message); }
-      try { console.log(await walletTick(env, say, kvGet, kvPut)); } catch (e) { console.log("Wallet-Fehler " + e.message); }
-    })());
-    else ctx.waitUntil(tick(env));
+    if (String(ev.cron).startsWith("2-59")) { ctx.waitUntil(memeRun(env)); return; }   // falls ein zweiter Zeitplan aktiv ist
+    ctx.waitUntil(tick(env));
+    // Meme-Radar + Smart-Wallets als EIGENER Lauf (eigenes Rechenzeit-Budget) über die Selbst-Verbindung SELF – braucht keinen zweiten Zeitplan
+    if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/memerun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Meme-Lauf: " + e.message)));
+    else ctx.waitUntil(memeRun(env));
   },
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -582,7 +589,7 @@ export default {
     if (url.pathname === "/wallet") return new Response(await walletAdmin(env, url.searchParams));
     if (url.pathname === "/walletrun") return new Response(await walletTick(env, say, kvGet, kvPut));
     if (url.pathname === "/memes") return new Response(await memePage(env, url.searchParams.get("key"), await walletData(env).catch(() => null)), { headers: { "content-type": "text/html; charset=utf-8" } });
-    if (url.pathname === "/memerun") return new Response(await memeTick(env, say, kvGet, kvPut));
+    if (url.pathname === "/memerun") return new Response(await memeRun(env));
     if (url.pathname === "/weekly") { await schema(env); return new Response(await weeklyReport(env, true)); }
     if (url.pathname === "/macro") { const log = []; await schema(env); await kvPut(env, "macro_check", ""); await macroTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/export") { await exportDaily(env); return new Response("export ok"); }
