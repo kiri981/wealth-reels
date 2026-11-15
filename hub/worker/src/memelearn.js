@@ -59,7 +59,8 @@ function outcome(ev, S) {   // S: Schnappschüsse [{t,px,liq}] aufsteigend ab Er
   const e = P[0]; if (!(e.px > 0)) return null;
   const end = P[P.length - 1]; let mx = 0, mn = 0, y = 0, dead = false;
   for (const s of P) {
-    if (!(s.px > 0) || (s.liq != null && s.liq < 3000)) { dead = true; mn = -1; break; }
+    if (!(s.px > 0)) continue;   // kein Kurs in diesem Schnappschuss (z. B. Pump.fun-Umzug) – überspringen
+    if (s.px <= e.px * 0.1 || (s.liq != null && s.liq < 1000 && s.px < e.px * 0.5)) { dead = true; mn = -1; break; }
     const ch = s.px / e.px - 1; mx = Math.max(mx, ch); mn = Math.min(mn, ch);
     if (!y && ch <= -0.35) y = -1; if (!y && ch >= 1) y = 1;
   }
@@ -75,7 +76,8 @@ export function simExit(path, t0, p, cost = 0.03) {   // p: {tp, sl, trail, maxH
   const buy = e * (1 + cost); let qty = 1 / buy, cash = 0, half = false, peak = e; const tEnd = path[i].t + p.maxH * 3600;
   for (let k = i + 1; k < path.length; k++) {
     const s = path[k];
-    if (!(s.px > 0) || (s.liq != null && s.liq < 3000)) return cash - 1;   // Rug: Rest wertlos
+    if (!(s.px > 0)) continue;
+    if (s.liq != null && s.liq < 1000 && s.px < e * 0.5) return cash - 1;   // Rug: Rest wertlos
     const px = s.px; peak = Math.max(peak, px);
     if (!half && px / e - 1 >= p.tp) { cash += (qty / 2) * px * (1 - cost); qty /= 2; half = true; }
     const stop = half ? Math.max(e, peak * (1 - p.trail)) : e * (1 + p.sl);

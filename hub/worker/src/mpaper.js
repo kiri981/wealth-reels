@@ -16,8 +16,10 @@ const DS = "https://api.dexscreener.com";
 const N = (x) => (x == null || x === "" ? null : +x);
 
 export async function mpSchema(env) {
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_mpev (id TEXT, pt INTEGER, t INTEGER, ev TEXT, px REAL, note TEXT)").run();   // v2.7 Verlauf je Position: Kauf, Hälfte, Stopp-Anpassung, Verkauf
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_mpos (id TEXT, t INTEGER, chain TEXT, token TEXT, pool TEXT, sym TEXT, src TEXT, px REAL, qty REAL, cost REAL, peak REAL, half INTEGER DEFAULT 0, cash REAL DEFAULT 0, last_px REAL, last_seen INTEGER, t_close INTEGER, px_close REAL, pnl REAL, why TEXT, PRIMARY KEY (id, t))").run();
 }
+const ev = (env, id, pt, t, e, px, note) => env.DB.prepare("INSERT INTO hub_mpev (id, pt, t, ev, px, note) VALUES (?, ?, ?, ?, ?, ?)").bind(id, pt, t, e, px, String(note || "").slice(0, 500)).run().catch(() => {});
 const fmt = (v) => (v == null ? "?" : v >= 1 ? v.toFixed(4) : v.toPrecision(4));
 export async function mpOpen(env, say, x) {   // x: {chain, token, pool, sym, px, src}
   if (!x?.token || !x.px) return false;
@@ -32,6 +34,7 @@ export async function mpOpen(env, say, x) {   // x: {chain, token, pool, sym, px
   const now = Math.floor(Date.now() / 1000), buy = x.px * (1 + MP.cost), qty = MP.size / buy;
   await env.DB.prepare("INSERT INTO hub_mpos (id, t, chain, token, pool, sym, src, px, qty, cost, peak, last_px, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     .bind(id, now, x.chain, x.token, x.pool || null, x.sym || null, x.src || "Radar", x.px, qty, MP.size, x.px, x.px, now).run();
+  await ev(env, id, now, now, "kauf", x.px, `${MP.size} $ gekauft (inkl. ${Math.round(MP.cost * 100)} % Kosten) · Grund: ${x.src || "Radar"}${x.info ? " · " + x.info : ""} · Regeln: Hälfte bei ${pc(RU.tp)}, Stop ${pc(RU.sl)}, Trailing ${Math.round(RU.trail * 100)} %, max. ${RU.maxH} Std.`);
   await say(env, `🤖 Papier-Wallet kauft ${x.sym} (${x.chain}) für ${MP.size} $ @ ${fmt(x.px)} – Grund: ${x.src}\nRegeln${RU.learned ? " (gelernt)" : ""}: Hälfte bei ${pc(RU.tp)}, Stop ${pc(RU.sl)}, nachgezogener Stop ${Math.round(RU.trail * 100)} %, max. ${RU.maxH} Std. (simuliert, kein echtes Geld)`);
   return true;
 }
@@ -52,12 +55,13 @@ export async function mpManage(env, say) {
   let closed = 0;
   for (const p of P) {
     const q = Q[p.id]; let px = q?.px ?? null; let why = null, closeAt = null;
-    if (px == null) { if (now - (p.last_seen || p.t) > 1800) { why = "Kurs nicht mehr abrufbar (Rug?)"; closeAt = 0; } else continue; }
-    else if ((q.liq ?? 0) < 3000) { why = "Liquidität abgezogen (Rug)"; closeAt = 0; }
+    if (px == null) { if (now - (p.last_seen || p.t) > 3 * 3600) { why = "Kurs 3 Std. nicht mehr abrufbar (Rug?)"; closeAt = 0; } else continue; }
+    else if (q.liq != null && q.liq < 1000 && px < p.px * 0.5) { why = "Liquidität abgezogen (Rug)"; closeAt = 0; }   // v2.7: nur echte Rugs – beim Pump.fun-Umzug auf PumpSwap ist die alte Liquidität kurz weg, das ist kein Rug
+    else if (px <= p.px * 0.1) { why = "Kurs −90 % (Rug)"; closeAt = px; }
     let peak = Math.max(p.peak || p.px, px ?? 0), half = p.half, cash = p.cash || 0, qty = p.qty;
     if (closeAt == null) {
       const ch = px / p.px - 1;
-      if (!half && ch >= MP.tp) { cash += (qty / 2) * px * (1 - MP.cost); qty = qty / 2; half = 1; await say(env, `🤖 Papier-Wallet: ${p.sym} +${Math.round(ch * 100)} % – Hälfte verkauft (simuliert)`); }
+      if (!half && ch >= MP.tp) { cash += (qty / 2) * px * (1 - MP.cost); qty = qty / 2; half = 1; await ev(env, p.id, p.t, now, "haelfte", px, `+${Math.round(ch * 100)} % erreicht → Hälfte verkauft (${((qty) * px * (1 - MP.cost)).toFixed(2)} $ zurück) · Stop jetzt mindestens Einstand, danach ${Math.round(MP.trail * 100)} % unter dem Höchstkurs nachgezogen`); await say(env, `🤖 Papier-Wallet: ${p.sym} +${Math.round(ch * 100)} % – Hälfte verkauft (simuliert)`); }
       const stop = half ? Math.max(p.px, peak * (1 - MP.trail)) : p.px * (1 + MP.sl);
       if (px <= stop) { why = half ? "nachgezogener Stop" : "Stop " + pc(MP.sl); closeAt = px; }
       else if (now - p.t >= MP.maxH * 3600) { why = "Zeit (" + MP.maxH + " Std.)"; closeAt = px; }
@@ -65,6 +69,7 @@ export async function mpManage(env, say) {
     if (closeAt != null) {
       const pnl = cash + qty * closeAt * (1 - MP.cost) - p.cost;
       await env.DB.prepare("UPDATE hub_mpos SET t_close = ?, px_close = ?, pnl = ?, why = ?, qty = ?, cash = ?, half = ?, peak = ?, last_px = ? WHERE id = ? AND t = ?").bind(now, closeAt, pnl, why, qty, cash, half, peak, px, p.id, p.t).run();
+      await ev(env, p.id, p.t, now, "verkauf", closeAt, `${why} · Ergebnis ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} $ (${pnl >= 0 ? "+" : ""}${Math.round((pnl / p.cost) * 100)} %) · Höchstkurs ${fmt(peak)} (${pc(peak / p.px - 1)}) · Haltedauer ${((now - p.t) / 3600).toFixed(1)} Std.`);
       await say(env, `🤖 Papier-Wallet verkauft ${p.sym}: ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} $ (${pnl >= 0 ? "+" : ""}${Math.round((pnl / p.cost) * 100)} %) – ${why} (simuliert)`);
       closed++;
     } else await env.DB.prepare("UPDATE hub_mpos SET qty = ?, cash = ?, half = ?, peak = ?, last_px = ?, last_seen = ? WHERE id = ? AND t = ?").bind(qty, cash, half, peak, px, now, p.id, p.t).run();

@@ -254,7 +254,7 @@ export async function memeTick(env, say, kvGet, kvPut) {
       `https://dexscreener.com/${x.chain}/${x.pool}\nNur Beobachtung, keine Anlageberatung – die meisten Memecoins verlieren fast alles.`);
     await env.DB.prepare("UPDATE hub_meme SET alert_t = ?, alert_px = ? WHERE id = ?").bind(now, x.px, r.id).run();
     sent++;
-    try { await mpOpen(env, say, { chain: x.chain, token: x.token, pool: x.pool, sym: x.sym, px: x.px, src: "Meme-Radar (Heiß-Wert " + m.score + ")" }); } catch (e) { log.push("Papier " + e.message); }
+    try { await mpOpen(env, say, { chain: x.chain, token: x.token, pool: x.pool, sym: x.sym, px: x.px, src: "Meme-Radar (Heiß-Wert " + m.score + ")", info: `Marktwert ${usd(x.mc)} · Liquidität ${usd(x.liq)} · Vol. 1 Std. ${usd(x.v1h)} · Alter ${m.age != null ? (m.age < 1 ? Math.round(m.age * 60) + " Min." : m.age.toFixed(1) + " Std.") : "?"} · Kaufdruck ${m.buyPct != null ? Math.round(m.buyPct * 100) + " %" : "?"} · 1 Std. ${x.c1h != null ? (x.c1h >= 0 ? "+" : "") + Math.round(x.c1h) + " %" : "?"} · Sicherheit ${sec.level}${(x.src || []).some((q) => /Pump/.test(q)) ? " · Pump.fun" : ""}` }); } catch (e) { log.push("Papier " + e.message); }
   }
   await kvPut(env, hk, sent);
 
