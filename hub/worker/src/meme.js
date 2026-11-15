@@ -81,7 +81,7 @@ function basicFlags(x, m) {
   if ((x.c1h ?? 0) > 300) f.push("+300 % in 1 Std. (Spätkäufer-Gefahr)");
   return f;
 }
-async function security(x) {   // → { level: "ok"|"warn"|"danger"|"unknown", flags: [] }
+export async function security(x) {   // → { level: "ok"|"warn"|"danger"|"unknown", flags: [] }
   const flags = []; let lvl = "ok";
   try {
     if (x.chain === "solana") {
@@ -181,7 +181,7 @@ export async function memeTick(env, say, kvGet, kvPut) {
 const usd = (v) => (v == null ? "?" : v >= 1e9 ? (v / 1e9).toFixed(2) + " Mrd $" : v >= 1e6 ? (v / 1e6).toFixed(2) + " Mio $" : v >= 1e3 ? (v / 1e3).toFixed(1) + "k $" : v.toFixed(0) + " $");
 
 // ---------------------------------------------------------------- Seite /memes
-export async function memePage(env, key) {
+export async function memePage(env, key, WD) {
   await memeSchema(env);
   const now = Math.floor(Date.now() / 1000);
   const R = (await env.DB.prepare("SELECT * FROM hub_meme WHERE last_t > ? ORDER BY score DESC LIMIT 300").bind(now - 1800).all()).results;
@@ -193,7 +193,7 @@ export async function memePage(env, key) {
   const al = A.map((r) => ({ sym: r.sym, chain: r.chain, pool: r.pool, t: r.alert_t, h1: ch(r.alert_px, r.px1h), h6: ch(r.alert_px, r.px6h), h24: ch(r.alert_px, r.px24h) }));
   const done = al.filter((x) => x.h24 != null); const med = (v) => { const s = [...v].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : null; };
   const stats = { n: al.length, n24: done.length, up24: done.filter((x) => x.h24 > 0).length, med24: med(done.map((x) => x.h24)), x2: done.filter((x) => x.h24 >= 100).length, rug: done.filter((x) => x.h24 <= -80).length };
-  const DATA = JSON.stringify({ items, al, stats, t: now }).replace(/</g, "\\u003c");
+  const DATA = JSON.stringify({ items, al, stats, t: now, wd: WD || null }).replace(/</g, "\\u003c");
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meme-Radar</title>
 <style>:root{--bg:#0b0b0d;--card:#151518;--line:#26262b;--tx:#ececf0;--mut:#9a9aa3;--gold:#e8b54a;--g:#3ecf8e;--r:#ff6b6b;--y:#f5c451}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;padding:16px;max-width:1280px;margin:auto}
@@ -206,13 +206,17 @@ h1{font-size:22px;margin:0}h1 b{color:var(--gold)}.sub{color:var(--mut);font-siz
 th{color:var(--mut);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--card);cursor:pointer}td:first-child,th:first-child,td:nth-child(2),th:nth-child(2){text-align:left}tr:hover td{background:#18181c}
 .sym{font-weight:700}.sym a{color:var(--tx);text-decoration:none}.nm{color:var(--mut);font-size:11.5px;max-width:160px;overflow:hidden;text-overflow:ellipsis;display:block}.pos{color:var(--g)}.neg{color:var(--r)}
 .sc{display:inline-block;min-width:34px;text-align:center;border-radius:6px;padding:2px 6px;font-weight:700;color:#111}.chip{font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:1px 7px;margin-left:4px}
-.risk{cursor:help}.lk a{color:var(--gold);text-decoration:none;font-size:12px;margin-left:6px}.foot{color:var(--mut);font-size:12px;margin-top:12px}
+.risk{cursor:help}.lk a{color:var(--gold);text-decoration:none;font-size:12px;margin-left:6px}.foot{color:var(--mut);font-size:12px;margin-top:12px}.mini{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font:inherit;font-size:12.5px;cursor:pointer}
 @media(max-width:640px){body{padding:12px}h1{font-size:19px}}</style></head><body>
 <h1>🚀 Meme-<b>Radar</b></h1><div class="sub" id="sub"></div>
 <div class="warn">⚠️ Nur Beobachtung und Bildung, keine Anlageberatung. Die große Mehrheit neuer Memecoins verliert innerhalb von Tagen fast ihren gesamten Wert; frühe Käufe macht oft schon ein Bot in Sekunden. Sicherheits-Checks (GoPlus/RugCheck) finden nicht jeden Betrug. Nur Geld einsetzen, dessen Totalverlust du verkraftest.</div>
 <div class="kpis" id="kpis"></div>
 <div class="tabs" id="tabs"></div>
 <div class="f">Kette <select id="fc"><option value="">alle</option></select> Min. Liquidität <input id="fl" type="number" value="15000" step="5000"> Sicherheit <select id="fs"><option value="">alle</option><option value="nodanger" selected>ohne 🔴</option><option value="ok">nur 🟢</option></select> <span id="cnt"></span></div>
+<div id="wbox" style="display:none;margin-bottom:12px"><div class="warn" style="background:#121a14;border-color:#244a30;color:#bfe6c9">👛 Trage Wallets ein, die du z. B. über DexScreener „Top Traders“ oder gmgn.ai gefunden hast (hoher Gewinn, gute Trefferquote). Der Hub meldet, wenn 2+ deiner Wallets denselben Coin kaufen (👛×2), und zeigt ehrlich, was aus ihren Käufen wurde – gemessen ab dem Moment, in dem der Hub den Kauf sah. Viele „Top-Trader“ sind Insider oder Bots: entscheidend ist die Bilanz hier, nicht die auf gmgn.</div>
+<div id="wnote" class="foot" style="color:#f5c451"></div>
+<div class="f" style="display:flex"><input id="wa" placeholder="Solana-Wallet-Adresse" style="width:340px;max-width:100%"><input id="wn" placeholder="Name (z. B. gmgn-Top1)" style="width:180px"><label><input id="wal" type="checkbox"> Alarm bei jedem Kauf</label><button id="wadd" class="mini" style="background:#e8b54a;color:#111;font-weight:700">+ Wallet hinzufügen</button></div>
+<div class="w" id="wl" style="margin-bottom:14px"></div></div>
 <div class="w"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
 <div class="foot">Heiß-Wert 0–100 = Volumen, Volumen-Beschleunigung, Kaufdruck, Preis-Momentum, Alter und Umschlag kombiniert. Beschl. 1h = Volumen der letzten Stunde ÷ Schnitt der letzten 6 Std. Quellen: GeckoTerminal, DexScreener, GoPlus, RugCheck. Seite lädt jede Minute neu.</div>
 <script>const D=${DATA};const GP=${JSON.stringify(GOPLUS)};
@@ -222,13 +226,15 @@ const ag=(h)=>h==null?"–":h<1?Math.round(h*60)+"m":h<48?h.toFixed(1)+"h":Math.
 const esc=(s)=>String(s??"").replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const scol=(s)=>s>=70?"#3ecf8e":s>=50?"#f5c451":s>=30?"#d9a441":"#666";
 const sec=(x)=>{const i=x.sec==="ok"?"🟢":x.sec==="warn"?"🟡":x.sec==="danger"?"🔴":"⚪";const t=[...(x.secf||[]),...(x.flags||[])].join(" · ")||"noch nicht geprüft";return '<span class="risk" title="'+esc((x.secsrc?x.secsrc+": ":"")+t)+'">'+i+(x.flags&&x.flags.length?" ⚠️"+x.flags.length:"")+'</span>'};
-const TABS=[["hot","🔥 Heiß jetzt",(a,b)=>b.score-a.score,()=>true],["new","🆕 Neu < 24h",(a,b)=>b.score-a.score,(x)=>x.age!=null&&x.age<24],["acc","🚀 Beschleuniger",(a,b)=>(b.acc||0)-(a.acc||0),(x)=>(x.v1h||0)>5000],["c1h","📈 Top 1h",(a,b)=>(b.c1h||-1e9)-(a.c1h||-1e9),()=>true],["c24","📊 Top 24h",(a,b)=>(b.c24||-1e9)-(a.c24||-1e9),()=>true],["al","🔔 Hinweise & Ergebnis"]];
+const TABS=[["hot","🔥 Heiß jetzt",(a,b)=>b.score-a.score,()=>true],["new","🆕 Neu < 24h",(a,b)=>b.score-a.score,(x)=>x.age!=null&&x.age<24],["acc","🚀 Beschleuniger",(a,b)=>(b.acc||0)-(a.acc||0),(x)=>(x.v1h||0)>5000],["c1h","📈 Top 1h",(a,b)=>(b.c1h||-1e9)-(a.c1h||-1e9),()=>true],["c24","📊 Top 24h",(a,b)=>(b.c24||-1e9)-(a.c24||-1e9),()=>true],["al","🔔 Hinweise & Ergebnis"],["w","👛 Smart-Wallets"]];
 let tab="hot";try{tab=localStorage.getItem("mr_tab")||"hot"}catch(e){}
 [...new Set(D.items.map(x=>x.chain))].sort().forEach(c=>{const o=document.createElement("option");o.value=o.textContent=c;$("fc").appendChild(o)});
 $("sub").textContent="Stand "+new Date(D.t*1000).toLocaleString("de-DE")+" · "+D.items.length+" Coins in Beobachtung";
 const s=D.stats;$("kpis").innerHTML=[["Hinweise gesamt",s.n],["nach 24h ausgewertet",s.n24],["davon im Plus",s.n24?Math.round(s.up24/s.n24*100)+" %":"–"],["Median nach 24h",s.med24==null?"–":(s.med24>=0?"+":"")+s.med24.toFixed(0)+" %"],["verdoppelt",s.x2],["−80 % oder schlimmer",s.rug]].map(([a,b])=>'<div class="k"><b>'+b+'</b><span>'+a+'</span></div>').join("");
 function render(){$("tabs").innerHTML=TABS.map(t=>'<button class="'+(t[0]===tab?"on":"")+'" data-t="'+t[0]+'">'+t[1]+'</button>').join("");
  document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;try{localStorage.setItem("mr_tab",tab)}catch(e){}render()});
+ $("wbox").style.display=tab==="w"?"block":"none";document.querySelector(".f").style.display=tab==="w"||tab==="al"?"none":"flex";
+ if(tab==="w"){renderW();return}
  if(tab==="al"){$("th").innerHTML="<tr><th>Coin</th><th>Kette</th><th>Hinweis</th><th>nach 1h</th><th>nach 6h</th><th>nach 24h</th></tr>";
   $("tb").innerHTML=D.al.map(x=>"<tr><td class=sym><a target=_blank rel=noopener href='https://dexscreener.com/"+esc(x.chain)+"/"+esc(x.pool)+"'>"+esc(x.sym)+"</a></td><td>"+esc(x.chain)+"</td><td>"+new Date(x.t*1000).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+"</td><td>"+pc(x.h1)+"</td><td>"+pc(x.h6)+"</td><td>"+pc(x.h24)+"</td></tr>").join("")||"<tr><td colspan=6>Noch keine Hinweise.</td></tr>";$("cnt").textContent="";return}
  const T=TABS.find(t=>t[0]===tab);const fc=$("fc").value,fl=+$("fl").value||0,fs=$("fs").value;
@@ -237,6 +243,17 @@ function render(){$("tabs").innerHTML=TABS.map(t=>'<button class="'+(t[0]===tab?
  $("cnt").textContent=L.length+" Treffer";
  $("th").innerHTML="<tr><th>Coin</th><th>Kette</th><th>Heiß</th><th>Alter</th><th>Marktwert</th><th>Liquidität</th><th>Vol 1h</th><th>Beschl. 1h</th><th>5m</th><th>1h</th><th>6h</th><th>24h</th><th>Käufe 1h</th><th>seit Entdeckung</th><th>Sicherheit</th><th>Links</th></tr>";
  $("tb").innerHTML=L.map(x=>"<tr><td><span class=sym><a target=_blank rel=noopener href='https://dexscreener.com/"+esc(x.chain)+"/"+esc(x.pool)+"'>"+esc(x.sym)+"</a></span>"+(x.alerted?"<span class=chip>🔔</span>":"")+(NC[String(x.sym).toUpperCase()]>1?"<span class=chip title='Mehrere Coins mit diesem Namen – oft Nachahmer. Adresse prüfen!' style='color:#f5c451'>Doppelname</span>":"")+(String(x.src).includes("Boost")?"<span class=chip title='bezahlte Werbung auf DexScreener'>Boost</span>":"")+"<span class=nm>"+esc(x.name)+"</span></td><td>"+esc(x.chain)+"</td><td><span class=sc style='background:"+scol(x.score)+"'>"+x.score+"</span></td><td>"+ag(x.age)+"</td><td>"+usd(x.mc)+"</td><td>"+usd(x.liq)+"</td><td>"+usd(x.v1h)+"</td><td>"+(x.acc==null?"–":x.acc.toFixed(1)+"×")+"</td><td>"+pc(x.c5)+"</td><td>"+pc(x.c1h)+"</td><td>"+pc(x.c6h)+"</td><td>"+pc(x.c24)+"</td><td>"+(x.buy==null?"–":Math.round(x.buy*100)+"%")+"</td><td>"+pc(x.grow==null?null:x.grow*100)+"</td><td>"+sec(x)+"</td><td class=lk><a target=_blank rel=noopener href='https://dexscreener.com/"+esc(x.chain)+"/"+esc(x.pool)+"'>DS</a>"+(x.chain==="solana"?"<a target=_blank rel=noopener href='https://rugcheck.xyz/tokens/"+esc(x.token)+"'>Rug</a>":GP[x.chain]?"<a target=_blank rel=noopener href='https://gopluslabs.io/token-security/"+GP[x.chain]+"/"+esc(x.token)+"'>Sec</a>":"")+"</td></tr>").join("")||"<tr><td colspan=16>Keine Treffer mit diesen Filtern.</td></tr>"}
-["fc","fl","fs"].forEach(i=>$(i).oninput=render);render();setTimeout(()=>location.reload(),60000);
+const Q=location.search;const api=async(p)=>{const r=await fetch("/wallet"+Q+"&"+p);const t=await r.text();if(t!=="ok")alert(t);location.reload()};
+const sh=(a)=>a.slice(0,4)+"…"+a.slice(-4);
+function renderW(){const W=D.wd;$("cnt").textContent="";
+ if(!W){$("th").innerHTML="";$("tb").innerHTML="<tr><td>Wallet-Daten nicht verfügbar.</td></tr>";return}
+ $("wnote").innerHTML=W.helius?"":"⚠️ Noch kein Helius-Schlüssel hinterlegt – Wallets werden gespeichert, aber erst beobachtet, sobald HELIUS_KEY gesetzt ist.";
+ $("wl").innerHTML=W.wallets.length?"<table><thead><tr><th>Wallet</th><th>Adresse</th><th>Käufe gesehen</th><th>nach 24h ausgewertet</th><th>davon im Plus</th><th>Ø nach 24h</th><th>−80 % oder schlimmer</th><th>Alarm je Kauf</th><th></th></tr></thead><tbody>"+W.wallets.map(w=>{const s=W.stats[w.addr]||{};return "<tr><td class=sym>"+esc(w.label||"–")+"</td><td><a target=_blank rel=noopener style='color:#e8b54a' href='https://gmgn.ai/sol/address/"+esc(w.addr)+"'>"+sh(w.addr)+"</a></td><td>"+(s.n||0)+"</td><td>"+(s.n24||0)+"</td><td>"+(s.n24?Math.round(s.up24/s.n24*100)+" %":"–")+"</td><td>"+(s.avg24==null?"–":pc(s.avg24*100))+"</td><td>"+(s.rug||0)+"</td><td><button data-tg='"+esc(w.addr)+"' class=mini>"+(w.alert?"🔔 an":"🔕 aus")+"</button></td><td><button data-del='"+esc(w.addr)+"' class=mini>entfernen</button></td></tr>"}).join("")+"</tbody></table>":"<p class=foot>Noch keine Wallets eingetragen.</p>";
+ document.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>api("toggle="+encodeURIComponent(b.dataset.tg)));
+ document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{if(confirm("Wallet entfernen?"))api("del="+encodeURIComponent(b.dataset.del))});
+ $("th").innerHTML="<tr><th>Zeit</th><th>Wallet</th><th>Aktion</th><th>Coin</th><th>SOL</th><th>Marktwert beim Kauf</th><th>Liquidität</th><th>nach 1h</th><th>nach 6h</th><th>nach 24h</th></tr>";
+ $("tb").innerHTML=W.tx.map(x=>{const c=(a,b)=>a&&b?(b/a-1)*100:null;const cl=W.clusters[x.mint];return "<tr><td>"+new Date(x.t*1000).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+"</td><td>"+esc(x.label||sh(x.addr))+"</td><td>"+(x.side>0?"<span class=pos>Kauf</span>":"<span class=neg>Verkauf</span>")+"</td><td class=sym><a target=_blank rel=noopener href='https://dexscreener.com/solana/"+esc(x.pool||x.mint)+"'>"+esc(x.sym||sh(x.mint))+"</a>"+(cl&&x.side>0?"<span class=chip style='color:#3ecf8e'>👛×"+cl+"</span>":"")+"</td><td>"+(x.sol?Math.abs(x.sol).toFixed(2):"–")+"</td><td>"+usd(x.mc)+"</td><td>"+usd(x.liq)+"</td><td>"+(x.side>0?pc(c(x.px,x.px1h)):"")+"</td><td>"+(x.side>0?pc(c(x.px,x.px6h)):"")+"</td><td>"+(x.side>0?pc(c(x.px,x.px24h)):"")+"</td></tr>"}).join("")||"<tr><td colspan=10>Noch keine Transaktionen gesehen.</td></tr>"}
+$("wadd").onclick=()=>{const a=$("wa").value.trim();if(!a)return;api("add="+encodeURIComponent(a)+"&label="+encodeURIComponent($("wn").value.trim())+"&alert="+($("wal").checked?1:0))};
+["fc","fl","fs"].forEach(i=>$(i).oninput=render);render();setTimeout(()=>{if(tab!=="w")location.reload()},60000);
 </script></body></html>`;
 }

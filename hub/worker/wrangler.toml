@@ -25,6 +25,7 @@ META_REGION = "london"
 #   (GH_TOKEN optional – nicht nötig: der nächtliche Forschungs-Agent holt die Daten selbst aus D1)
 #   HUB_KEY   – frei gewähltes Passwort fürs Dashboard
 #   COINALYZE_KEY – API-Schlüssel von coinalyze.net (Konto → API Key), für Funding/Open Interest/Liquidationen
+#   HELIUS_KEY – API-Schlüssel von dashboard.helius.dev (kostenlos), für den Smart-Wallet-Tracker (Solana)
 
 # Workers AI: bewertet Nachrichten (kostenloses Tageskontingent)
 [ai]
