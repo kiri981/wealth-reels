@@ -185,10 +185,53 @@ export function swingFilter(C, kind, cot, ry) {
   return ok;
 }
 
+// ---------------------------------------------------------------- Familie deriv (v1.6) – 1:1 wie run_deriv() in engine.py
+// D: [{t, o, h, l, c, oi, fr, liq_l, liq_s}] aufsteigend (Tage)
+function rollZ(x, w = 90, mp = 60) {
+  return x.map((v, i) => {
+    const s = x.slice(Math.max(0, i - w + 1), i + 1).filter((y) => y !== null && isFinite(y));
+    if (s.length < mp || v === null || !isFinite(v)) return NaN;
+    const m = s.reduce((a, b) => a + b, 0) / s.length; const sd = Math.sqrt(s.reduce((a, b) => a + (b - m) ** 2, 0) / (s.length - 1));
+    return sd > 0 ? (v - m) / sd : NaN;
+  });
+}
+export function derivSig(D, sig, z) {
+  const n = D.length;
+  if (sig === "liqL") return rollZ(D.map((x) => x.liq_l ?? 0)).map((v) => v > z);
+  if (sig === "liqS") return rollZ(D.map((x) => x.liq_s ?? 0)).map((v) => v > z);
+  if (sig === "frHi") return rollZ(D.map((x) => x.fr)).map((v) => v > z);
+  if (sig === "frLo") return rollZ(D.map((x) => x.fr)).map((v) => v < -z);
+  const oc = rollZ(D.map((x, i) => (i >= 3 && D[i - 3].oi ? x.oi / D[i - 3].oi - 1 : null)));
+  const pc = D.map((x, i) => (i >= 3 ? x.c / D[i - 3].c - 1 : NaN));
+  if (sig === "oiUpPxDn") return oc.map((v, i) => v > z && pc[i] < 0);
+  if (sig === "oiUpPxUp") return oc.map((v, i) => v > z && pc[i] > 0);
+  return new Array(n).fill(false);
+}
+export function runDeriv(D, p) {
+  const n = D.length, o = D.map((x) => x.o), h = D.map((x) => x.h), l = D.map((x) => x.l), c = D.map((x) => x.c);
+  const tr = D.map((x, i) => { const pc = i ? c[i - 1] : c[0]; return Math.max(h[i] - l[i], Math.abs(h[i] - pc), Math.abs(l[i] - pc)); });
+  const atr = tr.map((v, i) => (i < 13 ? NaN : tr.slice(i - 13, i + 1).reduce((a, b) => a + b, 0) / 14));
+  const S = derivSig(D, p.sig, p.z); const dr = p.dr, H = p.hold, k = p.k; const out = []; let i = 0;
+  while (i < n - 1) {
+    if (!S[i] || !isFinite(atr[i]) || !isFinite(o[i + 1])) { i++; continue; }
+    const j0 = i + 1, e = o[j0], R = k * atr[i], stop = e - dr * R; let ex = null, j = j0, why = "";
+    while (j < n && j < j0 + H) {
+      if ((dr > 0 && l[j] <= stop) || (dr < 0 && h[j] >= stop)) { ex = (o[j] - stop) * dr > 0 ? stop : o[j]; why = "SL"; break; }
+      j++;
+    }
+    if (ex === null) { if (j0 + H - 1 < n) { j = j0 + H - 1; ex = c[j]; why = "Zeit"; } else { j = n - 1; ex = c[j]; why = "offen"; } }
+    const cost = (p._costp ?? 0.0012) * e;
+    out.push({ t: D[j0].t, dr, e, sl: stop, r: (dr * (ex - e) - cost) / R, why, tx: D[j].t, open: why === "offen" });
+    i = j + 1;
+  }
+  return out;
+}
+
 export function trades(fam, p, data) {
   if (fam === "sess") return runSess(data.DAYS, p);
   if (fam === "rbo") return runRbo(p.tf === "15m" ? data.F15 : data.F5, p);
   if (fam === "swing") return data.D1 ? runSwing(data.D1, p) : [];
+  if (fam === "deriv") return data.DD ? runDeriv(data.DD, p) : [];
   return [];
 }
 export function resample(C, sec) {

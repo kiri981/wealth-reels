@@ -213,6 +213,44 @@ def swing_filter(dates, kind, cot=None, ry=None):
             sma = pd.Series(R).rolling(50).mean().values; ok &= ~(R > sma)
     return ok
 
+
+# ---------------------------------------------------------------- Familie deriv (v1.6): Derivate-Signale auf Tagesbasis (Coinalyze-Perps)
+# D: DataFrame je Markt (Index Tag) mit o,h,l,c, oi, fr, liq_l, liq_s. Signal am Tagesschluss, Einstieg nächster Tag Eröffnung.
+# sig: liqL (Long-Liquidationen ungewöhnlich hoch) · liqS (Short-Liq.) · frHi / frLo (Funding extrem hoch/tief)
+#      oiUpPxDn / oiUpPxUp (Open Interest steigt in 3 Tagen ungewöhnlich stark bei fallendem/steigendem Preis)
+# z: Schwelle des z-Werts (90 Tage), dr: +1 long / -1 short, hold: Haltedauer in Tagen, k: Stop k·ATR14
+def deriv_sig(D, sig, z):
+    def zs(x):
+        m = x.rolling(90, min_periods=60).mean(); s = x.rolling(90, min_periods=60).std(); return ((x - m) / s).values
+    if sig == "liqL": return zs(D.liq_l.fillna(0)) > z
+    if sig == "liqS": return zs(D.liq_s.fillna(0)) > z
+    if sig == "frHi": return zs(D.fr) > z
+    if sig == "frLo": return zs(D.fr) < -z
+    oc = zs(D.oi / D.oi.shift(3) - 1); pc = (D.c / D.c.shift(3) - 1).values
+    if sig == "oiUpPxDn": return (oc > z) & (pc < 0)
+    if sig == "oiUpPxUp": return (oc > z) & (pc > 0)
+    return np.zeros(len(D), bool)
+def run_deriv(D, p):
+    o, h, l, c = D.o.values, D.h.values, D.l.values, D.c.values; n = len(c)
+    tr = np.maximum(h - l, np.maximum(abs(h - np.r_[c[0], c[:-1]]), abs(l - np.r_[c[0], c[:-1]])))
+    atr = pd.Series(tr).rolling(14).mean().values
+    S = deriv_sig(D, p["sig"], p["z"]); t = (D.index.values.astype("datetime64[s]").astype(np.int64))
+    dr, H, k = p["dr"], p["hold"], p["k"]; out = []; i = 0
+    while i < n - 1:
+        if not S[i] or not np.isfinite(atr[i]) or not np.isfinite(o[i + 1]):
+            i += 1; continue
+        j0 = i + 1; e = o[j0]; R = k * atr[i]; stop = e - dr * R; ex = None; j = j0
+        while j < n and j < j0 + H:
+            if (dr > 0 and l[j] <= stop) or (dr < 0 and h[j] >= stop): ex = stop if (o[j] - stop) * dr > 0 else o[j]; why = "SL"; break
+            j += 1
+        if ex is None:
+            if j0 + H - 1 < n: j = j0 + H - 1; ex = c[j]; why = "Zeit"
+            else: j = n - 1; ex = c[j]; why = "offen"
+        cost = p.get("_costp", 0.0012) * e
+        out.append(dict(t=int(t[j0]), dr=int(dr), e=float(e), sl=float(stop), r=float((dr * (ex - e) - cost) / R), why=why, tx=int(t[j]), open=why == "offen"))
+        i = j + 1
+    return out
+
 # ---------------------------------------------------------------- Kennzahlen
 def stats(trades):
     r = np.array([x["r"] for x in trades])

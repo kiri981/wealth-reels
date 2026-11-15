@@ -377,8 +377,13 @@ async function paper(env) {
       if (strats.some((x) => x.family === "swing")) DATA[sym].D1 = await load(env, TK(sym, "1d"), 0);
     }
     const data = DATA[sym];
-    if (E.SYMS[sym]?._costp) Object.assign(p, E.withSym(JSON.parse(s.params), data.px || (data.D1 && data.D1.length ? data.D1[data.D1.length - 1].c : 0)));
-    if (s.family !== "swing" && !data.DAYS) continue;
+    if (s.family === "deriv") {   // Derivate-Familie (v1.6): Coinalyze-Tageshistorie, Kurs der Perps
+      if (!data.DD) data.DD = (await env.DB.prepare("SELECT d, o, h, l, c, oi, fr, liq_l, liq_s FROM hub_deriv_d WHERE sym = ? AND c IS NOT NULL ORDER BY d").bind(sym.replace(/USD$/, "")).all()).results
+        .map((x) => ({ ...x, t: Math.floor(Date.parse(x.d + "T00:00:00Z") / 1000) }));
+      p._costp = ["XAUUSD", "XAGUSD"].includes(sym) ? 0.0006 : (E.SYMS[sym]?._costp ?? 0.0012);
+    }
+    if (s.family !== "deriv" && E.SYMS[sym]?._costp) Object.assign(p, E.withSym(JSON.parse(s.params), data.px || (data.D1 && data.D1.length ? data.D1[data.D1.length - 1].c : 0)));
+    if (s.family !== "swing" && s.family !== "deriv" && !data.DAYS) continue;
     if (s.family === "swing" && p.filt && p.filt !== "none" && data.D1) {   // COT/Realzins-Filter (v1.5)
       const cot = (await env.DB.prepare("SELECT d, mm_l, mm_s, oi FROM hub_cot WHERE sym = ? ORDER BY d").bind(sym).all()).results;
       const ry = (await env.DB.prepare("SELECT d, v FROM hub_macro WHERE series = 'DFII10' ORDER BY d").all()).results;
