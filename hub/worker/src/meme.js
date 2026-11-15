@@ -134,7 +134,29 @@ export async function memeTick(env, say, kvGet, kvPut) {
   } catch (e) { log.push("DS " + e.message); }
   try {   // Pump.fun (Solana-Startrampe): Coins kurz vor dem Abschluss der Bonding-Kurve, frisch abgeschlossene und „König des Hügels“ – Kennzahlen dann über DexScreener
     const PF = "https://frontend-api-v3.pump.fun", M = {}; let ok = 0;
-    if (env.MORALIS_KEY) {   // v2.7: Pump.fun-Daten über Moralis (Pump.fun selbst sperrt Cloudflare) – alle 15 Min., dazwischen aus dem Zwischenspeicher
+    if (env.HELIUS_KEY) {   // v2.7: Pump.fun-Abschlüsse direkt von der Solana-Blockchain (Helius): das Pump.fun-Migrationskonto zieht abgeschlossene Coins auf PumpSwap um
+      const ck = "helius_pfgrad"; let G = { t: 0, last: null, L: [] }; try { G = JSON.parse((await kvGet(env, ck)) || "null") || G; } catch (e) {}
+      if (now - G.t >= 900) {   // alle 15 Min. neue Umzüge holen
+        const rpc = async (method, params) => { const r = await fetch(`https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_KEY}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) }); if (!r.ok) throw new Error("Helius " + r.status); const J = await r.json(); if (J.error) throw new Error("Helius " + (J.error.message || "").slice(0, 60)); return J.result; };
+        try {
+          const sigs = (await rpc("getSignaturesForAddress", ["39azUYFWPz3VHgKCf3VChUwbpURdCHRxjWVowf5jUJjg", { limit: 40 }])).filter((x) => !x.err);
+          const fresh = []; for (const x of sigs) { if (x.signature === G.last) break; fresh.push(x); }
+          let n = 0;
+          for (const x of fresh.slice(0, 15)) {
+            const tx = await rpc("getTransaction", [x.signature, { encoding: "jsonParsed", maxSupportedTransactionVersion: 0 }]).catch(() => null);
+            const mints = [...new Set((tx?.meta?.postTokenBalances || []).map((b) => b.mint).filter((m) => m && m !== "So11111111111111111111111111111111111111112"))];
+            const mint = mints.find((m) => /pump$/.test(m)) || (mints.length === 1 ? mints[0] : null);
+            if (mint && !G.L.some((g) => g[0] === mint)) { G.L.push([mint, x.blockTime || now]); n++; }
+          }
+          if (sigs.length) G.last = sigs[0].signature;
+          G.t = now; G.L = G.L.filter((g) => now - g[1] < 6 * 3600).slice(-80);
+          await kvPut(env, ck, JSON.stringify(G)); log.push("PF-Abschlüsse +" + n);
+        } catch (e) { log.push("PF-Helius " + e.message); G.t = now - 600; await kvPut(env, ck, JSON.stringify(G)).catch(() => {}); }
+      }
+      for (const [m] of G.L) M[m] = "Pump.fun abgeschlossen";
+      if (G.L.length) ok = 1;
+    }
+    if (env.MORALIS_KEY && env.MORALIS_KEY.length >= 20) {   // v2.7: Pump.fun-Daten über Moralis (Pump.fun selbst sperrt Cloudflare) – alle 15 Min., dazwischen aus dem Zwischenspeicher
       const ck = "moralis_pf", c = await kvGet(env, ck).catch(() => null); let L = null;
       if (c) { const o = JSON.parse(c); if (now - o.t < 900) L = o.L; }
       if (!L) {
