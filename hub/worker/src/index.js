@@ -7,7 +7,7 @@
 // Secrets: META_TOKEN, META_ACCOUNT, (META_REGION), GH_TOKEN, HUB_KEY
 import * as E from "./engine.js";
 
-const VERSION = "1.2";
+const VERSION = "1.3";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -51,6 +51,7 @@ async function schema(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_trades (sid TEXT, t INTEGER, dr INTEGER, e REAL, sl REAL, tp REAL, r REAL, why TEXT, tx INTEGER, closed INTEGER, notified INTEGER DEFAULT 0, PRIMARY KEY (sid, t))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_strats (id TEXT PRIMARY KEY, name TEXT, family TEXT, params TEXT, status TEXT, backtest TEXT, live TEXT, created TEXT)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_kv (k TEXT PRIMARY KEY, v TEXT)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_news (id TEXT PRIMARY KEY, t INTEGER, src TEXT, title TEXT, url TEXT, score INTEGER, dir TEXT, summary TEXT, sent INTEGER DEFAULT 0)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_events (id TEXT PRIMARY KEY, t INTEGER, cur TEXT, title TEXT, impact TEXT, forecast TEXT, previous TEXT, actual TEXT, note TEXT)"),
   ]);
   await env.STATE?.put?.("hub:schema1", "1");
@@ -112,6 +113,79 @@ async function newsAlerts(env) {
 async function newsWindows(env, from) {   // Zeitfenster ±30 Min. um rote US-Termine
   const { results } = await env.DB.prepare("SELECT t FROM hub_events WHERE impact = 'High' AND cur = 'USD' AND t >= ?").bind(from).all();
   return results.map((x) => [x.t - 1800, x.t + 1800]);
+}
+
+// ---------------------------------------------------------------- Dollar & Devisen (v1.3)
+// DXY-Näherung aus den 6 Währungspaaren des Dollar-Index (offizielle Formel), dazu Sprung-Warnungen für Dollar und Gold/Silber/Bitcoin.
+const FX = ["EURUSD", "USDJPY", "GBPUSD", "USDCAD", "USDSEK", "USDCHF"];
+const DXYW = { EURUSD: -0.576, USDJPY: 0.136, GBPUSD: -0.119, USDCAD: 0.091, USDSEK: 0.042, USDCHF: 0.036 };
+async function fxTick(env, log) {
+  for (const s2 of FX) {
+    try { const c = await candles(env, s2, "5m", 60); await store(env, `${s2}:5m`, c); } catch (e) { log.push(s2 + " Fehler " + e.message.slice(0, 60)); }
+  }
+  // DXY für die letzten ~2 Stunden berechnen
+  const since = Math.floor(Date.now() / 1000) - 3 * 3600; const M = {};
+  for (const s2 of FX) for (const k of await load(env, `${s2}:5m`, since)) (M[k.t] ||= {})[s2] = k.c;
+  const dxy = Object.entries(M).filter(([, v]) => FX.every((x) => v[x])).map(([t, v]) => [Number(t), 50.14348112 * FX.reduce((p, x) => p * Math.pow(v[x], DXYW[x]), 1)]).sort((a, b) => a[0] - b[0]);
+  if (dxy.length) await kvPut(env, "dxy", JSON.stringify(dxy.slice(-36)));
+  // Sprung-Warnungen: Dollar-Index ≥ 0,30 % in 30 Min.; Gold ≥ 0,8 %, Silber ≥ 1,5 %, Bitcoin ≥ 2,5 % in 15 Min.
+  const alerts = [];
+  if (dxy.length > 6) { const a = dxy[dxy.length - 7][1], b = dxy[dxy.length - 1][1], ch = (b / a - 1) * 100; if (Math.abs(ch) >= 0.3) alerts.push(["DXY", `💵 Dollar-Index ${ch > 0 ? "steigt" : "fällt"} kräftig: ${ch > 0 ? "+" : ""}${ch.toFixed(2)} % in 30 Min. (≈ ${b.toFixed(2)}). Ein stärkerer Dollar drückt meist auf Gold und Silber.`]); }
+  for (const [sym, thr] of [["XAUUSD", 0.8], ["XAGUSD", 1.5], ["BTCUSD", 2.5]]) {
+    const C = await load(env, TK(sym, "5m"), Math.floor(Date.now() / 1000) - 3600);
+    if (C.length > 3) { const a = C[C.length - 4].c, b = C[C.length - 1].c, ch = (b / a - 1) * 100; if (Math.abs(ch) >= thr) alerts.push([sym, `⚡ ${NAME(sym)} ${ch > 0 ? "springt" : "fällt"} ${ch > 0 ? "+" : ""}${ch.toFixed(2)} % in 15 Min. (${b.toFixed(DIG(sym))}).`]); }
+  }
+  for (const [k, txt] of alerts) {
+    const key = "spike_" + k + "_" + new Date().toISOString().slice(0, 13);   // höchstens 1 Warnung je Markt und Stunde
+    if (!(await kvGet(env, key))) { await kvPut(env, key, 1); await say(env, txt + "\n(Hinweis, keine Anlageberatung)"); }
+  }
+}
+
+// ---------------------------------------------------------------- Weltnachrichten / Geopolitik (v1.3)
+// RSS mehrerer Nachrichtenquellen, Vorfilter über Stichworte, Bewertung durch Workers AI (Bedeutung für Gold/Silber/Bitcoin 0–3).
+const FEEDS = [
+  ["BBC", "https://feeds.bbci.co.uk/news/world/rss.xml"],
+  ["BBC Business", "https://feeds.bbci.co.uk/news/business/rss.xml"],
+  ["Al Jazeera", "https://www.aljazeera.com/xml/rss/all.xml"],
+  ["CNBC", "https://www.cnbc.com/id/100727362/device/rss/rss.html"],
+  ["CNBC Economy", "https://www.cnbc.com/id/20910258/device/rss/rss.html"],
+  ["FXStreet", "https://www.fxstreet.com/rss/news"],
+  ["Investing", "https://www.investing.com/rss/news_11.rss"],
+];
+const KW = /\b(war|attack|missile|strike|invasion|troops|sanction|tariff|trade war|fed|fomc|powell|rate (cut|hike)|interest rate|inflation|cpi|jobs report|payrolls|recession|default|debt ceiling|shutdown|treasury|yield|dollar|gold|silver|bitcoin|crypto|etf|central bank|ecb|boj|pboc|china|taiwan|iran|israel|gaza|russia|ukraine|nato|nuclear|ceasefire|opec|oil|bank (run|collapse|failure)|crisis|emergency|coup|election|trump|putin|xi jinping)\b/i;
+const unesc = (x) => String(x || "").replace(/<!\[CDATA\[|\]\]>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/<[^>]+>/g, "").trim();
+async function newsTick(env, log) {
+  let found = 0, sent = 0, ai = 0; const now = Math.floor(Date.now() / 1000);
+  for (const [src, url] of FEEDS) {
+    let xml; try { const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (wc-hub news)" } }); if (!r.ok) continue; xml = await r.text(); } catch { continue; }
+    const items = xml.split(/<item[ >]/).slice(1, 25);
+    for (const it of items) {
+      const title = unesc((it.match(/<title>([\s\S]*?)<\/title>/) || [])[1]); const link = unesc((it.match(/<link>([\s\S]*?)<\/link>/) || [])[1]);
+      const pd = Date.parse(unesc((it.match(/<pubDate>([\s\S]*?)<\/pubDate>/) || [])[1])); const t = isNaN(pd) ? now : Math.floor(pd / 1000);
+      if (!title || now - t > 3 * 3600 || !KW.test(title)) continue;
+      const id = (src + ":" + title).slice(0, 180);
+      if (await env.DB.prepare("SELECT 1 FROM hub_news WHERE id = ?").bind(id).first()) continue;
+      found++;
+      let score = 1, dir = "", summary = "";
+      if (env.AI && ai++ < 12) {   // höchstens 12 KI-Bewertungen pro Lauf
+        try {
+          const out = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", { max_tokens: 160, messages: [
+            { role: "system", content: "You rate breaking news for a gold, silver and bitcoin trader. Reply ONLY with JSON: {\"score\":0-3,\"gold\":\"up|down|unclear\",\"de\":\"one short German sentence why it matters\"}. score 3 = likely to move gold/USD/BTC strongly within hours (war escalation, surprise central bank action, major sanctions/tariffs, bank crisis); 2 = relevant macro/geopolitical news; 1 = minor; 0 = irrelevant." },
+            { role: "user", content: `${src}: ${title}` }] });
+          const j = JSON.parse(String(out.response || "").match(/\{[\s\S]*\}/)[0]); score = Math.max(0, Math.min(3, Number(j.score) || 0)); dir = j.gold || ""; summary = String(j.de || "").slice(0, 220);
+        } catch (e) { score = 1; }
+      }
+      await env.DB.prepare("INSERT INTO hub_news (id, t, src, title, url, score, dir, summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(id, t, src, title.slice(0, 300), link.slice(0, 400), score, dir, summary).run();
+      if (score >= 3 || (score >= 2 && /fed|powell|fomc|tariff|sanction|war|missile|attack|nuclear|invasion|default|bank/i.test(title))) {
+        const hr = "news_hour_" + new Date().toISOString().slice(0, 13);
+        const cnt = Number((await kvGet(env, hr)) || 0); if (cnt >= 4) continue;   // max. 4 Eilmeldungen pro Stunde
+        await kvPut(env, hr, cnt + 1);
+        await say(env, `🌍 Eilmeldung (${src}): ${title}${summary ? "\n→ " + summary : ""}${dir && dir !== "unclear" ? `\nGold-Tendenz laut KI-Einschätzung: ${dir === "up" ? "eher steigend" : "eher fallend"} (unsicher)` : ""}\n${link}\n(Automatische Einschätzung, keine Anlageberatung)`);
+        await env.DB.prepare("UPDATE hub_news SET sent = 1 WHERE id = ?").bind(id).run(); sent++;
+      }
+    }
+  }
+  log.push(`News neu:${found} gemeldet:${sent}`);
 }
 
 // ---------------------------------------------------------------- Postausgang (Welcome-Bot schickt an Kevin)
@@ -206,6 +280,7 @@ async function dashboard(env) {
   const last = await env.DB.prepare("SELECT MAX(t) t FROM hub_candles WHERE tf = '5m'").first();
   const syms = (await env.DB.prepare("SELECT tf, COUNT(*) n FROM hub_candles WHERE tf = '5m' OR tf LIKE '%:5m' GROUP BY tf").all()).results.map((x) => (x.tf === "5m" ? "Gold" : NAME(x.tf.split(":")[0])) + " " + x.n).join(" · ");
   const symOf = Object.fromEntries(S.map((s) => [s.id, (JSON.parse(s.params || "{}").sym) || "XAUUSD"]));
+  const DXYV = await kvGet(env, "dxy");
   const A = Object.fromEntries(agg.map((a) => [a.sid, a])); const nm = Object.fromEntries(S.map((s) => [s.id, s.name]));
   const esc = (x) => String(x ?? "").replace(/[<&>]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
   const f = (v, d = 2) => (v == null || isNaN(v) ? "–" : (v >= 0 ? "+" : "") + Number(v).toFixed(d));
@@ -216,8 +291,9 @@ async function dashboard(env) {
   return `<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WC Trading Hub</title>
 <style>body{margin:0;background:#0d0d0f;color:#eee;font:15px/1.45 system-ui,sans-serif;padding:16px}h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:24px 0 8px;color:#e8b54a}.s{color:#999;font-size:13px}
 .w{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}td,th{padding:7px 8px;border-bottom:1px solid #222;text-align:left;font-size:13.5px}th{color:#aaa;font-weight:600}.b{color:#000;font-weight:700;border-radius:10px;padding:2px 8px;font-size:12px}</style>
-<h1>WC Trading Hub</h1><div class="s">v${VERSION} · letzte Kerze ${last?.t ? fmtT(last.t) : "–"} · Kerzen: ${esc(syms)} · Register ${esc(await kvGet(env, "reg_updated") || "–")} · Papierhandel, keine Anlageberatung</div>
+<h1>WC Trading Hub</h1><div class="s">v${VERSION} · letzte Kerze ${last?.t ? fmtT(last.t) : "–"} · Dollar-Index ≈ ${(() => { try { const d = JSON.parse(DXYV || "[]"); return d.length ? d[d.length - 1][1].toFixed(2) : "–"; } catch { return "–"; } })()} · Kerzen: ${esc(syms)} · Register ${esc(await kvGet(env, "reg_updated") || "–")} · Papierhandel, keine Anlageberatung</div>
 <h2>Strategien</h2><div class="w"><table><tr><th>Status</th><th>Strategie</th><th>BT n</th><th>BT Ø</th><th>BT Treffer</th><th>Holdout Ø</th><th>Live n</th><th>Live Ø</th><th>Live Treffer</th><th>Live Σ</th></tr>${rows || '<tr><td colspan="10">Noch keine – der Forschungs-Agent läuft jede Nacht.</td></tr>'}</table></div>
+<h2>Wichtige Nachrichten (KI-Bewertung ≥ 2)</h2><div class="w"><table><tr><th>Zeit</th><th>Quelle</th><th>Schlagzeile</th><th>Bewertung</th></tr>${(await env.DB.prepare("SELECT * FROM hub_news WHERE score >= 2 ORDER BY t DESC LIMIT 15").all()).results.map((x) => `<tr><td>${fmtT(x.t)}</td><td>${esc(x.src)}</td><td><a style="color:#e8b54a" href="${esc(x.url)}">${esc(x.title)}</a><br><span class="s">${esc(x.summary)}</span></td><td>${x.score}${x.dir ? " · Gold " + esc(x.dir) : ""}</td></tr>`).join("") || '<tr><td colspan="4">Noch keine.</td></tr>'}</table></div>
 <h2>Letzte Papier-Trades</h2><div class="w"><table><tr><th>Zeit</th><th>Strategie</th><th>Richtung</th><th>Einstieg</th><th>Ergebnis</th><th>Grund</th></tr>${trs || '<tr><td colspan="6">Noch keine.</td></tr>'}</table></div></html>`;
 }
 
@@ -244,6 +320,8 @@ async function tick(env) {
     try { log.push("Register:" + await syncRegistry(env)); } catch (e) { log.push("Register-Fehler " + e.message); }
     await env.DB.prepare("DELETE FROM hub_candles WHERE (tf = '5m' OR tf LIKE '%:5m') AND t < ?").bind(Math.floor(Date.now() / 1000) - 75 * 86400).run();
   }
+  if (min % 10 < 5) { try { await newsTick(env, log); } catch (e) { log.push("Nachrichten-Fehler " + e.message); } }
+  try { await fxTick(env, log); } catch (e) { log.push("FX-Fehler " + e.message); }
   try { log.push("News:" + await newsAlerts(env)); } catch (e) { log.push("News-Fehler " + e.message); }
   try { log.push("Papier:" + await paper(env)); } catch (e) { log.push("Papier-Fehler " + e.message); }
   if (hr === 22 && min >= 30 && min < 35) { try { await exportDaily(env); log.push("Export ok"); } catch (e) { log.push("Export-Fehler " + e.message); await say(env, "⚠️ Hub-Export nach GitHub: " + e.message.slice(0, 200)); } }
