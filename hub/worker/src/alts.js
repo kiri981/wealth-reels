@@ -15,6 +15,7 @@ export async function altSchema(env) {
   await env.DB.batch([
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_mkt (t INTEGER PRIMARY KEY, total REAL, btcd REAL, ethd REAL, total2 REAL, total3 REAL, stabled REAL, vol REAL)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_alts (sym TEXT PRIMARY KEY, name TEXT, rank INTEGER, mcap REAL, px REAL, t INTEGER, score REAL, scen TEXT, data TEXT)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_apos (sym TEXT, t INTEGER, dir INTEGER, e REAL, sl0 REAL, sl REAL, tgt REAL, atr REAL, peak REAL, half INTEGER DEFAULT 0, part REAL DEFAULT 0, last_t INTEGER, last_px REAL, t_close INTEGER, px_close REAL, r REAL, why TEXT, score REAL, scen TEXT, PRIMARY KEY (sym, t))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_altsig (sym TEXT, t INTEGER, scen TEXT, px REAL, lvl REAL, stop REAL, tgt REAL, score REAL, px1d REAL, px3d REAL, px7d REAL, hit TEXT, PRIMARY KEY (sym, t))"),
   ]);
 }
@@ -116,6 +117,46 @@ export function scan(D, H4, btcD, ctx = {}) {
     cdl, scen, lvl, stop, tgt, rr: scen && lvl && stop && tgt ? Math.abs(tgt - lvl) / Math.abs(lvl - stop) : null, score: Math.round(s), why, oi7: ctx.oi7 ?? null, fr: ctx.fr ?? null };
 }
 
+// ---------------------------------------------------------------- Altcoin-Papierdepot (v2.3): jeder bestätigte Ausbruch wird simuliert gehandelt
+// Einstieg zum aktuellen Kurs · Stop = Stop-Zone des Szenarios (1R) · Ziel-Zone: Hälfte verkaufen · ab +1R Stop auf Einstand ·
+// ab +2R nachgezogener Stop 1×Tages-ATR unter dem Höchstkurs (bzw. über dem Tiefstkurs bei Short) · spätestens nach 14 Tagen raus.
+// Kosten 0,12 % je Trade. Geprüft wird mit 4-Std.-Kerzen (Hoch/Tief), also auch Bewegungen zwischen zwei Läufen.
+export const AP = { maxOpen: 8, cost: 0.0012, beR: 1, trailR: 2, trailAtr: 1, maxDays: 14 };
+async function apOpen(env, say, x, s, now) {
+  const open = (await env.DB.prepare("SELECT sym FROM hub_apos WHERE t_close IS NULL").all()).results;
+  if (open.length >= AP.maxOpen || open.some((o) => o.sym === x.sym)) return false;
+  const dir = /short|unten/.test(s.scen) ? -1 : 1, e = x.px ?? s.px;
+  if (!e || !s.stop || (dir > 0 ? e <= s.stop : e >= s.stop)) return false;
+  await env.DB.prepare("INSERT OR IGNORE INTO hub_apos (sym, t, dir, e, sl0, sl, tgt, atr, peak, last_t, last_px, score, scen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .bind(x.sym, now, dir, e, s.stop, s.stop, s.tgt, s.atr, e, now, e, s.score, s.scen).run();
+  return true;
+}
+export async function apManage(env, say, H4by, pxBy, now) {
+  const P = (await env.DB.prepare("SELECT * FROM hub_apos WHERE t_close IS NULL").all()).results; let closed = 0;
+  const d = (v) => (v == null ? "?" : v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(3) : v.toPrecision(4));
+  for (const p of P) {
+    const R = Math.abs(p.e - p.sl0), dr = p.dir; if (!R) continue;
+    const bars = (H4by[p.sym] || []).filter((k) => k.t >= p.last_t - 14400 && k.t + 14400 > p.last_t);   // 4-Std.-Kerzen seit der letzten Prüfung
+    let sl = p.sl, peak = p.peak, half = p.half, part = p.part || 0, exit = null, why = null, lastPx = pxBy[p.sym] ?? p.last_px;
+    for (const k of bars) {
+      if (dr > 0 ? k.l <= sl : k.h >= sl) { exit = sl; why = sl === p.sl0 ? "Stop" : (dr > 0 ? sl >= p.e : sl <= p.e) ? (sl === p.e ? "Einstand-Stop" : "nachgezogener Stop") : "Stop"; break; }
+      peak = dr > 0 ? Math.max(peak, k.h) : Math.min(peak, k.l);
+      if (!half && p.tgt && (dr > 0 ? k.h >= p.tgt : k.l <= p.tgt)) { half = 1; part = 0.5 * Math.abs(p.tgt - p.e) / R; await say(env, `🪙 Altcoin-Papier: ${p.sym} hat die Ziel-Zone ${d(p.tgt)} erreicht – Hälfte verkauft (+${(Math.abs(p.tgt - p.e) / R).toFixed(1)}R), Rest läuft mit nachgezogenem Stop (simuliert)`); }
+      const runR = dr * (peak - p.e) / R;
+      if (runR >= AP.beR) sl = dr > 0 ? Math.max(sl, p.e) : Math.min(sl, p.e);
+      if (runR >= AP.trailR) sl = dr > 0 ? Math.max(sl, peak - AP.trailAtr * p.atr) : Math.min(sl, peak + AP.trailAtr * p.atr);
+    }
+    if (exit == null && now - p.t >= AP.maxDays * 86400 && lastPx) { exit = lastPx; why = "Zeit (14 Tage)"; }
+    if (exit != null) {
+      const rest = half ? 0.5 : 1, r = part + rest * dr * (exit - p.e) / R - (AP.cost * p.e) / R;
+      await env.DB.prepare("UPDATE hub_apos SET t_close = ?, px_close = ?, r = ?, why = ?, sl = ?, peak = ?, half = ?, part = ?, last_t = ?, last_px = ? WHERE sym = ? AND t = ?").bind(now, exit, r, why, sl, peak, half, part, now, lastPx, p.sym, p.t).run();
+      await say(env, `🪙 Altcoin-Papier: ${p.sym} ${dr > 0 ? "Long" : "Short"} beendet – ${why} @ ${d(exit)} · Ergebnis ${r >= 0 ? "+" : ""}${r.toFixed(2)}R (${r >= 0 ? "+" : ""}${((r * R) / p.e * 100).toFixed(1)} %) (simuliert)`);
+      closed++;
+    } else await env.DB.prepare("UPDATE hub_apos SET sl = ?, peak = ?, half = ?, part = ?, last_t = ?, last_px = ? WHERE sym = ? AND t = ?").bind(sl, peak, half, part, now, lastPx, p.sym, p.t).run();
+  }
+  return `Altcoin-Papier: ${P.length} offen, ${closed} beendet`;
+}
+
 // ---------------------------------------------------------------- Stündlicher Scan
 async function cz(env, path, q, tries = 4) {   // Coinalyze: max. 40 Abfragen/Min. – bei 429 warten (Retry-After) und wiederholen
   for (let k = 0; ; k++) {
@@ -183,13 +224,17 @@ export async function altTick(env, say, kvGet, kvPut, force) {
     if (!s.scen || s.score < 60 || !/läuft/.test(s.scen)) continue;
     const prev = await env.DB.prepare("SELECT t FROM hub_altsig WHERE sym = ? AND t > ?").bind(x.sym, now - 5 * 86400).first(); if (prev) continue;
     await env.DB.prepare("INSERT OR IGNORE INTO hub_altsig (sym, t, scen, px, lvl, stop, tgt, score) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(x.sym, now, s.scen, x.px ?? s.px, s.lvl, s.stop, s.tgt, s.score).run();
+    const opened = await apOpen(env, say, x, s, now).catch(() => false);
     if (sent < 3) {
       const d = (v) => (v == null ? "?" : v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(3) : v.toPrecision(4));
       await say(env, `🪙 Altcoin-Scanner: ${x.sym} (Rang ${x.rank}) – ${s.scen}\nPunktzahl ${s.score}/100 · Kurs ${d(x.px ?? s.px)} · Level ${d(s.lvl)} · Stop-Zone ${d(s.stop)} · Ziel-Zone ${d(s.tgt)} (CRV ${s.rr ? s.rr.toFixed(1) : "?"})\n` +
-        `Gründe: ${s.why.slice(0, 5).join(", ") || "–"}\nTrend Tag ${s.trendD} · 4h ${s.trend4} · 30T ggü. BTC ${s.rs30 != null ? (s.rs30 * 100).toFixed(1) + " %" : "?"}\nNur Szenario zur eigenen Prüfung, keine Anlageberatung.`);
+        `Gründe: ${s.why.slice(0, 5).join(", ") || "–"}\nTrend Tag ${s.trendD} · 4h ${s.trend4} · 30T ggü. BTC ${s.rs30 != null ? (s.rs30 * 100).toFixed(1) + " %" : "?"}${opened ? `\n📒 Auf Papier eröffnet (Perp): Stop-Zone = 1R (${(Math.abs(s.lvl - s.stop) / (x.px ?? s.px) * 100).toFixed(1)} % Abstand → bei 1 % Kontorisiko Hebel ${(0.01 / (Math.abs((x.px ?? s.px) - s.stop) / (x.px ?? s.px))).toFixed(1)}×), Hälfte in der Ziel-Zone, ab +1R Einstand, ab +2R nachgezogener Stop.` : ""}\nNur Szenario zur eigenen Prüfung, keine Anlageberatung.`);
       sent++;
     }
   }
+  // Papierdepot führen (4-Std.-Kerzen aller gescannten Coins)
+  let apMsg = "";
+  try { const H4by = {}, pxBy = {}; for (const x of coins) { H4by[x.sym] = toC(H4[x.cz]); pxBy[x.sym] = x.px; } apMsg = await apManage(env, say, H4by, pxBy, now); } catch (e) { apMsg = "Altcoin-Papier-Fehler " + e.message; }
   // Nachverfolgung: Kurs nach 1/3/7 Tagen und ob Ziel oder Stop zuerst erreicht wurde (grob über Tageskerzen)
   const due = (await env.DB.prepare("SELECT * FROM hub_altsig WHERE px7d IS NULL AND t < ?").bind(now - 86400).all()).results;
   for (const g of due) {
@@ -199,7 +244,7 @@ export async function altTick(env, say, kvGet, kvPut, force) {
     const col = dt >= 7 * 86400 ? "px7d" : dt >= 3 * 86400 && g.px3d == null ? "px3d" : g.px1d == null ? "px1d" : null;
     if (col || hit !== g.hit) await env.DB.prepare(`UPDATE hub_altsig SET ${col || "hit"} = ?, hit = ? WHERE sym = ? AND t = ?`).bind(col ? px : hit, hit || null, g.sym, g.t).run();
   }
-  const msg = `Altcoins (${msrc}${hist.err ? ", " + hist.err + " Coinalyze-Abrufe fehlgeschlagen: " + hist.last : ""}): ${coins.length} mit Perp, ${res.length} gescannt, ${res.filter((r) => r.s.scen).length} mit Szenario, ${sent} Hinweise`;
+  const msg = `Altcoins (${msrc}${hist.err ? ", " + hist.err + " Coinalyze-Abrufe fehlgeschlagen: " + hist.last : ""}): ${coins.length} mit Perp, ${res.length} gescannt, ${res.filter((r) => r.s.scen).length} mit Szenario, ${sent} Hinweise · ${apMsg}`;
   await kvPut(env, "log_alt", new Date().toISOString() + " " + msg);
   return msg;
 }
@@ -210,7 +255,8 @@ export async function altPage(env) {
   const A = (await env.DB.prepare("SELECT * FROM hub_alts ORDER BY score DESC").all()).results.map((r) => ({ ...r, d: JSON.parse(r.data || "{}"), data: undefined }));
   const M = (await env.DB.prepare("SELECT * FROM hub_mkt ORDER BY t DESC LIMIT 700").all()).results.reverse();
   const S = (await env.DB.prepare("SELECT * FROM hub_altsig ORDER BY t DESC LIMIT 100").all()).results;
-  const DATA = JSON.stringify({ A, M, S }).replace(/</g, "\\u003c");
+  const P = (await env.DB.prepare("SELECT * FROM hub_apos ORDER BY t DESC LIMIT 200").all()).results;
+  const DATA = JSON.stringify({ A, M, S, P }).replace(/</g, "\\u003c");
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Altcoin-Scanner</title>
 <style>:root{--bg:#070b10;--card:#0d141d;--line:#1d2b3b;--tx:#e6eef6;--mut:#8697aa;--gold:#e8b54a;--cy:#3fd2ff;--g:#36d399;--r:#ff5d73}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;padding:16px;max-width:1400px;margin:auto}
@@ -232,8 +278,11 @@ const back=(h)=>M.find(x=>x.t>=(L?L.t:0)-h*3600)||M[0];
 if(L){const b=back(24);$("kp").innerHTML=[["BTC-Dominanz",L.btcd.toFixed(2)+" %",L.btcd-b.btcd,"Pp"],["ETH-Dominanz",(L.ethd||0).toFixed(2)+" %",(L.ethd||0)-(b.ethd||0),"Pp"],["Gesamt",big(L.total),L.total/b.total-1,"%"],["TOTAL2 (ohne BTC)",big(L.total2),L.total2/b.total2-1,"%"],["TOTAL3 (Altcoins)",big(L.total3),L.total3/b.total3-1,"%"],["Stablecoin-Anteil",(L.stabled||0).toFixed(2)+" %",(L.stabled||0)-(b.stabled||0),"Pp"]].map(([a,v,c,u])=>'<div class="k"><b>'+v+'</b><span>'+a+' · 24h '+(u==="%"?pc(c):'<span class="'+(c>=0?"pos":"neg")+'">'+(c>=0?"+":"")+c.toFixed(2)+" Pp</span>")+'</span></div>').join("")}
 if(M.length>2){const W=600,H=60,line=(k,col)=>{const v=M.map(x=>x[k]);const mn=Math.min(...v),mx=Math.max(...v);return '<path fill="none" stroke="'+col+'" stroke-width="1.6" vector-effect="non-scaling-stroke" d="'+v.map((y,i)=>(i?"L":"M")+(i*W/(v.length-1)).toFixed(1)+" "+(H-4-(y-mn)/(mx-mn||1)*(H-8)).toFixed(1)).join(" ")+'"/>'};$("ch").innerHTML='<svg viewBox="0 0 600 60" preserveAspectRatio="none">'+line("btcd","#3fd2ff")+line("total3","#e8b54a")+'</svg>'}else $("ch").innerHTML='<div class="foot">Die Aufzeichnung startet gerade – der Verlauf füllt sich alle 15 Minuten.</div>';
 $("sub").textContent=D.A.length?("Stand "+new Date(Math.max(...D.A.map(a=>a.t))*1000).toLocaleString("de-DE")+" · "+D.A.length+" Coins gescannt"):"Der erste Scan läuft zur nächsten vollen Stunde.";
-const TABS=[["long","🚀 Ausbruch long",x=>x.d.scen&&!/short|unten/.test(x.d.scen)],["short","📉 Bruch nach unten",x=>x.d.scen&&/short|unten/.test(x.d.scen)],["rs","💪 Stärker als BTC",x=>(x.d.rs30??-9)>0],["all","Alle Top 100",()=>true],["sig","📋 Ergebnis-Statistik"]];
+const TABS=[["long","🚀 Ausbruch long",x=>x.d.scen&&!/short|unten/.test(x.d.scen)],["short","📉 Bruch nach unten",x=>x.d.scen&&/short|unten/.test(x.d.scen)],["rs","💪 Stärker als BTC",x=>(x.d.rs30??-9)>0],["all","Alle Top 100",()=>true],["sig","📋 Ergebnis-Statistik"],["pap","📒 Papier-Depot"]];
 let tab="long";function render(){ $("tabs").innerHTML=TABS.map(t=>'<button class="'+(t[0]===tab?"on":"")+'" data-t="'+t[0]+'">'+t[1]+'</button>').join("");document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
+ if(tab==="pap"){const P=D.P,C=P.filter(p=>p.t_close),O=P.filter(p=>!p.t_close),sum=C.reduce((a,p)=>a+p.r,0),w=C.filter(p=>p.r>0).length;
+  $("th").innerHTML="<tr><th colspan=10 style='text-align:left;font-size:13px;color:var(--tx)'>Abgeschlossen "+C.length+" · Summe <span class='"+(sum>=0?"pos":"neg")+"'>"+(sum>=0?"+":"")+sum.toFixed(2)+"R</span> · Ø "+(C.length?(sum/C.length).toFixed(2):"–")+"R · Treffer "+(C.length?Math.round(w/C.length*100):0)+" % · offen "+O.length+"/8 <span style='color:var(--mut)'>· Regeln: Stop-Zone = 1R, Hälfte in der Ziel-Zone, ab +1R Einstand, ab +2R nachgezogener Stop (1×ATR), max. 14 Tage · simuliert</span></th></tr><tr><th>Coin</th><th>Richtung</th><th>Eröffnet</th><th>Einstieg</th><th>Stop aktuell</th><th>Ziel-Zone</th><th>Kurs / Ausstieg</th><th>Ergebnis</th><th>Status</th><th>Punkte</th><th>Hebel bei 1 % Risiko</th></tr>";
+  $("tb").innerHTML=[...O,...C].map(p=>{const R=Math.abs(p.e-p.sl0),cur=p.t_close?p.px_close:p.last_px,u=p.t_close?p.r:(R?((p.part||0)+(p.half?.5:1)*p.dir*(cur-p.e)/R):0);return "<tr><td><b>"+esc(p.sym)+"</b></td><td>"+(p.dir>0?"Long":"Short")+"</td><td>"+new Date(p.t*1000).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+"</td><td>"+px(p.e)+"</td><td>"+px(p.sl)+(p.t_close?"":(p.dir>0?p.sl>=p.e:p.sl<=p.e)?" 🔒":"")+"</td><td>"+px(p.tgt)+(p.half?" ✓":"")+"</td><td>"+px(cur)+"</td><td><span class='"+(u>=0?"pos":"neg")+"'>"+(u>=0?"+":"")+u.toFixed(2)+"R</span></td><td>"+(p.t_close?esc(p.why):"offen"+(p.half?" (Hälfte verkauft)":""))+"</td><td>"+Math.round(p.score||0)+"</td><td>"+(R?(0.01/(R/p.e)).toFixed(1)+"×":"–")+"</td></tr>"}).join("")||"<tr><td colspan=11>Noch keine Papier-Trades. Der erste kommt mit dem nächsten bestätigten Ausbruch.</td></tr>";return}
  if(tab==="sig"){const S=D.S,done=S.filter(s=>s.hit);$("th").innerHTML="<tr><th>Coin</th><th>Szenario</th><th>Zeit</th><th>Punkte</th><th>Einstieg</th><th>nach 1T</th><th>nach 3T</th><th>nach 7T</th><th>zuerst erreicht</th></tr>";
   const ch=(a,b,up)=>a&&b?(up?1:-1)*(b/a-1):null;$("tb").innerHTML=(done.length?'<tr><td colspan=9 style="text-align:left;color:var(--mut)">Ausgewertet: '+done.length+' · Ziel zuerst: '+done.filter(s=>s.hit==="Ziel").length+' · Stop zuerst: '+done.filter(s=>s.hit==="Stop").length+'</td></tr>':"")+S.map(s=>{const up=!/short|unten/.test(s.scen);return "<tr><td><b>"+esc(s.sym)+"</b></td><td>"+esc(s.scen)+"</td><td>"+new Date(s.t*1000).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+"</td><td>"+s.score+"</td><td>"+px(s.px)+"</td><td>"+pc(ch(s.px,s.px1d,up))+"</td><td>"+pc(ch(s.px,s.px3d,up))+"</td><td>"+pc(ch(s.px,s.px7d,up))+"</td><td>"+esc(s.hit||"offen")+"</td></tr>"}).join("")||"<tr><td colspan=9>Noch keine gemeldeten Ausbrüche.</td></tr>";return}
  const T=TABS.find(t=>t[0]===tab);const L=D.A.filter(T[2]).sort((a,b)=>tab==="rs"?(b.d.rs30-a.d.rs30):tab==="all"?(a.rank-b.rank):(b.score-a.score));
