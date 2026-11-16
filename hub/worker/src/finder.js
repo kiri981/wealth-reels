@@ -1,4 +1,6 @@
-// WC Trading Hub – Wallet-Finder (v2.4, Solana): sucht selbstständig und laufend nach Wallets, die früh in starke Gewinner einsteigen.
+// WC Trading Hub – Wallet-Finder (v3.0, Solana): sucht selbstständig und laufend nach Wallets, die früh in starke Gewinner einsteigen.
+// v3.0: Gewinner haben bei Erkennung meist > 8.000 Transaktionen → Start nicht erreichbar. Daher VORAB-ERFASSUNG: junge Radar-Coins
+// (≤ 8 Std., Liq. ≥ 10k) bekommen ihre ersten Käufer sofort gespeichert; wird der Coin später ein Gewinner, werden diese Käufer übernommen.
 //
 // 1) GEWINNER sammeln (breit, nicht nur unsere Hinweise):
 //    · Meme-Radar: Coins mit ≥ +200 % (24 Std.) oder ≥ 3× seit Entdeckung
@@ -21,13 +23,15 @@ const GT = "https://api.geckoterminal.com/api/v2", DS = "https://api.dexscreener
 const UA = { "User-Agent": "Mozilla/5.0 wc-hub", Accept: "application/json" };
 const N = (x) => (x == null || x === "" ? null : +x);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-export const WF = { maxProbe: 40, tokensPerRun: 3, walletsPerRun: 6, minWinners: 2, days: 21 };
+export const WF = { maxProbe: 40, tokensPerRun: 1, walletsPerRun: 6, minWinners: 2, days: 21, prePerRun: 3, preTx: 150, preMaxAgeH: 8 };
 
 export async function finderSchema(env) {
   await env.DB.batch([
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_wfind_tok (mint TEXT PRIMARY KEY, sym TEXT, src TEXT, gain REAL, t INTEGER, done INTEGER DEFAULT 0, buyers INTEGER, note TEXT)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_wfind_hit (wallet TEXT, mint TEXT, t INTEGER, sol REAL, PRIMARY KEY (wallet, mint))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_wfind_eval (wallet TEXT PRIMARY KEY, t INTEGER, ok INTEGER, why TEXT)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_wfind_pre (mint TEXT PRIMARY KEY, sym TEXT, t INTEGER, done INTEGER DEFAULT 0, buyers INTEGER, note TEXT)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_wfind_early (wallet TEXT, mint TEXT, t INTEGER, sol REAL, PRIMARY KEY (wallet, mint))"),
   ]);
   for (const col of ["status TEXT DEFAULT 'manual'", "found INTEGER", "score REAL"]) { try { await env.DB.prepare("ALTER TABLE hub_wallet ADD COLUMN " + col).run(); } catch (e) {} }
 }
@@ -63,7 +67,7 @@ async function collect(env, now) {
 }
 
 // ---------------------------------------------------------------- 2) Frühe Käufer eines Gewinners
-async function earlyBuyers(env, mint) {
+async function earlyBuyers(env, mint, nTx = 250) {
   let before = null, oldest = [], pages = 0, reached = false;
   while (pages < 8) {
     const r = await rpc(env, { jsonrpc: "2.0", id: 1, method: "getSignaturesForAddress", params: [mint, before ? { limit: 1000, before } : { limit: 1000 }] });
@@ -73,7 +77,7 @@ async function earlyBuyers(env, mint) {
     if (L.length < 1000) { reached = true; break; }
   }
   if (!reached) return { skip: "zu viele Transaktionen (> 8.000) – Start nicht erreichbar" };
-  const sigs = oldest.filter((x) => !x.err).reverse().slice(0, 250); if (!sigs.length) return { skip: "keine Transaktionen" };
+  const sigs = oldest.filter((x) => !x.err).reverse().slice(0, nTx); if (!sigs.length) return { skip: "keine Transaktionen" };
   const first = sigs[0].slot; const buyers = {};
   for (let i = 0; i < sigs.length; i += 50) {
     const res = await rpc(env, sigs.slice(i, i + 50).map((s, k) => ({ jsonrpc: "2.0", id: k, method: "getTransaction", params: [s.signature, { maxSupportedTransactionVersion: 0, encoding: "jsonParsed" }] })));
@@ -128,6 +132,28 @@ export async function finderTick(env, say, kvGet, kvPut, force) {
   await kvPut(env, "wf_hr", String(hr));
   const log = [];
   try { log.push("neue Gewinner " + (await collect(env, now))); } catch (e) { log.push("Sammeln-Fehler " + e.message); }
+  // v3.0 VORAB-ERFASSUNG: junge Coins aus dem Meme-Radar (≤ 8 Std. alt, Liq. ≥ 20k) – erste Käufer festhalten, solange der Start noch erreichbar ist
+  try {
+    const young = (await env.DB.prepare("SELECT m.token, m.sym FROM hub_meme m LEFT JOIN hub_wfind_pre p ON p.mint = m.token WHERE m.chain = 'solana' AND m.created > ? AND m.last_t > ? AND p.mint IS NULL AND json_extract(m.data, '$.liq') >= 10000 ORDER BY COALESCE(m.score, 0) DESC, json_extract(m.data, '$.liq') DESC LIMIT 10").bind(now - WF.preMaxAgeH * 3600, now - 3600).all()).results;
+    let pre = 0;
+    for (const y of young) {
+      if (pre >= WF.prePerRun) break;
+      const r = await earlyBuyers(env, y.token, WF.preTx); pre++;
+      if (r.skip) { await env.DB.prepare("INSERT OR REPLACE INTO hub_wfind_pre (mint, sym, t, done, note) VALUES (?, ?, ?, 1, ?)").bind(y.token, y.sym, now, r.skip).run(); continue; }
+      const st = Object.entries(r.buyers).map(([w, b]) => env.DB.prepare("INSERT OR IGNORE INTO hub_wfind_early (wallet, mint, t, sol) VALUES (?, ?, ?, ?)").bind(w, y.token, b.t || now, b.sol));
+      for (let i = 0; i < st.length; i += 90) await env.DB.batch(st.slice(i, i + 90));
+      await env.DB.prepare("INSERT OR REPLACE INTO hub_wfind_pre (mint, sym, t, done, buyers) VALUES (?, ?, ?, 1, ?)").bind(y.token, y.sym, now, st.length).run();
+    }
+    log.push(`vorab erfasst ${pre} junge Coins`);
+    // Gewinner, deren frühe Käufer schon vorab erfasst sind → direkt übernehmen
+    const M = (await env.DB.prepare("SELECT t.mint, t.sym FROM hub_wfind_tok t JOIN hub_wfind_pre p ON p.mint = t.mint AND p.buyers > 0 WHERE t.done = 0 OR t.note LIKE 'zu viele%'").all()).results;
+    for (const m of M) {
+      await env.DB.prepare("INSERT OR IGNORE INTO hub_wfind_hit (wallet, mint, t, sol) SELECT wallet, mint, t, sol FROM hub_wfind_early WHERE mint = ?").bind(m.mint).run();
+      const n = (await env.DB.prepare("SELECT COUNT(*) n FROM hub_wfind_hit WHERE mint = ?").bind(m.mint).first()).n;
+      await env.DB.prepare("UPDATE hub_wfind_tok SET done = 1, buyers = ?, note = 'aus Vorab-Erfassung' WHERE mint = ?").bind(n, m.mint).run();
+      log.push(`${m.sym || m.mint.slice(0, 6)}: ${n} frühe Käufer (vorab)`);
+    }
+  } catch (e) { log.push("Vorab-Fehler " + e.message); }
   // frühe Käufer der nächsten Gewinner (höchste Gewinne zuerst)
   const todo = (await env.DB.prepare("SELECT * FROM hub_wfind_tok WHERE done = 0 ORDER BY gain DESC LIMIT ?").bind(WF.tokensPerRun).all()).results;
   for (const t of todo) {
