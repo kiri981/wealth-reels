@@ -1,0 +1,22 @@
+{
+ "cover": {"kicker": "WOCHENAUSBLICK", "title": "Gold *bärisch* – Di 17.11.", "chart": "down"},
+ "music": "drive",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 3.0, "text": "Mein Gold-Plan für Dienstag steht.", "accent": "Hier sind meine Zonen.", "icon": "down"},
+  {"type": "shot", "dur": 5.0, "image": "https://raw.githubusercontent.com/kiri981/wealth-reels/main/outlooks/2026-11-17/1.jpg", "kicker": "1H · PLAN", "time": "4H & 1H abwärts – Bias bärisch"},
+  {"type": "cards", "dur": 4.6, "title": "Meine Zonen", "items": [
+    {"left": "Supply", "right": "4H OB · 3868.88 – 3908.00", "hot": true},
+    {"left": "Supply", "right": "4H FVG · 3909.22 – 3924.41", "hot": true},
+    {"left": "Supply", "right": "15m FVG · 3931.40 – 3934.97"}
+  ]},
+  {"type": "cards", "dur": 4.6, "title": "Liquidität & Termine", "items": [
+    {"left": "EQH ⬆️", "right": "3888.92"},
+    {"left": "PDH ⬆️", "right": "3901.20"},
+    {"left": "PDL ⬇️", "right": "3832.35"},
+    {"left": "Di 14:30", "right": "US Retail Sales", "hot": true}
+  ]},
+  {"type": "words", "dur": 4.8, "kicker": "MEIN PLAN", "text": "Pullback in die 4H OB, CHOCH auf 5m, Short Richtung 3832.35. 1H-Schluss über 3888.92: Bild ungültig."},
+  {"type": "cta", "dur": 3.0, "title": "Erst die Zone, dann die Bestätigung.", "button": "Kommentiere GOLD"}
+ ]
+}
