@@ -84,7 +84,8 @@ export async function walletTick(env, say, kvGet, kvPut) {
     const i = info[mint]; const sym = i?.baseToken?.symbol || mint.slice(0, 6);
     const buyers = (await env.DB.prepare("SELECT DISTINCT w.addr, w.label FROM hub_wtx x JOIN hub_wallet w ON w.addr = x.addr WHERE x.mint = ? AND x.side = 1 AND x.t > ? AND COALESCE(w.status, 'manual') != 'probe'").bind(mint, now - 6 * 3600).all()).results;
     const cluster = buyers.length >= 2 && !(await kvGet(env, "wclu_" + mint));
-    const solo = fresh.filter((x) => x.mint === mint && x.w.alert);
+    const solo = fresh.filter((x) => x.mint === mint && (x.w.alert || x.w.status === "copy"));
+    const copy = fresh.find((x) => x.mint === mint && x.w.status === "copy");   // v3.0 Papier-Kopie ausgewählter Wallets (Kevin 17.11.)
     if (!cluster && !solo.length) continue;
     const sec = await security({ chain: "solana", token: mint });
     const amp = sec.level === "ok" ? "🟢" : sec.level === "warn" ? "🟡" : sec.level === "danger" ? "🔴" : "⚪";
@@ -94,6 +95,7 @@ export async function walletTick(env, say, kvGet, kvPut) {
       `Marktwert ${usd(N(i?.marketCap) || N(i?.fdv))} · Liquidität ${usd(N(i?.liquidity?.usd))} · 1h ${i?.priceChange?.h1 ?? "?"} % · 24h ${i?.priceChange?.h24 ?? "?"} %\n` +
       `Sicherheit ${amp} ${(sec.flags || []).slice(0, 3).join("; ") || "keine Auffälligkeiten"}\nhttps://dexscreener.com/solana/${i?.pairAddress || mint}\nNur Beobachtung, keine Anlageberatung.`);
     if (cluster) { await kvPut(env, "wclu_" + mint, String(now)); if (sec.level !== "danger" && (N(i?.liquidity?.usd) || 0) >= 20000) await mpOpen(env, say, { chain: "solana", token: mint, pool: i?.pairAddress, sym, px: N(i?.priceUsd), src: `Smart-Wallet-Cluster (${buyers.length} Wallets)` }).catch(() => {}); }
+    if (copy && sec.level !== "danger" && (N(i?.liquidity?.usd) || 0) >= 10000) await mpOpen(env, say, { chain: "solana", token: mint, pool: i?.pairAddress, sym, px: N(i?.priceUsd), src: `Kopie ${lab(copy.w)}` }).catch(() => {});
     sent++;
   }
   await kvPut(env, hk, sent);
