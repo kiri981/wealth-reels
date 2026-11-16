@@ -29,7 +29,7 @@ import numpy as np
 
 SESS = {"asia": ("Asia/Tokyo", 9, 0), "london": ("Europe/London", 8, 0),   # (Frankfurt 09:00 = London 08:00 → doppelt, weggelassen)
         "ny": ("America/New_York", 8, 0), "nyse": ("America/New_York", 9, 30)}
-RNG, WIN, SLS, TGTS = [15, 30, 60], [60, 120, 240], ["opp", "mid"], [1.0, 1.5, 2.0, 3.0, "eod"]
+RNG, WIN, SLS, TGTS = [15, 30, 60], [60, 120, 240, 375], ["opp", "mid"], [1.0, 1.5, 2.0, 3.0, "eod"]
 WIDTH, TREND, DIRS = ["eng", "normal", "alle"], ["mit", "egal"], ["long", "short", "beide"]
 EOD_UTC = 21
 
@@ -37,8 +37,17 @@ def load(path, offset_h=0.0):
     T, O, H, L, C, SP = [], [], [], [], [], []
     with open(path) as f:
         for r in csv.DictReader(f):
-            T.append(int(float(r["t"])) - int(offset_h * 3600)); O.append(float(r["o"])); H.append(float(r["h"])); L.append(float(r["l"])); C.append(float(r["c"]))
+            T.append(int(float(r["t"])) - (0 if offset_h == "ny" else int(float(offset_h) * 3600))); O.append(float(r["o"])); H.append(float(r["h"])); L.append(float(r["l"])); C.append(float(r["c"]))
             SP.append(float(r.get("spread") or 0))
+    if offset_h == "ny":   # Broker-Zeit = New-York-Zeit + 7 Std. (übliche MT5-Konvention, folgt der US-Sommerzeit)
+        from zoneinfo import ZoneInfo; import datetime as _dt
+        ny = ZoneInfo("America/New_York"); cache = {}; T2 = []
+        for t in T:
+            loc = t - 7 * 3600; d = loc // 86400
+            if d not in cache:
+                cache[d] = int(_dt.datetime.fromtimestamp(d * 86400 + 43200, _dt.timezone.utc).replace(tzinfo=ny).utcoffset().total_seconds())
+            T2.append(loc - cache[d])
+        T = T2
     a = np.array; idx = np.argsort(T)
     return a(T)[idx], a(O)[idx], a(H)[idx], a(L)[idx], a(C)[idx], a(SP)[idx]
 
@@ -144,12 +153,13 @@ def auto_offset(path, ref="hub/data/xauusd_m5.csv"):
     return float(best[1])
 
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument("folder"); ap.add_argument("--offset", type=float, default=0.0, help="Broker-Serverzeit minus UTC in Stunden")
+    ap = argparse.ArgumentParser(); ap.add_argument("folder"); ap.add_argument("--offset", default="0", help="Broker-Serverzeit minus UTC in Stunden")
     ap.add_argument("--out", default="hub/reports/orb_multi.md"); ap.add_argument("--only", default="")
     a = ap.parse_args()
     files = sorted(glob.glob(os.path.join(a.folder, "*_m5.csv")))
     if a.only: files = [f for f in files if any(x.upper() in os.path.basename(f).upper() for x in a.only.split(","))]
-    if a.offset == "auto":
+    if a.offset == "ny": pass
+    elif a.offset == "auto":
         g = [f for f in files if os.path.basename(f).upper().startswith("XAUUSD")]
         a.offset = auto_offset(g[0]) if g else 0.0
         print(f"Zeitversatz Broker → UTC: {a.offset:+.0f} Std.", file=sys.stderr)
