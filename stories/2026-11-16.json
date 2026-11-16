@@ -1,0 +1,43 @@
+{
+ "date": "Montag, 16. November",
+ "headline": "Gold auf tiefstem Stand seit über 1 Jahr",
+ "price": "3.870 $",
+ "points": [
+  "Letzte Woche rund -4,5 %",
+  "Heiße US-Inflation belastet",
+  "Fed-Erhöhung im Dez. ~92 % eingepreist"
+ ],
+ "termine_label": "TERMINE (Bukarest)",
+ "termine": [
+  {
+   "zeit": "15:30",
+   "text": "Heute: Empire State Index (USA)",
+   "hot": true,
+   "say": "der Empire State Index"
+  },
+  {
+   "zeit": "offen",
+   "text": "Heute: Fed-Chef Warsh spricht",
+   "say": "Fed-Chef Warsh"
+  },
+  {
+   "zeit": "15:30",
+   "text": "Di: US-Einzelhandelsumsätze",
+   "say": "am Dienstag die Einzelhandelsumsätze"
+  },
+  {
+   "zeit": "21:00",
+   "text": "Mi: Fed-Protokolle",
+   "say": "am Mittwoch die Fed-Protokolle"
+  }
+ ],
+ "levels": {
+  "oben": "3.900",
+  "unten": "3.860"
+ },
+ "termine_intro": "Wichtig:",
+ "points_say": [
+  "Gold steht bei 3870 Dollar, nach rund minus 4,5 Prozent letzte Woche",
+  "Eine Fed-Zinserhöhung im Dezember ist zu rund 92 Prozent eingepreist"
+ ]
+}
