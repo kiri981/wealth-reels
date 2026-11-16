@@ -1,6 +1,6 @@
 // WC Trading Hub – Papier-Wallet für Meme-Coins (v2.0)
 // Kauft und verkauft SELBSTSTÄNDIG, aber nur simuliert, zu echten Live-Kursen (DexScreener) mit realistischen Kosten:
-//   3 % Schlupf+Gebühren beim Kauf, 3 % beim Verkauf. Startkapital 10.000 $ (v2.7, vorher 1.000 $), je Kauf 200 $, höchstens 15 Positionen gleichzeitig;
+//   3 % Schlupf+Gebühren beim Kauf, 3 % beim Verkauf. Startkapital 35.000 $ (v3.0: +25.000 $ aufgeladen 17.11.; v2.7: 10.000 $), je Kauf 200 $, höchstens 15 Positionen gleichzeitig;
 //   gekauft wird nur, solange freies Papier-Guthaben da ist. Ausstiegsregeln können von der Lernschleife (memelearn.js) ersetzt werden.
 // Einstieg: Meme-Radar-Hinweis (Heiß-Wert ≥ 70, Sicherheitscheck nicht 🔴, Liquidität ≥ 20k $) oder Smart-Wallet-Cluster (2+ Wallets kaufen).
 // Ausstieg: Hälfte bei +100 % · danach Stop auf Einstand und nachgezogener Stop 40 % unter dem Höchstkurs · Stop −35 % · spätestens nach 24 Std.
@@ -8,7 +8,7 @@
 // Kein echtes Geld, kein Wallet-Schlüssel – nur Messung, ob die Regeln Geld verdienen würden.
 // v2.8 nach Auswertung der ersten 40 Trades (alle Kursverläufe nachgerechnet): früher raus, enger Stopp, kurz halten.
 // Kurs wird jetzt alle ~15 Sek. geprüft (mpFast) + Frühwarnungen: Liquidität fällt, Kurssturz in Minuten, starker Verkaufsdruck → sofort raus.
-export const MP = { start: 10000, size: 200, maxOpen: 15, cost: 0.03, tp: 0.3, sl: -0.15, trail: 0.25, maxH: 3,
+export const MP = { start: 35000, size: 200, maxOpen: 15, cost: 0.03, tp: 0.3, sl: -0.15, trail: 0.25, maxH: 3,
   fw: { liqDrop: 0.3, liqPx: 0.08, crash: 0.12, crashWin: 180, sellX: 2, sellMin: 30, sellC5: -8 } };
 export async function mpRules(env) {   // feste Regeln + ggf. von der Lernschleife übernommene Ausstiegswerte
   try { const r = await env.DB.prepare("SELECT v FROM hub_kv WHERE k = 'meme_exit'").first(); if (r?.v) { const e = JSON.parse(r.v); return { ...MP, tp: e.tp, sl: e.sl, trail: e.trail, maxH: e.maxH, learned: e.t }; } } catch (e) {}
