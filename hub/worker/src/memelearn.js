@@ -8,6 +8,7 @@
 //      übernommen wird nur, was auf älteren UND neuesten Daten besser ist, mit Nachbar-Prüfung (kein Zufallstreffer). Rücksetzer-Einstieg wird nur gemeldet.
 // Alles Papier – die Lernschleife ändert nur Bewertung und Papier-Regeln, nie echtes Geld.
 
+import { fwCheck } from "./mpaper.js";
 export const ML = { minEv: 200, minPos: 15, minTrades: 40, blend: 0.6, gainAuc: 0.03, gainExit: 0.03, days: 30 };
 const L10 = (v) => (v == null || !(v > 0) ? null : Math.log10(v));
 
@@ -177,6 +178,7 @@ export async function memeLearn(env, say, kvGet, kvPut, MPcur) {
     if (adopt) await kvPut(env, "meme_exit", JSON.stringify({ tp: pick.p.tp, sl: pick.p.sl, trail: pick.p.trail, maxH: pick.p.maxH, t: now, dev: pick.d.m, ho: pick.h.m, curDev: cD.m, curHo: cH.m, prev: oldE }));
   } else rep.notes.push(`Ein-/Ausstieg: braucht ${ML.minTrades} heiße Fälle mit ≥ 20k $ Liquidität und 24-Std.-Verlauf (jetzt ${H.length}).`);
 
+  try { const fw = await fwCheck(env); rep.fw = fw; if (fw.n) rep.notes.push(`Frühwarn-Verkäufe: ${fw.n} geprüft – ${fw.richtig}× richtig (Kurs 1 Std. später tiefer), ${fw.zufrueh}× zu früh (danach noch +20 %), ${fw.neutral}× neutral.`); } catch (e) {}
   await kvPut(env, "meme_learn", JSON.stringify(rep));
   // Bericht an Kevin: wenn sich etwas ändert, sonst sonntags
   const P = (v) => (v == null ? "–" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + " %");

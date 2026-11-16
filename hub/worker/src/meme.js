@@ -254,6 +254,8 @@ export async function memeTick(env, say, kvGet, kvPut) {
       `https://dexscreener.com/${x.chain}/${x.pool}\nNur Beobachtung, keine Anlageberatung – die meisten Memecoins verlieren fast alles.`);
     await env.DB.prepare("UPDATE hub_meme SET alert_t = ?, alert_px = ? WHERE id = ?").bind(now, x.px, r.id).run();
     sent++;
+    const why0 = sec.level !== "ok" ? "Sicherheitscheck nur „" + sec.level + "“" : (x.liq || 0) < 50000 ? "Liquidität unter 50k $" : (x.c1h ?? 0) > 100 ? "schon über +100 % in 1 Std. gelaufen" : m.age != null && m.age < 0.5 ? "jünger als 30 Min." : null;   // v2.8 strengere Kaufregeln (aus den ersten 40 Trades: zu oft am Hoch gekauft, viele Rugs)
+    if (why0) { log.push("Papier: " + x.sym + " nicht gekauft (" + why0 + ")"); continue; }
     try { await mpOpen(env, say, { chain: x.chain, token: x.token, pool: x.pool, sym: x.sym, px: x.px, src: "Meme-Radar (Heiß-Wert " + m.score + ")", info: `Marktwert ${usd(x.mc)} · Liquidität ${usd(x.liq)} · Vol. 1 Std. ${usd(x.v1h)} · Alter ${m.age != null ? (m.age < 1 ? Math.round(m.age * 60) + " Min." : m.age.toFixed(1) + " Std.") : "?"} · Kaufdruck ${m.buyPct != null ? Math.round(m.buyPct * 100) + " %" : "?"} · 1 Std. ${x.c1h != null ? (x.c1h >= 0 ? "+" : "") + Math.round(x.c1h) + " %" : "?"} · Sicherheit ${sec.level}${(x.src || []).some((q) => /Pump/.test(q)) ? " · Pump.fun" : ""}` }); } catch (e) { log.push("Papier " + e.message); }
   }
   await kvPut(env, hk, sent);
@@ -275,7 +277,8 @@ export async function memeTick(env, say, kvGet, kvPut) {
     await env.DB.prepare("DELETE FROM hub_meme_snap WHERE t < ?").bind(now - 3 * 86400).run();
     await env.DB.prepare("DELETE FROM hub_meme WHERE alert_t IS NULL AND last_t < ?").bind(now - 7 * 86400).run();
   }
-  try { log.push(await mpManage(env, say)); } catch (e) { log.push("Papier-Wallet " + e.message); }
+  const fastT = +(await kvGet(env, "mpfast_t").catch(() => 0) || 0);   // v2.8: die schnelle Prüfung (alle ~15 Sek.) verwaltet die Positionen – hier nur als Ersatz, falls sie ausfällt
+  if (Math.floor(Date.now() / 1000) - fastT > 180) { try { log.push(await mpManage(env, say)); } catch (e) { log.push("Papier-Wallet " + e.message); } } else log.push("Papier-Wallet: schnelle Prüfung aktiv");
   return `Meme-Radar: ${ids.length} Kandidaten, ${sc} geprüft, ${sent} Hinweise${log.length ? " | " + log.join(" | ") : ""}`;
 }
 

@@ -16,9 +16,9 @@ import { memeLearn, mlPage } from "./memelearn.js";
 import { olTick } from "./outlook.js";
 import { altLearn, PARTS } from "./altlearn.js";
 import { czMap, hist } from "./alts.js";
-import { mpRules } from "./mpaper.js";
+import { mpRules, mpFast, fwCheck } from "./mpaper.js";
 
-const VERSION = "2.8";
+const VERSION = "2.9";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -617,6 +617,9 @@ async function memeRun(env) {   // v1.9: Meme-Radar, danach Smart-Wallets
 export default {
   async scheduled(ev, env, ctx) {
     if (String(ev.cron).startsWith("2-59")) { ctx.waitUntil(memeRun(env)); return; }   // falls ein zweiter Zeitplan aktiv ist
+    // v2.8: Zeitplan jede Minute – Meme-Papier-Positionen alle ~15 Sek. prüfen (eigener Lauf); alles andere wie bisher nur alle 5 Minuten
+    if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/mpfast?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Papier schnell: " + e.message)));
+    if (new Date().getUTCMinutes() % 5 !== 0) return;
     ctx.waitUntil(tick(env));
     // Meme-Radar + Smart-Wallets als EIGENER Lauf (eigenes Rechenzeit-Budget) über die Selbst-Verbindung SELF – braucht keinen zweiten Zeitplan
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/memerun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Meme-Lauf: " + e.message)));
@@ -648,6 +651,8 @@ export default {
     if (url.pathname === "/czdaily") { const log = []; await schema(env); await czDaily(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/olrun") { try { const msg = await olTick(env, say, kvGet, kvPut); await kvPut(env, "log_ol", new Date().toISOString() + " " + msg); return new Response(msg); } catch (e) { await kvPut(env, "log_ol", new Date().toISOString() + " Fehler " + e.message); return new Response("Ausblick-Fehler " + e.message); } }
     if (url.pathname === "/altlearnrun") { try { await altSchema(env); const msg = await altLearn(env, say, kvGet, kvPut, czMap, hist, +(url.searchParams.get("part") ?? PARTS)); await kvPut(env, "log_altlearn", new Date().toISOString() + " " + msg); return new Response(msg); } catch (e) { await kvPut(env, "log_altlearn", new Date().toISOString() + " Fehler " + e.message); return new Response("Altcoin-Lernen-Fehler " + e.message); } }
+    if (url.pathname === "/mpfast") { try { return new Response(await mpFast(env, say, kvPut)); } catch (e) { return new Response("Papier schnell Fehler " + e.message); } }
+    if (url.pathname === "/fwcheck") return Response.json(await fwCheck(env));
     if (url.pathname === "/mlearnrun") { try { const d0 = await kvGet(env, "mlearn_day"), day = new Date().toISOString().slice(0, 10); if (d0 === day && url.searchParams.get("force") !== "1") return new Response("heute schon gelaufen"); await kvPut(env, "mlearn_day", day); await env.DB.prepare("DELETE FROM hub_meme_snap WHERE t < ?").bind(Math.floor(Date.now() / 1000) - 40 * 86400).run(); const msg = await memeLearn(env, say, kvGet, kvPut, await mpRules(env)); await kvPut(env, "log_mlearn", new Date().toISOString() + " " + msg); return new Response(msg); } catch (e) { await kvPut(env, "log_mlearn", new Date().toISOString() + " Fehler " + e.message); return new Response("Meme-Lernen-Fehler " + e.message); } }
     if (url.pathname === "/mlearn") return new Response(await mlPage(env), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/sigrun") { try { return new Response(await sigTick(env, say, kvGet, kvPut)); } catch (e) { return new Response("Fremd-Ideen-Fehler " + e.message); } }

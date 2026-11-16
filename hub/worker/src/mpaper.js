@@ -6,7 +6,10 @@
 // Ausstieg: Hälfte bei +100 % · danach Stop auf Einstand und nachgezogener Stop 40 % unter dem Höchstkurs · Stop −35 % · spätestens nach 24 Std.
 //   · Liquidität < 3k $ oder Kurs 30 Min. nicht mehr abrufbar → als Totalverlust gewertet (Rug).
 // Kein echtes Geld, kein Wallet-Schlüssel – nur Messung, ob die Regeln Geld verdienen würden.
-export const MP = { start: 10000, size: 200, maxOpen: 15, cost: 0.03, tp: 1.0, sl: -0.35, trail: 0.4, maxH: 24 };
+// v2.8 nach Auswertung der ersten 40 Trades (alle Kursverläufe nachgerechnet): früher raus, enger Stopp, kurz halten.
+// Kurs wird jetzt alle ~15 Sek. geprüft (mpFast) + Frühwarnungen: Liquidität fällt, Kurssturz in Minuten, starker Verkaufsdruck → sofort raus.
+export const MP = { start: 10000, size: 200, maxOpen: 15, cost: 0.03, tp: 0.3, sl: -0.15, trail: 0.25, maxH: 3,
+  fw: { liqDrop: 0.3, liqPx: 0.08, crash: 0.12, crashWin: 180, sellX: 2, sellMin: 30, sellC5: -8 } };
 export async function mpRules(env) {   // feste Regeln + ggf. von der Lernschleife übernommene Ausstiegswerte
   try { const r = await env.DB.prepare("SELECT v FROM hub_kv WHERE k = 'meme_exit'").first(); if (r?.v) { const e = JSON.parse(r.v); return { ...MP, tp: e.tp, sl: e.sl, trail: e.trail, maxH: e.maxH, learned: e.t }; } } catch (e) {}
   return { ...MP };
@@ -44,12 +47,13 @@ async function prices(chainTokens) {
   for (const [c, L] of Object.entries(by)) for (let i = 0; i < L.length; i += 30) {
     const r = await fetch(`${DS}/tokens/v1/${c}/${L.slice(i, i + 30).join(",")}`, { headers: { "User-Agent": "Mozilla/5.0 wc-hub" } }).catch(() => null);
     const A = r && r.ok ? await r.json().catch(() => []) : [];
-    for (const x of Array.isArray(A) ? A : []) { const k = c + ":" + x.baseToken?.address; if (!out[k] || (x.liquidity?.usd || 0) > (out[k].liq || 0)) out[k] = { px: N(x.priceUsd), liq: N(x.liquidity?.usd) }; }
+    for (const x of Array.isArray(A) ? A : []) { const k = c + ":" + x.baseToken?.address; if (!out[k] || (x.liquidity?.usd || 0) > (out[k].liq || 0)) out[k] = { px: N(x.priceUsd), liq: N(x.liquidity?.usd), c5: N(x.priceChange?.m5), b5: N(x.txns?.m5?.buys), s5: N(x.txns?.m5?.sells) }; }
   }
   return out;
 }
 export async function mpManage(env, say) {
   await mpSchema(env);
+  for (const c of ["liqmax REAL", "hist TEXT", "fwres TEXT"]) await env.DB.prepare("ALTER TABLE hub_mpos ADD COLUMN " + c).run().catch(() => {});
   const P = (await env.DB.prepare("SELECT * FROM hub_mpos WHERE t_close IS NULL").all()).results; if (!P.length) return "Papier-Wallet: keine Positionen";
   const now = Math.floor(Date.now() / 1000); const Q = await prices(P.map((p) => [p.chain, p.token])); const MP = await mpRules(env);
   let closed = 0;
@@ -59,6 +63,15 @@ export async function mpManage(env, say) {
     else if (q.liq != null && q.liq < 1000 && px < p.px * 0.5) { why = "Liquidität abgezogen (Rug)"; closeAt = 0; }   // v2.7: nur echte Rugs – beim Pump.fun-Umzug auf PumpSwap ist die alte Liquidität kurz weg, das ist kein Rug
     else if (px <= p.px * 0.1) { why = "Kurs −90 % (Rug)"; closeAt = px; }
     let peak = Math.max(p.peak || p.px, px ?? 0), half = p.half, cash = p.cash || 0, qty = p.qty;
+    // Frühwarnungen (v2.8): Kursverlauf der letzten Minuten merken
+    const H = JSON.parse(p.hist || "[]").filter((h) => now - h[0] <= 600); if (px != null) H.push([now, px]);
+    const liqmax = Math.max(p.liqmax || 0, q?.liq || 0), F = MP.fw;
+    if (closeAt == null && px != null) {
+      const hi3 = Math.max(...H.filter((h) => now - h[0] <= F.crashWin).map((h) => h[1])), hi2 = Math.max(...H.filter((h) => now - h[0] <= 150).map((h) => h[1]));
+      if (q.liq != null && liqmax > 0 && q.liq < liqmax * (1 - F.liqDrop) && px < hi2 * (1 - F.liqPx)) { why = `Frühwarnung: Liquidität −${Math.round((1 - q.liq / liqmax) * 100)} % und Kurs fällt`; closeAt = px; }
+      else if (H.length >= 2 && px <= hi3 * (1 - F.crash)) { why = `Frühwarnung: −${Math.round((1 - px / hi3) * 100)} % in ${Math.round(F.crashWin / 60)} Min.`; closeAt = px; }
+      else if ((q.s5 || 0) >= F.sellMin && (q.s5 || 0) >= F.sellX * (q.b5 || 0) && (q.c5 ?? 0) <= F.sellC5) { why = `Frühwarnung: Verkaufsdruck (${q.s5} Verkäufe vs. ${q.b5 || 0} Käufe in 5 Min., ${Math.round(q.c5)} %)`; closeAt = px; }
+    }
     if (closeAt == null) {
       const ch = px / p.px - 1;
       if (!half && ch >= MP.tp) { cash += (qty / 2) * px * (1 - MP.cost); qty = qty / 2; half = 1; await ev(env, p.id, p.t, now, "haelfte", px, `+${Math.round(ch * 100)} % erreicht → Hälfte verkauft (${((qty) * px * (1 - MP.cost)).toFixed(2)} $ zurück) · Stop jetzt mindestens Einstand, danach ${Math.round(MP.trail * 100)} % unter dem Höchstkurs nachgezogen`); await say(env, `🤖 Papier-Wallet: ${p.sym} +${Math.round(ch * 100)} % – Hälfte verkauft (simuliert)`); }
@@ -68,13 +81,40 @@ export async function mpManage(env, say) {
     }
     if (closeAt != null) {
       const pnl = cash + qty * closeAt * (1 - MP.cost) - p.cost;
-      await env.DB.prepare("UPDATE hub_mpos SET t_close = ?, px_close = ?, pnl = ?, why = ?, qty = ?, cash = ?, half = ?, peak = ?, last_px = ? WHERE id = ? AND t = ?").bind(now, closeAt, pnl, why, qty, cash, half, peak, px, p.id, p.t).run();
+      const u = await env.DB.prepare("UPDATE hub_mpos SET t_close = ?, px_close = ?, pnl = ?, why = ?, qty = ?, cash = ?, half = ?, peak = ?, last_px = ? WHERE id = ? AND t = ? AND t_close IS NULL").bind(now, closeAt, pnl, why, qty, cash, half, peak, px, p.id, p.t).run();
+      if (!u.meta?.changes) continue;   // schon von einem parallelen Lauf geschlossen
       await ev(env, p.id, p.t, now, "verkauf", closeAt, `${why} · Ergebnis ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} $ (${pnl >= 0 ? "+" : ""}${Math.round((pnl / p.cost) * 100)} %) · Höchstkurs ${fmt(peak)} (${pc(peak / p.px - 1)}) · Haltedauer ${((now - p.t) / 3600).toFixed(1)} Std.`);
       await say(env, `🤖 Papier-Wallet verkauft ${p.sym}: ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} $ (${pnl >= 0 ? "+" : ""}${Math.round((pnl / p.cost) * 100)} %) – ${why} (simuliert)`);
       closed++;
-    } else await env.DB.prepare("UPDATE hub_mpos SET qty = ?, cash = ?, half = ?, peak = ?, last_px = ?, last_seen = ? WHERE id = ? AND t = ?").bind(qty, cash, half, peak, px, now, p.id, p.t).run();
+    } else await env.DB.prepare("UPDATE hub_mpos SET qty = ?, cash = ?, half = ?, peak = ?, last_px = ?, last_seen = ?, liqmax = ?, hist = ? WHERE id = ? AND t = ? AND t_close IS NULL").bind(qty, cash, half, peak, px, now, liqmax, JSON.stringify(H.slice(-40)), p.id, p.t).run();
   }
   return `Papier-Wallet: ${P.length} offen, ${closed} geschlossen`;
+}
+// Schnelle Kursprüfung: ein Lauf pro Minute, darin 4 Prüfungen im Abstand von ~15 Sek. (nur wenn Positionen offen sind)
+export async function mpFast(env, say, kvPut) {
+  let out = "";
+  for (let i = 0; i < 4; i++) {
+    const n = await env.DB.prepare("SELECT COUNT(*) n FROM hub_mpos WHERE t_close IS NULL").first().then((r) => r?.n || 0).catch(() => 0);
+    if (!n) return "Papier-Wallet schnell: keine offenen Positionen";
+    out = await mpManage(env, say);
+    await kvPut(env, "mpfast_t", String(Math.floor(Date.now() / 1000)));
+    if (i < 3) await new Promise((r) => setTimeout(r, 14000));
+  }
+  return "Papier-Wallet schnell: " + out;
+}
+// Frühwarnungen nachträglich prüfen: War der schnelle Verkauf richtig? (Kurs 30/60 Min. danach, aus den Radar-Schnappschüssen)
+export async function fwCheck(env) {
+  const now = Math.floor(Date.now() / 1000);
+  const R = (await env.DB.prepare("SELECT id, t, t_close, px_close FROM hub_mpos WHERE why LIKE 'Frühwarnung%' AND fwres IS NULL AND t_close < ?").bind(now - 3700).all().catch(() => ({ results: [] }))).results;
+  for (const r of R) {
+    const S = (await env.DB.prepare("SELECT t, px FROM hub_meme_snap WHERE id = ? AND t > ? AND t <= ? AND px > 0 ORDER BY t").bind(r.id, r.t_close, r.t_close + 3900).all()).results;
+    const at = (d) => { const s = S.filter((x) => x.t <= r.t_close + d).pop(); return s ? s.px : null; };
+    const p30 = at(1800), p60 = at(3600), mx = S.length ? Math.max(...S.map((x) => x.px)) : null;
+    const res = p60 == null ? "kein Kurs" : p60 < r.px_close ? "richtig" : mx > r.px_close * 1.2 ? "zu früh" : "neutral";
+    await env.DB.prepare("UPDATE hub_mpos SET fwres = ? WHERE id = ? AND t = ?").bind(JSON.stringify({ res, p30, p60, mx }), r.id, r.t).run();
+  }
+  const A = (await env.DB.prepare("SELECT fwres FROM hub_mpos WHERE fwres IS NOT NULL").all().catch(() => ({ results: [] }))).results.map((x) => JSON.parse(x.fwres).res);
+  return { n: A.length, richtig: A.filter((x) => x === "richtig").length, zufrueh: A.filter((x) => x === "zu früh").length, neutral: A.filter((x) => x === "neutral").length };
 }
 export async function mpData(env) {
   await mpSchema(env);
