@@ -1,0 +1,98 @@
+{
+ "voice": true,
+ "voice_speed": 1.1,
+ "cover": {
+  "kicker": "FUNDAMENTAL",
+  "title": "Inflation *rises* – gold falls?",
+  "chart": "down"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Inflation rises – and gold falls?",
+   "accent": "There's a reason.",
+   "icon": "alert",
+   "say": "Inflation rises – and gold falls? There's a reason."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "CPI",
+   "text": "The Consumer Price Index measures how fast US prices are rising.",
+   "say": "The CPI measures how fast prices in the US are rising."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "STEP 01 · Forecast vs. actual",
+   "items": [
+    {
+     "left": "Forecast",
+     "right": "e.g. 3.0 %"
+    },
+    {
+     "left": "Actual",
+     "right": "e.g. 3.3 %"
+    },
+    {
+     "left": "Key",
+     "right": "the difference",
+     "hot": true
+    }
+   ],
+   "say": "Step one: What matters is the difference from the forecast."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "STEP 02 · The reaction",
+   "items": [
+    {
+     "left": "CPI higher",
+     "right": "Gold often weaker"
+    },
+    {
+     "left": "CPI lower",
+     "right": "Gold often stronger",
+     "hot": true
+    },
+    {
+     "left": "Why",
+     "right": "Rate expectations"
+    }
+   ],
+   "say": "Step two: Higher than expected often means higher rates. Gold falls."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "STEP 03",
+   "text": "Mark the release in your calendar – no new trades before the number.",
+   "say": "Step three: Mark the date. No new trades before the number."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "COMMON MISTAKE",
+   "text": "“Inflation up, so gold up.” Short term, rate expectations matter.",
+   "say": "Common mistake: inflation up, so gold up. Short term, interest rates matter."
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Forecast first. Then the number.",
+   "button": "Comment GOLD",
+   "say": "I show news trades live in my free group. Comment GOLD.",
+   "sub": "Gold trade ideas live on Telegram",
+   "disclaimer": "Not financial advice. Trading involves risk of loss."
+  }
+ ],
+ "lang": "en",
+ "footer": "Not financial advice · Trading involves risk of loss"
+}

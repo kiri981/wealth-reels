@@ -1,0 +1,94 @@
+{
+ "voice": true,
+ "voice_speed": 1.1,
+ "cover": {
+  "kicker": "FUNDAMENTAL",
+  "title": "Inflation *steigt* – Gold fällt?",
+  "chart": "down"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Inflation steigt – und Gold fällt?",
+   "accent": "Das hat einen Grund.",
+   "icon": "alert",
+   "say": "Inflation steigt – und Gold fällt? Das hat einen Grund."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "CPI",
+   "text": "Der Verbraucherpreis-Index misst, wie schnell die Preise in den USA steigen.",
+   "say": "Der CPI misst, wie schnell die Preise in den USA steigen."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 01 · Prognose vs. Ist",
+   "items": [
+    {
+     "left": "Prognose",
+     "right": "z. B. 3,0 %"
+    },
+    {
+     "left": "Ergebnis",
+     "right": "z. B. 3,3 %"
+    },
+    {
+     "left": "Wichtig",
+     "right": "die Abweichung",
+     "hot": true
+    }
+   ],
+   "say": "Schritt eins: Entscheidend ist die Abweichung zur Prognose."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 02 · Die Reaktion",
+   "items": [
+    {
+     "left": "CPI höher",
+     "right": "Gold oft schwächer"
+    },
+    {
+     "left": "CPI tiefer",
+     "right": "Gold oft stärker",
+     "hot": true
+    },
+    {
+     "left": "Grund",
+     "right": "Zins-Erwartung"
+    }
+   ],
+   "say": "Schritt zwei: Höher als erwartet heißt oft höhere Zinsen. Gold fällt."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "SCHRITT 03",
+   "text": "Termin im Kalender markieren – vor der Zahl keine neuen Trades.",
+   "say": "Schritt drei: Termin markieren. Vor der Zahl keine neuen Trades."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "TYPISCHER FEHLER",
+   "text": "„Inflation hoch, also Gold rauf.“ Kurzfristig zählt die Zins-Erwartung.",
+   "say": "Typischer Fehler: Inflation hoch, also Gold rauf. Kurzfristig zählen die Zinsen."
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Erst die Prognose. Dann die Zahl.",
+   "button": "Kommentiere GOLD",
+   "say": "News-Trades zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}
