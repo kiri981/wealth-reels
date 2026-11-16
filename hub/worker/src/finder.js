@@ -182,6 +182,15 @@ export async function finderTick(env, say, kvGet, kvPut, force) {
       }
     } catch (e) { log.push("Prüf-Fehler " + e.message); break; }
   }
+  // v3.0: von Hand eingetragene Wallets einmalig an ihrer eigenen Historie prüfen (Ergebnis in hub_wfind_eval + Bot-Nachricht)
+  for (const w of (await env.DB.prepare("SELECT w.addr, w.label FROM hub_wallet w LEFT JOIN hub_wfind_eval e ON e.wallet = w.addr WHERE e.wallet IS NULL AND w.label NOT LIKE 'Finder-%' LIMIT 2").all()).results) {
+    try {
+      const v = await judge(env, w.addr);
+      await env.DB.prepare("INSERT OR REPLACE INTO hub_wfind_eval (wallet, t, ok, why) VALUES (?, ?, ?, ?)").bind(w.addr, now, v.ok, "Handprüfung · " + v.why).run();
+      await say(env, `👛 Wallet-Prüfung ${w.label}: ${v.ok ? "✅" : "❌"} ${v.why} (letzte ~60 Transaktionen). Bleibt in Probezeit – zählt erst, wenn neue Käufe nach 24 Std. im Plus liegen.`);
+      log.push(`Handprüfung ${w.label}: ${v.why}`);
+    } catch (e) { log.push("Handprüfung-Fehler " + e.message); }
+  }
   if (added) await say(env, `👛 Wallet-Finder: ${added} neue Wallet${added > 1 ? "s" : ""} in Probezeit aufgenommen (früh bei ≥ ${WF.minWinners} Gewinnern, eigene Historie im Plus). Sie zählen erst nach bestandener Probezeit für Hinweise.`);
   try { log.push(await probation(env, say)); } catch (e) { log.push("Probezeit-Fehler " + e.message); }
   const msg = `Wallet-Finder: ${log.join(" · ")} · ${cand.length} Kandidaten geprüft, ${added} aufgenommen`;
