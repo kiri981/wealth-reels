@@ -8,7 +8,7 @@ import sys, os, glob, math, json, argparse
 from datetime import datetime
 import numpy as np
 sys.path.insert(0, os.path.dirname(__file__))
-from orb_multi import load, stats, auto_offset
+from orb_multi import load, stats, auto_offset, point_of
 
 NS = [12, 24, 30, 48]; TRS = ["ema50", "ema200", "egal"]; SLS = ["atr1", "atr1.5", "atr2", "mitte"]; TPS = [1.0, 1.5, 2.0, 3.0]; DIRS = ["long", "short", "beide"]
 MAXH = 48 * 3600
@@ -26,7 +26,7 @@ def ema(x, n):
 def run_asset(name, path, offset):
     T, O, H, L, C, SP = load(path, offset)
     if len(T) < 5000: return None
-    point = float(np.median(np.diff(np.unique(np.round(C[-2000:], 6)))))
+    point = point_of(path)
     spread_px = float(np.median(SP[SP > 0])) * point if (SP > 0).any() else 0.0
     ht, hh, hl, hc, last5 = hourly(T, O, H, L, C)
     tr = np.maximum(hh[1:] - hl[1:], np.maximum(abs(hh[1:] - hc[:-1]), abs(hl[1:] - hc[:-1]))); atr = np.r_[np.nan, ema(tr, 14)]

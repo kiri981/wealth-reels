@@ -51,6 +51,17 @@ def load(path, offset_h=0.0):
     a = np.array; idx = np.argsort(T)
     return a(T)[idx], a(O)[idx], a(H)[idx], a(L)[idx], a(C)[idx], a(SP)[idx]
 
+def point_of(path):   # Kursstufe aus den Nachkommastellen der Rohdaten (z. B. Gold 0.01, BTC 0.01, EURUSD 0.00001)
+    dec = 0
+    with open(path) as f:
+        next(f)
+        for i, line in enumerate(f):
+            if i > 5000: break
+            for v in line.split(",")[1:5]:
+                v = v.rstrip("0")
+                if "." in v: dec = max(dec, len(v.split(".")[1]))
+    return 10.0 ** -dec
+
 def daily(T, H, L, C):
     d = (T // 86400); days = np.unique(d)
     hi, lo, cl = {}, {}, {}
@@ -105,7 +116,7 @@ def run_asset(name, path, offset):
     if len(T) < 5000: return None
     ks, atr, sma, cl = daily(T, H, L, C)
     prev = {ks[i]: ks[i - 1] for i in range(1, len(ks))}
-    point = float(np.median(np.diff(np.unique(np.round(C[-2000:], 6))))) if len(C) > 2000 else 0
+    point = point_of(path)
     spread_px = float(np.median(SP[SP > 0])) * point if (SP > 0).any() and point > 0 else 0.0
     res = {}
     for sess in SESS:
