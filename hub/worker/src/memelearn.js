@@ -155,7 +155,7 @@ export async function memeLearn(env, say, kvGet, kvPut, MPcur) {
   // --- Ein-/Ausstieg: Raster auf den „hot“-Ereignissen mit genug Liquidität
   const H = EV.filter((x) => x.kind === "hot" && (x.liq || 0) >= 20000);
   if (H.length >= ML.minTrades) {
-    const G = []; const TP = [0.5, 1, 2], SL = [-0.2, -0.35, -0.5], TR = [0.25, 0.4, 0.6], MH = [6, 12, 24], DP = [0, 0.15];
+    const G = []; const TP = [0.2, 0.3, 0.5, 1, 2], SL = [-0.15, -0.2, -0.35, -0.5], TR = [0.15, 0.25, 0.4, 0.6], MH = [1, 3, 6, 12, 24], DP = [0, 0.15];   // v2.8: auch schnelles Rein-und-raus testen
     for (const tp of TP) for (const sl of SL) for (const trail of TR) for (const maxH of MH) for (const dip of DP) G.push({ tp, sl, trail, maxH, dip });
     const cutH = Math.floor(H.length * 0.7), hD = H.slice(0, cutH), hH = H.slice(cutH);
     const ev = (p, L) => { const r = L.map((x) => simExit(x.o.path, x.o.t0, p)).filter((v) => v != null); return { m: mean(r), n: r.length, win: r.length ? r.filter((v) => v > 0).length / r.length : null }; };
