@@ -3,6 +3,7 @@
 //   Einstieg (Kevin 17.11.): Solana, Liquidität ≥ 10k $, Volumen 24 Std. ≥ 15k $, Marktwert ≥ 20k $, Alter 20 Min. – 6 Std., Sicherheitscheck nicht 🔴,
 //     + Axiom-ähnliche Halter-Prüfung über Helius: Top-10-Wallets (ohne Pools/Bonding-Kurve) ≤ 30 % des Angebots, größte einzelne Wallet ≤ 10 %.
 //     + Plausibilität: Volumen 24 Std. ≥ 1 × Marktwert, Liquidität 3–150 % des Marktwerts, Marktwert je Trade ≤ 2.000 $ (gegen aufgeblasene Marktwerte).
+//     + Insider/Bundler: ≥ 3 Top-Halter mit demselben SOL-Geldgeber oder ≥ 5 frische Wegwerf-Wallets (< 15 Transaktionen) unter den Top 10 → abgelehnt.
 //     Socials werden mitgeschrieben (eigene Daten: mit Socials 3× so oft 5-fach) – Auswertung nach den ersten Wochen.
 //   Einsatz 50 $ je Coin, Startkapital 5.000 $, höchstens 25 neue Käufe pro Tag.
 //   Ausstieg: bei 2× wird der Einsatz herausgenommen (Hälfte verkauft) → Rest läuft „kostenlos“ weiter, OHNE Zeitlimit.
@@ -13,7 +14,7 @@
 import { tagNarr } from "./narrative.js";
 const DS = "https://api.dexscreener.com";
 const N = (x) => (x == null || x === "" ? null : +x);
-export const RN = { start: 5000, size: 50, perDay: 25, cost: 0.03, x2: 2, runAfter: 5, trail: 0.6, dead: 0.05, liqDead: 1000, maxAgeH: 6, minAgeMin: 20, minLiq: 10000, minVol: 15000, minMc: 20000, top10: 0.30, top1: 0.10, checksPerRun: 5, minVolMc: 1.0, liqMc: [0.03, 1.5], maxMcPerTx: 2000 };
+export const RN = { start: 5000, size: 50, perDay: 25, cost: 0.03, x2: 2, runAfter: 5, trail: 0.6, dead: 0.05, liqDead: 1000, maxAgeH: 6, minAgeMin: 20, minLiq: 10000, minVol: 15000, minMc: 20000, top10: 0.30, top1: 0.10, checksPerRun: 3, maxCluster: 3, maxFresh: 5, minVolMc: 1.0, liqMc: [0.03, 1.5], maxMcPerTx: 2000 };
 
 async function schema(env) {
   await env.DB.batch([
@@ -46,7 +47,31 @@ export async function holders(env, mint) {
   const kind = Object.fromEntries(uniq.map((o, i) => [o, prog?.result?.value?.[i]?.owner || SYS]));   // Wallet = gehört dem System-Programm; sonst Programm-Konto (Pool o. Ä.)
   const per = {}; L.forEach((x, i) => { const o = own[i]; if (!o || kind[o] !== SYS) return; per[o] = (per[o] || 0) + (N(x.uiAmount) || 0); });
   const top = Object.values(per).sort((p, q) => q - p);
-  return { top10: top.slice(0, 10).reduce((s2, v) => s2 + v, 0) / sup, top1: (top[0] || 0) / sup, pools: Object.keys(kind).filter((o) => kind[o] !== SYS).length };
+  const wallets = Object.entries(per).sort((p, q) => q[1] - p[1]).slice(0, 10).map(([w]) => w);
+  return { top10: top.slice(0, 10).reduce((s2, v) => s2 + v, 0) / sup, top1: (top[0] || 0) / sup, pools: Object.keys(kind).filter((o) => kind[o] !== SYS).length, wallets };
+}
+// Insider-/Bundler-Prüfung (wie Axiom „Insiders/Bundlers“): Wer hat die Top-Halter mit SOL versorgt? Wie frisch sind sie?
+//   ≥ 3 Top-Halter mit DEMSELBEN Geldgeber → eine Person/Gruppe (Insider-Cluster). ≥ 5 Top-10-Wallets mit < 15 Transaktionen → Wegwerf-/Bundle-Wallets.
+export async function insiders(env, wallets) {
+  if (!wallets?.length) return null;
+  const S = await rpc(env, wallets.map((w, i) => ({ jsonrpc: "2.0", id: i, method: "getSignaturesForAddress", params: [w, { limit: 1000 }] })));
+  const info = wallets.map((w, i) => { const L = (Array.isArray(S) ? S.find((x) => x.id === i)?.result : null) || []; return { w, n: L.length, oldest: L.length && L.length < 1000 ? L[L.length - 1].signature : null }; });
+  const fresh = info.filter((x) => x.n > 0 && x.n < 15).length;
+  const ask = info.filter((x) => x.oldest);
+  const T = ask.length ? await rpc(env, ask.map((x, i) => ({ jsonrpc: "2.0", id: i, method: "getTransaction", params: [x.oldest, { maxSupportedTransactionVersion: 0, encoding: "jsonParsed" }] }))) : [];
+  const fund = {};
+  for (const r of Array.isArray(T) ? T : []) {
+    const x = ask[r.id], tx = r.result; if (!tx) continue;
+    const keys = tx.transaction.message.accountKeys.map((k) => (typeof k === "string" ? k : k.pubkey)), pre = tx.meta?.preBalances || [], post = tx.meta?.postBalances || [];
+    let best = null, drop = 0; keys.forEach((k, i) => { const d = (pre[i] || 0) - (post[i] || 0); if (k !== x.w && d > drop) { drop = d; best = k; } });
+    if (best) (fund[best] ||= []).push(x.w);
+  }
+  let cl = Object.entries(fund).sort((a, b) => b[1].length - a[1].length)[0];
+  if (cl && cl[1].length >= 3) {   // Börsen-Auszahlungs-Wallets (sehr viele Transaktionen in kurzer Zeit) sind kein Insider-Cluster
+    const f = await rpc(env, { jsonrpc: "2.0", id: 9, method: "getSignaturesForAddress", params: [cl[0], { limit: 1000 }] }); const L = f?.result || [];
+    if (L.length >= 1000 && L[0].blockTime - L[L.length - 1].blockTime < 6 * 3600) cl = null;
+  }
+  return { fresh, cluster: cl ? cl[1].length : 0, funder: cl ? cl[0] : null, checked: info.length };
 }
 const usd = (v) => (v == null ? "?" : v >= 1e6 ? (v / 1e6).toFixed(1) + " Mio. $" : v >= 1e3 ? Math.round(v / 1e3) + "k $" : Math.round(v) + " $");
 
@@ -71,12 +96,19 @@ export async function runnerTick(env, say) {
       if (vm < RN.minVolMc || lm < RN.liqMc[0] || lm > RN.liqMc[1] || mpt > RN.maxMcPerTx) { log.push(`${c.sym} unplausibel (Vol/MC ${vm.toFixed(2)}, Liq/MC ${lm.toFixed(2)}, MC/Trade ${Math.round(mpt)} $)`); continue; }
       let h = null; checks++;
       try { h = env.HELIUS_KEY ? await holders(env, c.token) : null; } catch (e) { log.push("Halter-Fehler " + e.message); }
+      let ins = null;
+      if (h && h.top10 <= RN.top10 && h.top1 <= RN.top1) { try { ins = await insiders(env, h.wallets); } catch (e) { log.push("Insider-Fehler " + e.message); } }
+      if (ins && (ins.cluster >= RN.maxCluster || ins.fresh >= RN.maxFresh)) {
+        const why = ins.cluster >= RN.maxCluster ? `Insider-Cluster: ${ins.cluster} Top-Halter vom selben Geldgeber` : `${ins.fresh} von ${ins.checked} Top-Haltern sind frische Wegwerf-Wallets`;
+        await env.DB.prepare("UPDATE hub_meme SET risk = json_set(COALESCE(risk, '{}'), '$.holders_bad', ?) WHERE id = ?").bind(why, c.id).run().catch(() => {});
+        log.push(`${c.sym} abgelehnt (${why})`); continue;
+      }
       if (!h || h.top10 > RN.top10 || h.top1 > RN.top1) {
         await env.DB.prepare("UPDATE hub_meme SET risk = json_set(COALESCE(risk, '{}'), '$.holders_bad', ?) WHERE id = ?").bind(h ? `Top10 ${Math.round(h.top10 * 100)} %, größte ${Math.round(h.top1 * 100)} %` : "keine Halterdaten", c.id).run().catch(() => {});
         log.push(`${c.sym} abgelehnt (${h ? "Top10 " + Math.round(h.top10 * 100) + " %" : "keine Halterdaten"})`); continue;
       }
       const qty = RN.size / (q.px * (1 + RN.cost));
-      const f = JSON.stringify({ ...(c.f ? JSON.parse(c.f) : {}), top10: h.top10, top1: h.top1, soc_now: q.soc, narr: tagNarr(c.name, c.sym), mc_in: q.mc, liq_in: q.liq, v24_in: q.v24, tx24_in: q.tx24, volmc: vm, liqmc: lm });
+      const f = JSON.stringify({ ...(c.f ? JSON.parse(c.f) : {}), top10: h.top10, top1: h.top1, ins_cluster: ins?.cluster ?? null, ins_fresh: ins?.fresh ?? null, soc_now: q.soc, narr: tagNarr(c.name, c.sym), mc_in: q.mc, liq_in: q.liq, v24_in: q.v24, tx24_in: q.tx24, volmc: vm, liqmc: lm });
       await env.DB.prepare("INSERT OR IGNORE INTO hub_rpos (id, t, token, sym, px, qty, cost, peak, last_px, last_liq, last_seen, f) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(c.id, now, c.token, c.sym, q.px, qty, RN.size, q.px, q.px, q.liq, now, f).run();
       today++; free -= RN.size; log.push(`Kauf ${c.sym} (Top10 ${Math.round(h.top10 * 100)} %)`);
