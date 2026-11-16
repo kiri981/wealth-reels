@@ -59,9 +59,14 @@ if side != 0
         label.new(bar_index, side > 0 ? low : high, hits == 0 ? "SL" : "BE", style = side > 0 ? label.style_label_up : label.style_label_down, color = hits == 0 ? color.new(color.red, 10) : color.new(color.gray, 10), textcolor = color.white, size = size.tiny)
         side := 0
     else
-        tps = array.from(t1, t2, t3)
-        while hits < 3 and (side > 0 ? high >= array.get(tps, hits) : low <= array.get(tps, hits))
-            realR += (1.0 / 3.0) * side * (array.get(tps, hits) - e) / risk
+        for k = 0 to 2
+            if hits > k
+                continue
+            tpx = k == 0 ? t1 : k == 1 ? t2 : t3
+            reached = side > 0 ? high >= tpx : low <= tpx
+            if not reached
+                break
+            realR += (1.0 / 3.0) * side * (tpx - e) / risk
             hits += 1
             label.new(bar_index, side > 0 ? high : low, "TP " + str.tostring(hits) + " ✓", style = side > 0 ? label.style_label_down : label.style_label_up, color = color.new(color.black, 10), textcolor = color.white, size = size.tiny)
             if hits == 1
