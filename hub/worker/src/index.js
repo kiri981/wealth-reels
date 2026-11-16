@@ -11,6 +11,7 @@ import { walletTick, walletAdmin, walletData } from "./wallets.js";
 import { altTick, altPage, mktTick, altSchema } from "./alts.js";
 import { mpData } from "./mpaper.js";
 import { finderTick, finderData } from "./finder.js";
+import { runnerTick, runnerData } from "./runner.js";
 import { sigTick, sigPage, sigData } from "./signals.js";
 import { memeLearn, mlPage } from "./memelearn.js";
 import { olTick } from "./outlook.js";
@@ -18,7 +19,7 @@ import { altLearn, PARTS } from "./altlearn.js";
 import { czMap, hist } from "./alts.js";
 import { mpRules, mpFast, fwCheck } from "./mpaper.js";
 
-const VERSION = "2.9";
+const VERSION = "3.0";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -628,6 +629,7 @@ export default {
     const m = new Date().getUTCMinutes();
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/fxrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("FX-Lauf: " + e.message)));   // v2.5 Devisen
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/sigrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Fremd-Ideen: " + e.message)));   // v2.6 Telegram-Kanäle
+    if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/runrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Langläufer: " + e.message)));   // v3.0
     if (m >= 20 && m < 25) {   // Wallet-Finder stündlich als eigener Lauf
       if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/finderrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Finder-Lauf: " + e.message)));
       else ctx.waitUntil(finderTick(env, say, kvGet, kvPut).catch((e) => console.log("Finder-Fehler " + e.message)));
@@ -659,6 +661,7 @@ export default {
     if (url.pathname === "/sig") return new Response(await sigPage(env), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/sigjson") return Response.json(await sigData(env));
     if (url.pathname === "/fxrun") return new Response(await fxRun(env));
+    if (url.pathname === "/runrun") { try { return new Response(await runnerTick(env, say)); } catch (e) { return new Response("Langläufer-Fehler " + e.message); } }
     if (url.pathname === "/finderrun") { try { return new Response(await finderTick(env, say, kvGet, kvPut, url.searchParams.get("force") === "1")); } catch (e) { return new Response("Finder-Fehler " + e.message); } }
     if (url.pathname === "/alts") return new Response(await altPage(env), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/altrun") { try { return new Response(await altTick(env, say, kvGet, kvPut, url.searchParams.get("force") === "1")); } catch (e) { return new Response("Alt-Fehler " + e.message); } }

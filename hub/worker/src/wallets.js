@@ -64,7 +64,7 @@ export async function walletTick(env, say, kvGet, kvPut) {
     for (const x of L) want.push([w, x.signature, x.blockTime]);
   }
   if (!want.length) return `Wallets: ${W.length}, nichts Neues`;
-  const take = want.slice(0, 80);
+  const take = want.slice(0, 40);   // v3.0: Helius-Guthaben schonen (mehr beobachtete Wallets)
   const tres = await rpc(env, take.map(([, sig], i) => ({ jsonrpc: "2.0", id: i, method: "getTransaction", params: [sig, { maxSupportedTransactionVersion: 0, encoding: "jsonParsed" }] })));
   const rows = [];
   for (const r of Array.isArray(tres) ? tres : []) { const [w, sig, bt] = take[r.id]; for (const p of parseTx(r.result, w.addr)) rows.push({ ...p, sig, addr: w.addr, t: r.result?.blockTime || bt, w }); }

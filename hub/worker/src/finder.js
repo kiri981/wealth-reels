@@ -112,6 +112,28 @@ async function judge(env, wallet) {
   return { ok: ok ? 1 : 0, why: `${closed.length} abgeschlossen, ${wins} im Plus, netto ${net >= 0 ? "+" : ""}${net.toFixed(2)} SOL`, score: wins / closed.length + Math.min(1, net / 10) };
 }
 
+// v3.0 tiefe Handprüfung: bis zu 1.000 Signaturen, 200 Transaktionen ausgewertet – je Coin SOL rein/raus, Haltedauer, noch gehalten
+async function judgeDeep(env, wallet) {
+  const s = await rpc(env, { jsonrpc: "2.0", id: 1, method: "getSignaturesForAddress", params: [wallet, { limit: 1000 }] });
+  const L = (s.result || []).filter((x) => !x.err); if (L.length < 6) return { ok: 0, why: "zu wenig Aktivität" };
+  const span = (L[0].blockTime - L[L.length - 1].blockTime) / 86400;
+  const flow = {};
+  const pick = L.slice(0, 200);
+  for (let i = 0; i < pick.length; i += 50) {
+    const res = await rpc(env, pick.slice(i, i + 50).map((x, k) => ({ jsonrpc: "2.0", id: k, method: "getTransaction", params: [x.signature, { maxSupportedTransactionVersion: 0, encoding: "jsonParsed" }] })));
+    for (const x of Array.isArray(res) ? res : []) { const bt = x.result?.blockTime; for (const p of parseTx(x.result, wallet)) { const f = (flow[p.mint] ||= { buy: 0, sell: 0, t0: bt, t1: bt });
+      if (p.side > 0) f.buy += Math.max(0, p.sol); else f.sell += Math.max(0, -p.sol); f.t0 = Math.min(f.t0, bt); f.t1 = Math.max(f.t1, bt); } }
+  }
+  const coins = Object.values(flow).filter((f) => f.buy > 0.01);
+  const closed = coins.filter((f) => f.sell > 0), open = coins.length - closed.length;
+  if (coins.length < 3) return { ok: 0, why: `nur ${coins.length} Coins in den letzten ${pick.length} Transaktionen` };
+  const wins = closed.filter((f) => f.sell > f.buy), net = closed.reduce((a, f) => a + f.sell - f.buy, 0), inv = closed.reduce((a, f) => a + f.buy, 0);
+  const big = closed.filter((f) => f.sell >= 5 * f.buy).length, holdMed = closed.map((f) => (f.t1 - f.t0) / 3600).sort((a, b) => a - b)[Math.floor(closed.length / 2)] || 0;
+  const ok = closed.length >= 3 && wins.length / closed.length >= 0.4 && net > 0;
+  return { ok: ok ? 1 : 0, score: (closed.length ? wins.length / closed.length : 0) + Math.min(1, net / 10),
+    why: `${coins.length} Coins (${closed.length} verkauft, ${open} noch gehalten/aufgegeben) · ${wins.length} im Plus${closed.length ? " (" + Math.round(wins.length / closed.length * 100) + " %)" : ""} · ${big}× ≥ 5-fach · netto ${net >= 0 ? "+" : ""}${net.toFixed(2)} SOL auf ${inv.toFixed(1)} SOL Einsatz · Haltedauer Median ${holdMed < 1 ? Math.round(holdMed * 60) + " Min." : holdMed.toFixed(1) + " Std."} · Zeitraum ${span.toFixed(1)} Tage` };
+}
+
 // ---------------------------------------------------------------- 4) Probezeit
 async function probation(env, say) {
   const P = (await env.DB.prepare("SELECT w.addr, w.label, w.found FROM hub_wallet w WHERE w.status = 'probe'").all()).results; let up = 0, out = 0;
@@ -185,9 +207,10 @@ export async function finderTick(env, say, kvGet, kvPut, force) {
   // v3.0: von Hand eingetragene Wallets einmalig an ihrer eigenen Historie prüfen (Ergebnis in hub_wfind_eval + Bot-Nachricht)
   for (const w of (await env.DB.prepare("SELECT w.addr, w.label FROM hub_wallet w LEFT JOIN hub_wfind_eval e ON e.wallet = w.addr WHERE e.wallet IS NULL AND w.label NOT LIKE 'Finder-%' LIMIT 2").all()).results) {
     try {
-      const v = await judge(env, w.addr);
+      const v = await judgeDeep(env, w.addr);
       await env.DB.prepare("INSERT OR REPLACE INTO hub_wfind_eval (wallet, t, ok, why) VALUES (?, ?, ?, ?)").bind(w.addr, now, v.ok, "Handprüfung · " + v.why).run();
-      await say(env, `👛 Wallet-Prüfung ${w.label}: ${v.ok ? "✅" : "❌"} ${v.why} (letzte ~60 Transaktionen). Bleibt in Probezeit – zählt erst, wenn neue Käufe nach 24 Std. im Plus liegen.`);
+      await env.DB.prepare("UPDATE hub_wallet SET score = ? WHERE addr = ?").bind(v.score ?? null, w.addr).run();
+      await say(env, `👛 Wallet-Prüfung ${w.label}: ${v.ok ? "✅" : "❌"} ${v.why} (Rückblick: letzte bis zu 200 Transaktionen). Bleibt in Probezeit – zählt erst, wenn neue Käufe nach 24 Std. im Plus liegen.`);
       log.push(`Handprüfung ${w.label}: ${v.why}`);
     } catch (e) { log.push("Handprüfung-Fehler " + e.message); }
   }
