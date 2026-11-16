@@ -2,6 +2,7 @@
 // Je Coin: größter Solana-Pool (DexScreener-Suche) → Tageskerzen seit Pool-Start (GeckoTerminal) →
 //   Startwert (Schluss Tag 1), Tage bis 10× / 100× / Höchststand, tiefster Rückgang VOR dem 100×, Volumen/Marktwert und Liquidität am Anfang,
 //   Pump.fun-Start ja/nein, Socials heute. Läuft in Teilen (8 Coins je Lauf, Abruf-Grenzen), Ergebnis in hub_kv 'hist100'.
+import { KNOWN, tagNarr } from "./narrative.js";
 const DS = "https://api.dexscreener.com", GT = "https://api.geckoterminal.com/api/v2";
 const UA = { "User-Agent": "Mozilla/5.0 wc-hub", Accept: "application/json" };
 const N = (x) => (x == null || x === "" ? null : +x);
@@ -26,7 +27,7 @@ async function one(sym) {
   let dd = 0, hi = base; for (let i = 0; i < (i100 > 0 ? i100 : L.length); i++) { hi = Math.max(hi, L[i].h); dd = Math.min(dd, L[i].l / hi - 1); }
   return { sym, token: p.baseToken?.address, pump: /pump$/.test(p.baseToken?.address || ""), dex: p.dexId, created: p.pairCreatedAt ? Math.floor(p.pairCreatedAt / 1000) : L[0].t,
     mc0: supply ? base * supply : null, v0: L[0].v, volmc0: supply ? L[0].v / (base * supply) : null, x_peak: peak / base, d10: i10, d100: i100, dpeak: ipk, dd_before100: dd,
-    mc_now: N(p.marketCap), x_now: N(p.priceUsd) / base, soc: (p.info?.socials || []).map((x) => x.type).concat((p.info?.websites || []).length ? ["web"] : []), liq_now: N(p.liquidity?.usd), days: L.length };
+    mc_now: N(p.marketCap), x_now: N(p.priceUsd) / base, soc: (p.info?.socials || []).map((x) => x.type).concat((p.info?.websites || []).length ? ["web"] : []), liq_now: N(p.liquidity?.usd), days: L.length, narr: KNOWN[sym]?.[0] || tagNarr(p.baseToken?.name, sym), story: KNOWN[sym]?.[1] || null };
 }
 
 export async function hist100Tick(env, kvGet, kvPut, n = 8) {

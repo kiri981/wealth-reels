@@ -10,6 +10,7 @@
 //     (Kurs ≤ 5 % vom Einstieg, Liquidität < 1.000 $ oder 24 Std. kein Kurs → Totalverlust).
 // Zusätzlich: Langzeit-Messung (hub_meme_long) – täglich Marktwert aller gesehenen Solana-Coins für 30 Tage,
 //   damit wir lernen, was spätere 10×–1000×-Coins am ersten Tag von den anderen unterschied.
+import { tagNarr } from "./narrative.js";
 const DS = "https://api.dexscreener.com";
 const N = (x) => (x == null || x === "" ? null : +x);
 export const RN = { start: 5000, size: 50, perDay: 25, cost: 0.03, x2: 2, runAfter: 5, trail: 0.6, dead: 0.05, liqDead: 1000, maxAgeH: 6, minAgeMin: 20, minLiq: 10000, minVol: 15000, minMc: 20000, top10: 0.30, top1: 0.10, checksPerRun: 5, minVolMc: 1.0, liqMc: [0.03, 1.5], maxMcPerTx: 2000 };
@@ -55,7 +56,7 @@ export async function runnerTick(env, say) {
   // 1) neue Käufe
   const bal = await env.DB.prepare("SELECT COALESCE(SUM(CASE WHEN t_close IS NOT NULL THEN pnl END), 0) re, COALESCE(SUM(CASE WHEN t_close IS NULL THEN cost - COALESCE(cash, 0) END), 0) inv, SUM(CASE WHEN t > ? THEN 1 ELSE 0 END) today FROM hub_rpos").bind(day * 86400).first();
   let free = RN.start + (bal?.re || 0) - (bal?.inv || 0), today = bal?.today || 0;
-  const C = (await env.DB.prepare(`SELECT m.id, m.token, m.sym, f.f FROM hub_meme m LEFT JOIN hub_meme_feat f ON f.id = m.id AND f.kind = 'seen' LEFT JOIN hub_rpos r ON r.id = m.id
+  const C = (await env.DB.prepare(`SELECT m.id, m.token, m.sym, m.name, f.f FROM hub_meme m LEFT JOIN hub_meme_feat f ON f.id = m.id AND f.kind = 'seen' LEFT JOIN hub_rpos r ON r.id = m.id
     WHERE m.chain = 'solana' AND r.id IS NULL AND m.last_t > ? AND m.created BETWEEN ? AND ? AND COALESCE(m.risk, '') NOT LIKE '%"danger"%'
       AND json_extract(m.data, '$.liq') >= ? AND json_extract(m.data, '$.mc') >= ? AND COALESCE(json_extract(m.data, '$.v24'), json_extract(m.data, '$.v6h'), 0) >= ?
       AND COALESCE(m.risk, '') NOT LIKE '%holders_bad%' ORDER BY m.score DESC LIMIT 20`)
@@ -75,7 +76,7 @@ export async function runnerTick(env, say) {
         log.push(`${c.sym} abgelehnt (${h ? "Top10 " + Math.round(h.top10 * 100) + " %" : "keine Halterdaten"})`); continue;
       }
       const qty = RN.size / (q.px * (1 + RN.cost));
-      const f = JSON.stringify({ ...(c.f ? JSON.parse(c.f) : {}), top10: h.top10, top1: h.top1, soc_now: q.soc, mc_in: q.mc, liq_in: q.liq, v24_in: q.v24, tx24_in: q.tx24, volmc: vm, liqmc: lm });
+      const f = JSON.stringify({ ...(c.f ? JSON.parse(c.f) : {}), top10: h.top10, top1: h.top1, soc_now: q.soc, narr: tagNarr(c.name, c.sym), mc_in: q.mc, liq_in: q.liq, v24_in: q.v24, tx24_in: q.tx24, volmc: vm, liqmc: lm });
       await env.DB.prepare("INSERT OR IGNORE INTO hub_rpos (id, t, token, sym, px, qty, cost, peak, last_px, last_liq, last_seen, f) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(c.id, now, c.token, c.sym, q.px, qty, RN.size, q.px, q.px, q.liq, now, f).run();
       today++; free -= RN.size; log.push(`Kauf ${c.sym} (Top10 ${Math.round(h.top10 * 100)} %)`);
