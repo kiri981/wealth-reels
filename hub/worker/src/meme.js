@@ -44,6 +44,12 @@ function fromGT(p, tokens, src) {
     v5: N(v.m5), v1h: N(v.h1), v6h: N(v.h6), v24: N(v.h24), c5: N(pc.m5), c1h: N(pc.h1), c6h: N(pc.h6), c24: N(pc.h24),
     b5: tx.m5?.buys ?? null, s5: tx.m5?.sells ?? null, b1h: tx.h1?.buys ?? null, s1h: tx.h1?.sells ?? null, buyers1h: tx.h1?.buyers ?? null, sellers1h: tx.h1?.sellers ?? null, src: [src] };
 }
+// v3.0 Kevins Mindestwerte (17.11.): Solana, Liquidität ≥ 10k $, Volumen 24 Std. ≥ 15k $, Marktwert ≥ 20k $, mindestens 20 Min. alt
+export const KF = { liq: 10000, vol: 15000, mc: 20000, minAgeMin: 20 };
+export function kevinOk(x, m) {
+  const age = m?.age ?? (x.created ? (Date.now() / 1000 - x.created) / 3600 : null);
+  return x.chain === "solana" && (x.liq || 0) >= KF.liq && (x.v24 ?? x.v6h ?? x.v1h ?? 0) >= KF.vol && (x.mc || 0) >= KF.mc && age != null && age * 60 >= KF.minAgeMin;
+}
 function fromDS(x, src) {
   return { chain: x.chainId, token: x.baseToken?.address, pool: x.pairAddress, sym: x.baseToken?.symbol, name: x.baseToken?.name, created: x.pairCreatedAt ? Math.floor(x.pairCreatedAt / 1000) : null,
     px: N(x.priceUsd), mc: N(x.marketCap) || N(x.fdv), fdv: N(x.fdv), liq: N(x.liquidity?.usd),
@@ -198,7 +204,7 @@ export async function memeTick(env, say, kvGet, kvPut) {
     if (mints.length) { const pairs = await dsPairs("solana", mints); for (const [addr, x] of Object.entries(pairs)) add(fromDS(x, M[addr])); log.push("PF " + mints.length); }
   } catch (e) { log.push("PF " + e.message); }
 
-  const ids = Object.keys(C);
+  const ids = Object.keys(C).filter((id) => C[id].chain === "solana");   // v3.0 (Kevin 17.11.): nur noch Solana-Meme-Coins
   if (!ids.length) { let mp = ""; try { mp = await mpManage(env, say); } catch (e) { mp = "Papier-Wallet " + e.message; } return "Meme-Radar: keine Daten " + log.join(" ") + " | " + mp; }
   const old = {}; for (let i = 0; i < ids.length; i += 90) for (const r of (await env.DB.prepare(`SELECT * FROM hub_meme WHERE id IN (${ids.slice(i, i + 90).map(() => "?").join(",")})`).bind(...ids.slice(i, i + 90)).all()).results) old[r.id] = r;
   await mlSchema(env); const ML_M = await loadModel(env);   // v2.7: gelernter Heiß-Wert (nur wenn er sich auf neuen Daten bewährt hat)
@@ -246,6 +252,7 @@ export async function memeTick(env, say, kvGet, kvPut) {
     if (r.o?.alert_t) continue;
     const sec = r.sec || (r.o?.risk ? JSON.parse(r.o.risk) : null);
     if (!sec || sec.level === "danger" || sec.level === "unknown" || (r.x.liq || 0) < 20000) continue;   // nur mit Sicherheitscheck und genug Liquidität
+    if (!kevinOk(r.x, r.m)) continue;   // v3.0 Kevins Mindestwerte
     const x = r.x, m = r.m, f = (v, d = 0) => (v == null ? "–" : (v >= 0 ? "+" : "") + v.toFixed(d));
     const amp = sec.level === "ok" ? "🟢" : sec.level === "warn" ? "🟡" : "⚪";
     await say(env, `🚀 Meme-Radar: ${x.sym} (${x.chain})\nHeiß-Wert ${m.score}/100 · Alter ${m.age != null ? (m.age < 1 ? Math.round(m.age * 60) + " Min." : m.age.toFixed(1) + " Std.") : "?"}\n` +
