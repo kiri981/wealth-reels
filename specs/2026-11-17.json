@@ -1,0 +1,14 @@
+{
+ "cover": {"kicker": "MARKT", "title": "Gold auf *1-Jahres-Tief*", "chart": "down"},
+ "music": "drive",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 3.0, "text": "Gold fällt auf ein Jahrestief.", "accent": "Schuld ist nicht Gold selbst.", "icon": "down"},
+  {"type": "counter", "dur": 3.6, "label": "Spot-Gold Tagestief gestern", "from": 3900, "to": 3830, "decimals": 0, "suffix": " $", "color": "red", "sub": "Tiefster Stand seit Oktober 2025"},
+  {"type": "cards", "dur": 4.2, "title": "Montag auf einen Blick", "items": [{"left": "Gold", "right": "−0,8 % auf 3.848 $", "hot": true}, {"left": "Silber", "right": "−3,7 % auf 46,91 $"}, {"left": "Platin", "right": "−3,2 %"}]},
+  {"type": "cards", "dur": 4.4, "title": "Die drei Treiber", "items": [{"left": "Inflation", "right": "Okt. +0,4 % (erw. 0,3 %)"}, {"left": "Fed Dez.", "right": "94 % für Zinserhöhung", "hot": true}, {"left": "Dollar", "right": "nahe Hoch seit April 2025"}]},
+  {"type": "words", "dur": 4.0, "kicker": "WARUM DAS GOLD DRÜCKT", "text": "Gold zahlt keine Zinsen. Steigen die Zinsen, wird Halten teurer."},
+  {"type": "notify", "dur": 3.6, "title": "Keine Zeit, den Markt *selbst* zu analysieren?", "items": [{"text": "Gold: Tief bei 3.830 $", "time": "jetzt"}, {"text": "Dollar & Zinsen im Blick", "time": "1 Min.", "color": "gold"}, {"text": "Live-Updates in der Gruppe", "time": "2 Min."}]},
+  {"type": "cta", "dur": 3.0, "title": "Erst verstehen. Dann handeln.", "button": "Kommentiere GOLD"}
+ ]
+}
