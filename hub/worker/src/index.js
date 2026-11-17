@@ -22,7 +22,7 @@ import { altLearn, PARTS } from "./altlearn.js";
 import { czMap, hist } from "./alts.js";
 import { mpRules, mpFast, fwCheck } from "./mpaper.js";
 
-const VERSION = "3.2";
+const VERSION = "3.2b";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -576,8 +576,16 @@ async function tick(env) {
   const now = new Date(); const min = now.getUTCMinutes(), hr = now.getUTCHours();
   const log = [];
   for (const sym of SYMBOLS(env)) {
-    try { const c = await candles(env, sym, "5m", 600); await store(env, TK(sym, "5m"), c); log.push(`${sym} 5m:${c.length}`); }
-    catch (e) { log.push(sym + " 5m-Fehler " + e.message); const k = "err_" + sym + "_" + now.toISOString().slice(0, 13); if (!(await kvGet(env, k))) { await kvPut(env, k, 1); await say(env, `⚠️ Hub (${NAME(sym)}): Kerzen konnten nicht geladen werden – ` + e.message.slice(0, 200)); } }
+    try { let c; try { c = await candles(env, sym, "5m", 600); } catch (e1) { await new Promise((z) => setTimeout(z, 3000)); c = await candles(env, sym, "5m", 600); }   // v3.2: 1× wiederholen
+      await store(env, TK(sym, "5m"), c); log.push(`${sym} 5m:${c.length}`); }
+    catch (e) { log.push(sym + " 5m-Fehler " + e.message);
+      // v3.2 (Kevin 17.11.): MetaApi hakt oft kurz (504/Zeitüberschreitung); der nächste Lauf holt die Lücke automatisch nach (600 Kerzen).
+      // Meldung deshalb nur, wenn wirklich Daten fehlen: letzte gespeicherte Kerze älter als 45 Min. (an Wochentagen), höchstens 1× je 6 Std.
+      const lt = await env.DB.prepare("SELECT MAX(t) a FROM hub_candles WHERE tf = ?").bind(TK(sym, "5m")).first().catch(() => null);
+      const wd = now.getUTCDay(), wkend = wd === 6 || (wd === 0 && hr < 22) || (wd === 5 && hr >= 21);
+      const stale = lt?.a && Date.now() / 1000 - lt.a > 45 * 60 && (!wkend || /BTC|ETH|SOL|XRP|DOGE|BNB/.test(sym));
+      const k = "err_" + sym + "_" + now.toISOString().slice(0, 10) + "_" + Math.floor(hr / 6);
+      if (stale && !(await kvGet(env, k))) { await kvPut(env, k, 1); await say(env, `⚠️ Hub (${NAME(sym)}): seit ${Math.round((Date.now() / 1000 - lt.a) / 60)} Min. keine neuen Kerzen von MetaApi – ` + e.message.slice(0, 160)); } }
     try {   // Nachladen nach hinten, bis 45 Tage 5m-Historie da sind (je Lauf 1000 Kerzen)
       const o = await env.DB.prepare("SELECT MIN(t) a FROM hub_candles WHERE tf = ?").bind(TK(sym, "5m")).first();
       const bk = sym === "XAUUSD" ? "backfill_done" : "backfill_done_" + sym;
