@@ -15,8 +15,15 @@ export async function rpc(env, body) {
   const out = [];
   for (let i = 0; i < body.length; i += 8) {
     if (i) await sleep(900);
-    const res = await one(env, body.slice(i, i + 8));
-    if (Array.isArray(res)) out.push(...res);
+    let part = body.slice(i, i + 8), got = [];
+    for (let k = 0; k < 3 && part.length; k++) {   // einzelne Einträge mit „zu viele Anfragen“ (Fehler im Stapel statt HTTP 429) erneut holen
+      if (k) await sleep(1500 * k);
+      const res = await one(env, part); const A = Array.isArray(res) ? res : [];
+      const bad = new Set(A.filter((x) => x?.error && /429|rate|limit/i.test(String(x.error.code) + " " + String(x.error.message))).map((x) => x.id));
+      got.push(...A.filter((x) => !bad.has(x.id)));
+      part = part.filter((q) => bad.has(q.id));
+    }
+    out.push(...got);
   }
   return out;
 }

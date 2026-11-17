@@ -123,6 +123,7 @@ async function judgeDeep(env, wallet) {
   }
   const coins = Object.values(flow).filter((f) => f.buy > 0.01);
   const closed = coins.filter((f) => f.sell > 0), open = coins.length - closed.length;
+  if (!coins.length && pick.length >= 20) throw new Error("keine auswertbaren Transaktionen – nächster Lauf versucht es erneut");   // meist Abruf-Grenze
   if (coins.length < 3) return { ok: 0, why: `nur ${coins.length} Coins in den letzten ${pick.length} Transaktionen` };
   const wins = closed.filter((f) => f.sell > f.buy), net = closed.reduce((a, f) => a + f.sell - f.buy, 0), inv = closed.reduce((a, f) => a + f.buy, 0);
   const big = closed.filter((f) => f.sell >= 5 * f.buy).length, holdMed = closed.map((f) => (f.t1 - f.t0) / 3600).sort((a, b) => a - b)[Math.floor(closed.length / 2)] || 0;
