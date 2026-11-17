@@ -23,12 +23,19 @@ async function schema(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_meme_long (id TEXT, day INTEGER, mc REAL, liq REAL, PRIMARY KEY (id, day))"),
   ]);
 }
+// v3.2 (17.11.): Ein Kurssprung zählt nur, wenn echter Handel dahintersteht. Sonst Datenfehler (Schein-Pool: Marktwert 32 Mio., Liquidität 23 Mio., 100 $ Volumen/Std.)
+function plausible(p, q) {
+  if (q.mc && q.liq && q.liq > q.mc * 1.2) return false;
+  const ref = p.last_px || p.px;
+  if (q.px > ref * 3 && !((q.v1h || 0) >= (q.mc || 0) * 0.02 && (q.v1h || 0) >= 5000)) return false;
+  return true;
+}
 async function prices(tokens) {
   const out = {};
   for (let i = 0; i < tokens.length; i += 30) {
     const r = await fetch(`${DS}/tokens/v1/solana/${tokens.slice(i, i + 30).join(",")}`, { headers: { "User-Agent": "Mozilla/5.0 wc-hub" } }).catch(() => null);
     const A = r && r.ok ? await r.json().catch(() => []) : [];
-    for (const x of Array.isArray(A) ? A : []) { const k = x.baseToken?.address; if (!out[k] || (N(x.liquidity?.usd) || 0) > (out[k].liq || 0)) out[k] = { px: N(x.priceUsd), liq: N(x.liquidity?.usd), mc: N(x.marketCap) || N(x.fdv), v24: N(x.volume?.h24), tx24: (x.txns?.h24?.buys || 0) + (x.txns?.h24?.sells || 0), soc: (x.info?.socials || []).length + (x.info?.websites || []).length, created: x.pairCreatedAt ? x.pairCreatedAt / 1000 : null }; }
+    for (const x of Array.isArray(A) ? A : []) { const k = x.baseToken?.address; if (!out[k] || (N(x.volume?.h24) || 0) > (out[k].v24 || 0)) out[k] = { px: N(x.priceUsd), liq: N(x.liquidity?.usd), mc: N(x.marketCap) || N(x.fdv), v1h: N(x.volume?.h1), v24: N(x.volume?.h24), tx24: (x.txns?.h24?.buys || 0) + (x.txns?.h24?.sells || 0), soc: (x.info?.socials || []).length + (x.info?.websites || []).length, created: x.pairCreatedAt ? x.pairCreatedAt / 1000 : null }; }
   }
   return out;
 }
@@ -118,6 +125,7 @@ export async function runnerTick(env, say) {
     for (const p of P) {
       const q = Q[p.token]; let why = null, at = null;
       if (!q?.px) { if (now - (p.last_seen || p.t) > 86400) { why = "kein Kurs seit 24 Std. (tot)"; at = 0; } }
+      else if (!plausible(p, q)) { await env.DB.prepare("UPDATE hub_rpos SET last_seen = ? WHERE id = ?").bind(now, p.id).run(); }   // v3.2 Schein-Kurs ignorieren (FLYWHEEL 17.11.: 456× ohne Handel)
       else {
         const peak = Math.max(p.peak, q.px);
         await env.DB.prepare("UPDATE hub_rpos SET last_px = ?, last_liq = ?, last_seen = ?, peak = ? WHERE id = ?").bind(q.px, q.liq, now, peak, p.id).run();
