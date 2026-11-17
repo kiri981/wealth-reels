@@ -27,7 +27,7 @@ import { altLearn, PARTS } from "./altlearn.js";
 import { czMap, hist } from "./alts.js";
 import { mpRules, mpFast, fwCheck } from "./mpaper.js";
 
-const VERSION = "3.8";
+const VERSION = "3.9";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -444,6 +444,8 @@ async function paper(env) {
   const NW = await newsWindows(env, now - 5 * 86400).catch(() => []);
   const inNews = (t) => NW.some(([a, b]) => t >= a && t <= b);
   const RS = await riskState(env, now);
+  // v3.9 einmal täglich: alle abgeschlossenen Backtest-Trades (aus den geladenen Kerzen) für den Filter-Prüfer speichern – er muss nicht auf 40 Live-Trades warten
+  const btDay = new Date().toISOString().slice(0, 10), BT = (await kvGet(env, "bt_day")) !== btDay ? [] : null;
   for (const s of strats) {
     if (s.family === "filt" || s.family === "expl") continue;   // v3.5/3.6 Filter-Varianten füllt filtvar.js aus den Trades des Originals
     const p = E.withSym(JSON.parse(s.params)); const sym = p.sym || "XAUUSD";
@@ -474,6 +476,7 @@ async function paper(env) {
     }
     if (s.family === "vipz") { DATA.VZ ||= await vzTradesAll(env); data.VZ = DATA.VZ; }   // v3.1
     let tr; try { tr = E.trades(s.family, p, data); } catch (e) { console.log("Engine", s.id, e.message); continue; }
+    if (BT) for (const x of tr.filter((x) => !x.open && x.r != null && isFinite(x.r)).slice(-400)) BT.push([s.id, x.t, x.dr, x.e, x.r, x.pair || sym]);   // v3.9 Historie für den Filter-Prüfer
     const born = Math.floor(new Date((s.created || "2000-01-01") + "T00:00:00Z").getTime() / 1000) + 86400;   // nur Trades NACH der Aufnahme zählen (echter Vorwärtstest)
     for (const x of tr.filter((x) => (x.t >= recent || x.open) && x.t >= born && !inNews(x.t))) {
       const tsym = x.pair || sym;   // Währungsstärke: das gehandelte Kreuzpaar
@@ -492,6 +495,13 @@ async function paper(env) {
         await say(env, `${x.r > 0.05 ? "✅" : x.r < -0.05 ? "❌" : "➖"} Hub-Papiertrade beendet: ${x.r >= 0 ? "+" : ""}${x.r.toFixed(2)}R (${x.why})\n${s.name}\n${dir} ${tsym} @ ${x.e.toFixed(DIG(tsym))} → ${fmtT(x.tx)} Uhr`); n++;
       }
     }
+  }
+  if (BT) {
+    await env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_bt (sid TEXT, t INTEGER, dr INTEGER, e REAL, r REAL, sym TEXT, PRIMARY KEY (sid, t))").run();
+    const st = BT.map((b) => env.DB.prepare("INSERT OR REPLACE INTO hub_bt (sid, t, dr, e, r, sym) VALUES (?, ?, ?, ?, ?, ?)").bind(...b));
+    for (let i = 0; i < st.length; i += 100) await env.DB.batch(st.slice(i, i + 100));
+    await env.DB.prepare("DELETE FROM hub_bt WHERE t < ?").bind(now - 400 * 86400).run();
+    await kvPut(env, "bt_day", btDay); await kvPut(env, "log_bt", `${new Date().toISOString()} Historie: ${BT.length} Backtest-Trades gespeichert`);
   }
   return n;
 }

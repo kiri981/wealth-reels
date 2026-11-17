@@ -82,6 +82,9 @@ export async function filtTick(env, say, kvGet, kvPut) {
   const symOf = (s) => { try { return JSON.parse(s.params || "{}").sym || "XAUUSD"; } catch { return "XAUUSD"; } };
   const T = (await env.DB.prepare("SELECT sid, t, dr, e, sl, tp, r, why, tx, closed, COALESCE(sym, '') sym FROM hub_trades WHERE t > ? AND sid NOT LIKE '%|%' ORDER BY t").bind(from).all()).results;
   const bySid = {}; for (const x of T) (bySid[x.sid] ||= []).push(x);
+  // v3.9 Backtest-Historie dazu (nur für die Prüfung, nicht für die Varianten-Trades): Trades, die es live noch nicht gibt
+  const BH = (await env.DB.prepare("SELECT sid, t, dr, e, r, sym FROM hub_bt WHERE t > ? ORDER BY t").bind(now - 365 * DAY).all().catch(() => ({ results: [] }))).results;
+  const byHist = {}; for (const x of BH) (byHist[x.sid] ||= []).push({ ...x, closed: 1, hist: 1 });
   const CTX = {}; const getC = async (sym) => (CTX[sym] ||= await ctx(env, sym, from));
 
   // 1) Varianten mit neuen Trades des Originals füllen (nur Trades NACH ihrer Entstehung, die den Filter erfüllen)
@@ -103,7 +106,8 @@ export async function filtTick(env, say, kvGet, kvPut) {
   const M = [];   // Matrix für Bericht/AURUM
   let created = 0;
   for (const s of base) {
-    const sym = symOf(s), A = (bySid[s.id] || []).filter((x) => x.closed); if (A.length < 40) continue;
+    const sym = symOf(s), live = (bySid[s.id] || []).filter((x) => x.closed), seen = new Set(live.map((x) => x.t));
+    const A = [...(byHist[s.id] || []).filter((x) => !seen.has(x.t)), ...live].sort((a, b) => a.t - b.t); if (A.length < 40) continue;
     const C = await getC(sym); const LB = A.map((x) => ({ x, l: label(C, { ...x, sym }) }));
     const half = A[Math.floor(A.length / 2)].t, OK = [];
     for (const [fk, F] of Object.entries(FILTERS)) {
