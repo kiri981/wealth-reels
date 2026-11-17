@@ -180,6 +180,13 @@ def main(budget=300, seed=None):
     for s in reg["strategies"]:
         if s["status"] == "retired": continue
         fam, p = s["family"], s["params"]
+        if fam in ("ibs", "tbo"):   # v3.0: extern getestet (MT5-Daten, hub/tbo_multi.py / templates_test.py) – hier nur Live-Bilanz pflegen
+            born = int(pd.Timestamp(s.get("created", "2000-01-01"), tz="UTC").timestamp()) + 86400
+            lr = np.array([x["r"] for x in live.get(s["id"], []) if x.get("closed") and x["t"] >= born]); s["live"] = dict(n=len(lr), mean=float(lr.mean()) if len(lr) else None, win=float((lr > 0).mean()) if len(lr) else None)
+            if len(lr) >= 20 and lr[-20:].mean() < -0.15 and s["status"] != "retired":
+                s["status"] = "retired"; s["reason"] = f"Live schwach: letzte 20 Papier-Trades Ø {lr[-20:].mean():+.2f}R"; reg["log"].append(dict(d=today, id=s["id"], von="paper", nach="retired", grund=s["reason"]))
+            report.append(f"- **{s['name']}** [{s['status']}] Backtest (MT5, 4 J.) Ø {s['backtest'].get('mean', 0):+.2f}R n={s['backtest'].get('n')}, live n={len(lr)}" + (f" Ø {lr.mean():+.2f}R" if len(lr) else ""))
+            continue
         K = len([k for k in tried if k.startswith(fam + ":")])
         ev = evaluate(D, fam, p, K, cache)
         born = int(pd.Timestamp(s.get("created", "2000-01-01"), tz="UTC").timestamp()) + 86400   # nur echte Vorwärts-Trades

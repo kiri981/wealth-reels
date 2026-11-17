@@ -9153,6 +9153,330 @@
    "live": {
     "n": 0
    }
+  },
+  {
+   "id": "ibs:23908afa8a",
+   "name": "Nasdaq 100 · IBS: Kauf, wenn Schluss im unteren 20 % der Tagesspanne; raus bei Schluss > Vortageshoch (max. 5 Tage)",
+   "family": "ibs",
+   "params": {
+    "sym": "NAS100",
+    "ibs": 0.2,
+    "hold": 5,
+    "tf": "1d"
+   },
+   "backtest": {
+    "n": 142,
+    "mean": 0.1284369698742095,
+    "win": 0.6830985915492958,
+    "pf": 1.6607428360158407,
+    "dd": null,
+    "tdev": 2.2741380582719803,
+    "thr": 2.0,
+    "hold_mean": 0.1116019883879367,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "MT5 Aug 2022–Nov 2026"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "live": {
+    "n": 0
+   }
+  },
+  {
+   "id": "ibs:0934d19ab8",
+   "name": "S&P 500 · IBS: Kauf, wenn Schluss im unteren 20 % der Tagesspanne; raus bei Schluss > Vortageshoch (max. 5 Tage)",
+   "family": "ibs",
+   "params": {
+    "sym": "SP500",
+    "ibs": 0.2,
+    "hold": 5,
+    "tf": "1d"
+   },
+   "backtest": {
+    "n": 134,
+    "mean": 0.1568425294911569,
+    "win": 0.7014925373134329,
+    "pf": 1.795989741147343,
+    "dd": null,
+    "tdev": 1.925057555361833,
+    "thr": 2.0,
+    "hold_mean": 0.22388466968867698,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "MT5 Aug 2022–Nov 2026"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "live": {
+    "n": 0
+   }
+  },
+  {
+   "id": "ibs:22cd057b7d",
+   "name": "Dow Jones · IBS: Kauf, wenn Schluss im unteren 20 % der Tagesspanne; raus bei Schluss > Vortageshoch (max. 5 Tage)",
+   "family": "ibs",
+   "params": {
+    "sym": "DJ30",
+    "ibs": 0.2,
+    "hold": 5,
+    "tf": "1d"
+   },
+   "backtest": {
+    "n": 138,
+    "mean": 0.1250415254953763,
+    "win": 0.6956521739130435,
+    "pf": 1.5900090599667507,
+    "dd": null,
+    "tdev": 0.7073300070146799,
+    "thr": 2.0,
+    "hold_mean": 0.3035386319234407,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "MT5 Aug 2022–Nov 2026"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "live": {
+    "n": 0
+   }
+  },
+  {
+   "id": "ibs:c76c63c98a",
+   "name": "DAX · IBS: Kauf, wenn Schluss im unteren 20 % der Tagesspanne; raus bei Schluss > Vortageshoch (max. 5 Tage)",
+   "family": "ibs",
+   "params": {
+    "sym": "GER40",
+    "ibs": 0.2,
+    "hold": 5,
+    "tf": "1d"
+   },
+   "backtest": {
+    "n": 129,
+    "mean": 0.06466447593891632,
+    "win": 0.6511627906976745,
+    "pf": 1.2976112378448208,
+    "dd": null,
+    "tdev": 1.3425509594707195,
+    "thr": 2.0,
+    "hold_mean": 0.02195392992162627,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "MT5 Aug 2022–Nov 2026"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "live": {
+    "n": 0
+   }
+  },
+  {
+   "id": "tt:5593685848",
+   "name": "Nasdaq 100 · Turnaround Tuesday: Montag ≥ 0,5 % im Minus → Kauf; raus bei Schluss > Vortageshoch (max. 4 Tage)",
+   "family": "tt",
+   "params": {
+    "sym": "NAS100",
+    "drop": 0.005,
+    "tf": "1d"
+   },
+   "backtest": {
+    "n": 38,
+    "mean": 0.14450842246467677,
+    "win": 0.7631578947368421,
+    "pf": 1.9636692372775875,
+    "dd": null,
+    "tdev": 1.2623437275268021,
+    "thr": 2.0,
+    "hold_mean": 0.1672439385165416,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "MT5 Aug 2022–Nov 2026"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "live": {
+    "n": 0
+   }
+  },
+  {
+   "id": "tt:edacda606c",
+   "name": "S&P 500 · Turnaround Tuesday: Montag ≥ 0,5 % im Minus → Kauf; raus bei Schluss > Vortageshoch (max. 4 Tage)",
+   "family": "tt",
+   "params": {
+    "sym": "SP500",
+    "drop": 0.005,
+    "tf": "1d"
+   },
+   "backtest": {
+    "n": 25,
+    "mean": 0.1361855909704202,
+    "win": 0.72,
+    "pf": 2.0388321476077875,
+    "dd": null,
+    "tdev": 0.934850637724394,
+    "thr": 2.0,
+    "hold_mean": 0.16805521249709943,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "MT5 Aug 2022–Nov 2026"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "live": {
+    "n": 0
+   }
+  },
+  {
+   "id": "tt:0be1d81479",
+   "name": "Dow Jones · Turnaround Tuesday: Montag ≥ 0,5 % im Minus → Kauf; raus bei Schluss > Vortageshoch (max. 4 Tage)",
+   "family": "tt",
+   "params": {
+    "sym": "DJ30",
+    "drop": 0.005,
+    "tf": "1d"
+   },
+   "backtest": {
+    "n": 28,
+    "mean": 0.0844103110753569,
+    "win": 0.6785714285714286,
+    "pf": 1.4805670190773055,
+    "dd": null,
+    "tdev": 0.07762745650165925,
+    "thr": 2.0,
+    "hold_mean": 0.24201716027238282,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "MT5 Aug 2022–Nov 2026"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "live": {
+    "n": 0
+   }
+  },
+  {
+   "id": "tbo:147fbe3c3a",
+   "name": "Bitcoin · TBO Trend-Breakout 1 Std.: 30-Kerzen-Ausbruch mit EMA 200, SL 2·ATR, Ziel 2R, max. 48 Std.",
+   "family": "tbo",
+   "params": {
+    "sym": "BTCUSD",
+    "n": 30,
+    "k": 2,
+    "rr": 2,
+    "maxh": 48,
+    "tf": "1h"
+   },
+   "backtest": {
+    "n": 810,
+    "mean": 0.09,
+    "win": null,
+    "pf": null,
+    "dd": null,
+    "tdev": null,
+    "thr": 2.0,
+    "hold_mean": 0.1,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "MT5 Aug 2022–Nov 2026"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "live": {
+    "n": 0
+   }
+  },
+  {
+   "id": "tbo:0725ce49ee",
+   "name": "Ethereum · TBO Trend-Breakout 1 Std.: 30-Kerzen-Ausbruch mit EMA 200, SL 2·ATR, Ziel 2R, max. 48 Std.",
+   "family": "tbo",
+   "params": {
+    "sym": "ETHUSD",
+    "n": 30,
+    "k": 2,
+    "rr": 2,
+    "maxh": 48,
+    "tf": "1h"
+   },
+   "backtest": {
+    "n": 807,
+    "mean": 0.029,
+    "win": null,
+    "pf": null,
+    "dd": null,
+    "tdev": null,
+    "thr": 2.0,
+    "hold_mean": 0.054,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "MT5 Aug 2022–Nov 2026"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "live": {
+    "n": 0
+   }
+  },
+  {
+   "id": "tbo:69b500cdbb",
+   "name": "Gold · TBO Trend-Breakout 1 Std.: 30-Kerzen-Ausbruch mit EMA 200, SL 2·ATR, Ziel 2R, max. 48 Std.",
+   "family": "tbo",
+   "params": {
+    "sym": "XAUUSD",
+    "n": 30,
+    "k": 2,
+    "rr": 2,
+    "maxh": 48,
+    "tf": "1h"
+   },
+   "backtest": {
+    "n": 673,
+    "mean": 0.073,
+    "win": null,
+    "pf": null,
+    "dd": null,
+    "tdev": null,
+    "thr": 2.0,
+    "hold_mean": 0.18,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "MT5 Aug 2022–Nov 2026"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "live": {
+    "n": 0
+   }
+  },
+  {
+   "id": "tbo:68672ac0c8",
+   "name": "Nasdaq 100 · TBO Trend-Breakout 1 Std.: 30-Kerzen-Ausbruch mit EMA 200, SL 2·ATR, Ziel 2R, max. 48 Std.",
+   "family": "tbo",
+   "params": {
+    "sym": "NAS100",
+    "n": 30,
+    "k": 2,
+    "rr": 2,
+    "maxh": 48,
+    "tf": "1h"
+   },
+   "backtest": {
+    "n": 704,
+    "mean": 0.069,
+    "win": null,
+    "pf": null,
+    "dd": null,
+    "tdev": null,
+    "thr": 2.0,
+    "hold_mean": 0.021,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "MT5 Aug 2022–Nov 2026"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "live": {
+    "n": 0
+   }
   }
  ],
  "log": [
@@ -9183,6 +9507,83 @@
    "von": "neu",
    "nach": "paper",
    "grund": "bestanden: t=2.1 > 2.0, Holdout Ø +0.02R"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "ibs:23908afa8a",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "ibs:0934d19ab8",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "ibs:22cd057b7d",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "ibs:c76c63c98a",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "tt:5593685848",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "tt:edacda606c",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "tt:0be1d81479",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "tbo:147fbe3c3a",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "tbo:0725ce49ee",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "tbo:69b500cdbb",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "tbo:68672ac0c8",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
   }
  ],
  "updated": "2026-11-16T01:21:42+00:00"

@@ -9,7 +9,9 @@ export const SYMS = { XAUUSD: { _cost: 0.35, _minr: 0.3, name: "Gold" }, XAGUSD:
   EURUSD: { _cost: 0.00008, _minr: 0.0005, name: "EUR/USD" }, GBPUSD: { _cost: 0.00012, _minr: 0.0005, name: "GBP/USD" }, AUDUSD: { _cost: 0.0001, _minr: 0.0005, name: "AUD/USD" },
   NZDUSD: { _cost: 0.00015, _minr: 0.0005, name: "NZD/USD" }, USDJPY: { _cost: 0.012, _minr: 0.05, name: "USD/JPY" }, USDCAD: { _cost: 0.00015, _minr: 0.0005, name: "USD/CAD" },
   USDCHF: { _cost: 0.00015, _minr: 0.0005, name: "USD/CHF" }, EURJPY: { _cost: 0.02, _minr: 0.05, name: "EUR/JPY" }, GBPJPY: { _cost: 0.03, _minr: 0.05, name: "GBP/JPY" },
-  EURGBP: { _cost: 0.0001, _minr: 0.0005, name: "EUR/GBP" }, FX: { _cost: 0, _minr: 0, name: "Devisen" } };
+  EURGBP: { _cost: 0.0001, _minr: 0.0005, name: "EUR/GBP" }, FX: { _cost: 0, _minr: 0, name: "Devisen" },
+  NAS100: { _costp: 0.0002, _minrp: 0.001, name: "Nasdaq 100" }, SP500: { _costp: 0.0002, _minrp: 0.001, name: "S&P 500" }, DJ30: { _costp: 0.0002, _minrp: 0.001, name: "Dow Jones" },
+  GER40: { _costp: 0.0002, _minrp: 0.001, name: "DAX" } };
 export const withSym = (p, price) => {
   const c = SYMS[p.sym || "XAUUSD"] || SYMS.XAUUSD;
   if (c._costp) return { ...p, name: c.name, _costp: c._costp, _cost: c._costp * (price || 0), _minr: c._minrp * (price || 0) };
@@ -268,8 +270,69 @@ export function trades(fam, p, data) {
   if (fam === "swing") return data.D1 ? runSwing(data.D1, p) : [];
   if (fam === "deriv") return data.DD ? runDeriv(data.DD, p) : [];
   if (fam === "fxs") return data.FXCUR ? runFxs(data.FXCUR, p) : [];
+  if (fam === "ibs") return data.D1 ? runIbs(data.D1, p) : [];
+  if (fam === "tt") return data.D1 ? runTt(data.D1, p) : [];
+  if (fam === "tbo") return data.H1 && data.H1.length > 250 ? runTbo(data.H1, p) : [];
   if (fam === "learn") return data.C5 && data.C5.length > 3000 ? runLearn(data.C5, p) : [];   // v2.1: Lernmodell (15m aus 5m)
   return [];
+}
+// ---------------------------------------------------------------- v3.0 Familien aus den MT5-Nachtests (4 Jahre, 19 Märkte)
+function atrArr(C, n = 14) { const a = new Array(C.length).fill(null); let s = 0; for (let i = 1; i < C.length; i++) { const tr = Math.max(C[i].h - C[i].l, Math.abs(C[i].h - C[i - 1].c), Math.abs(C[i].l - C[i - 1].c)); s += tr; if (i > n) s -= Math.max(C[i - n].h - C[i - n].l, Math.abs(C[i - n].h - C[i - n - 1].c), Math.abs(C[i - n].l - C[i - n - 1].c)); if (i >= n) a[i] = s / n; } return a; }
+// IBS (Internal Bar Strength): Schluss im unteren 20 % der Tagesspanne → Kauf zum Schluss; raus, sobald Schluss > Vortageshoch, spätestens nach 5 Tagen.
+//   Notstopp 2 × ATR(14) (im Nachtest nicht nötig, hier zur Sicherheit). R = 2 × ATR.
+export function runIbs(D, p) {
+  const out = [], A = atrArr(D), lim = p.ibs ?? 0.2, mx = p.hold ?? 5, cost = (p._costp ?? 0.0002);
+  for (let i = 15; i < D.length; i++) {
+    const x = D[i], rg = x.h - x.l; if (!(rg > 0) || !A[i]) continue;
+    if ((x.c - x.l) / rg >= lim) continue;
+    const e = x.c, R = 2 * A[i], sl = e - R; let j = i + 1, why = null, px = null;
+    for (; j < D.length; j++) {
+      if (D[j].l <= sl) { px = sl; why = "Notstopp"; break; }
+      if (D[j].c > D[j - 1].h) { px = D[j].c; why = "Schluss > Vortageshoch"; break; }
+      if (j - i >= mx) { px = D[j].c; why = "Zeit"; break; }
+    }
+    if (px == null) { out.push({ t: x.t, dr: 1, e, sl, tp: null, r: (D[D.length - 1].c - e - cost * e) / R, why: "offen", tx: D[D.length - 1].t, open: true }); break; }
+    out.push({ t: x.t, dr: 1, e, sl, tp: null, r: (px - e - cost * e) / R, why, tx: D[j].t, open: false }); i = j;
+  }
+  return out;
+}
+// Turnaround Tuesday: Montag schließt ≥ 0,5 % unter Freitag → Kauf Montag-Schluss; raus, sobald Schluss > Vortageshoch, spätestens nach 4 Tagen. R = 2 × ATR.
+export function runTt(D, p) {
+  const out = [], A = atrArr(D), drop = p.drop ?? 0.005, cost = (p._costp ?? 0.0002);
+  for (let i = 15; i < D.length; i++) {
+    const wd = new Date((D[i].t + 43200) * 1000).getUTCDay(); if (wd !== 1 || !(D[i].c < D[i - 1].c * (1 - drop)) || !A[i]) continue;
+    const e = D[i].c, R = 2 * A[i], sl = e - R; let j = i + 1, px = null, why = null;
+    for (; j < D.length; j++) {
+      if (D[j].l <= sl) { px = sl; why = "Notstopp"; break; }
+      if (D[j].c > D[j - 1].h) { px = D[j].c; why = "Schluss > Vortageshoch"; break; }
+      if (j - i >= 4) { px = D[j].c; why = "Zeit"; break; }
+    }
+    if (px == null) { out.push({ t: D[i].t, dr: 1, e, sl, tp: null, r: (D[D.length - 1].c - e - cost * e) / R, why: "offen", tx: D[D.length - 1].t, open: true }); break; }
+    out.push({ t: D[i].t, dr: 1, e, sl, tp: null, r: (px - e - cost * e) / R, why, tx: D[j].t, open: false }); i = j;
+  }
+  return out;
+}
+// TBO (Kevins Trend Breakout, 1 Std.): Schluss über Hoch / unter Tief der letzten N Kerzen (erste Ausbruchskerze), nur mit EMA 200,
+//   SL k × ATR(14), Ziel rr × SL, spätestens nach 48 Std.; immer nur eine Position.
+export function runTbo(H, p) {
+  const N = p.n ?? 30, k = p.k ?? 2, rr = p.rr ?? 2, mh = p.maxh ?? 48, cost = p._costp ? p._costp : 0, A = atrArr(H), out = [];
+  const em = []; const a = 2 / 201; for (let i = 0; i < H.length; i++) em.push(i ? a * H[i].c + (1 - a) * em[i - 1] : H[i].c);
+  const hh = (i) => { let m = -Infinity; for (let q = i - N; q < i; q++) m = Math.max(m, H[q].h); return m; };
+  const ll = (i) => { let m = Infinity; for (let q = i - N; q < i; q++) m = Math.min(m, H[q].l); return m; };
+  for (let i = Math.max(N + 1, 200); i < H.length; i++) {
+    if (!A[i]) continue;
+    const up = H[i].c > hh(i) && !(H[i - 1].c > hh(i - 1)), dn = H[i].c < ll(i) && !(H[i - 1].c < ll(i - 1));
+    const dr = up && H[i].c > em[i] ? 1 : dn && H[i].c < em[i] ? -1 : 0; if (!dr) continue;
+    const e = H[i].c, R = k * A[i], sl = e - dr * R, tp = e + dr * rr * R, c0 = cost ? cost * e : (p._cost ?? 0); let j = i + 1, px = null, why = null;
+    for (; j < H.length; j++) {
+      if ((dr > 0 && H[j].l <= sl) || (dr < 0 && H[j].h >= sl)) { px = sl; why = "SL"; break; }
+      if ((dr > 0 && H[j].h >= tp) || (dr < 0 && H[j].l <= tp)) { px = tp; why = "TP"; break; }
+      if (H[j].t - H[i].t >= mh * 3600) { px = H[j].c; why = "Zeit"; break; }
+    }
+    if (px == null) { out.push({ t: H[i].t, dr, e, sl, tp, r: (dr * (H[H.length - 1].c - e) - c0) / R, why: "offen", tx: H[H.length - 1].t, open: true }); break; }
+    out.push({ t: H[i].t, dr, e, sl, tp, r: (dr * (px - e) - c0) / R, why, tx: H[j].t, open: false }); i = j;
+  }
+  return out;
 }
 export function resample(C, sec) {
   const out = [];

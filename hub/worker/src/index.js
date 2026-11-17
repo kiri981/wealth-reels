@@ -145,6 +145,7 @@ const FX = ["EURUSD", "USDJPY", "GBPUSD", "USDCAD", "USDSEK", "USDCHF"];   // f�
 // v2.5: Devisen zum Handeln (Papier) – 7 Hauptpaare + 3 Kreuze; Kerzen vom Broker (MetaApi), eigener Lauf /fxrun
 const FX_TRADE = ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDJPY", "USDCAD", "USDCHF", "EURJPY", "GBPJPY", "EURGBP"];
 const FX_ALL = [...new Set([...FX, ...FX_TRADE])];
+const IDX = ["NAS100", "SP500", "DJ30", "GER40"];   // v3.0: Indizes für IBS / Turnaround Tuesday / TBO (Tages- und Stundenkerzen über MetaApi)
 async function fxRun(env) {   // sparsam mit Datenbank-Abfragen: alle Paare in einem Schub speichern, Nachladen nur 1 Paar je Lauf
   const now = new Date(), min = now.getUTCMinutes(), out = [], st = [];
   const put = (tf, C) => { for (const k of C) st.push(env.DB.prepare("INSERT INTO hub_candles (tf, t, o, h, l, c) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(tf, t) DO UPDATE SET o=excluded.o, h=excluded.h, l=excluded.l, c=excluded.c").bind(tf, k.t, k.o, k.h, k.l, k.c)); };
@@ -159,6 +160,10 @@ async function fxRun(env) {   // sparsam mit Datenbank-Abfragen: alle Paare in e
   const nd = FX_TRADE.find((s) => !state.d1[s]);
   if (nd) { try { put(`${nd}:1d`, await candles(env, nd, "1d", 1000)); state.d1[nd] = 1; } catch (e) { out.push(nd + " 1d " + e.message.slice(0, 40)); } }
   else if (min < 5) for (const s of FX_TRADE) { try { put(`${s}:1d`, await candles(env, s, "1d", 5)); } catch (e) {} }
+  state.ix ||= {};
+  const ni = IDX.find((s) => !state.ix[s]);
+  if (ni) { try { put(`${ni}:1d`, await candles(env, ni, "1d", 1000)); put(`${ni}:1h`, await candles(env, ni, "1h", 1000)); state.ix[ni] = 1; } catch (e) { out.push(ni + " Index " + e.message.slice(0, 50)); } }
+  else if (min < 5) for (const s of IDX) { try { put(`${s}:1d`, await candles(env, s, "1d", 5)); put(`${s}:1h`, await candles(env, s, "1h", 5)); } catch (e) { out.push(s + " " + e.message.slice(0, 40)); } }
   for (let k = 0; k < st.length; k += 90) await env.DB.batch(st.slice(k, k + 90));
   await kvPut(env, "fx_state", JSON.stringify(state));
   const msg = `Devisen: ${FX_ALL.length} Paare, ${st.length} Kerzen, nachgeladen ${Object.keys(state.bf).length}/${FX_ALL.length}, Tageshistorie ${Object.keys(state.d1).length}/${FX_TRADE.length}${out.length ? " | " + out.join(" | ") : ""}`;
@@ -443,7 +448,8 @@ async function paper(env) {
       const C5 = await load(env, TK(sym, "5m"), now - 30 * 86400);
       DATA[sym] = C5.length >= 500 ? { DAYS: E.days(C5), F5: E.feats(C5), F15: E.feats(E.resample(C5, 900)), C5 } : {};
       DATA[sym].px = C5.length ? C5.slice(-8640).map((k) => k.c).sort((a, b) => a - b)[Math.floor(Math.min(C5.length, 8640) / 2)] : null;
-      if (strats.some((x) => x.family === "swing")) DATA[sym].D1 = await load(env, TK(sym, "1d"), 0);
+      if (strats.some((x) => ["swing", "ibs", "tt"].includes(x.family))) DATA[sym].D1 = await load(env, TK(sym, "1d"), 0);
+      if (strats.some((x) => x.family === "tbo")) DATA[sym].H1 = C5.length >= 2400 ? E.resample(C5, 3600) : await load(env, TK(sym, "1h"), now - 60 * 86400);   // v3.0 TBO
     }
     const data = DATA[sym];
     if (s.family === "deriv") {   // Derivate-Familie (v1.6): Coinalyze-Tageshistorie, Kurs der Perps
@@ -452,8 +458,8 @@ async function paper(env) {
       p._costp = ["XAUUSD", "XAGUSD"].includes(sym) ? 0.0006 : (E.SYMS[sym]?._costp ?? 0.0012);
     }
     if (s.family !== "deriv" && E.SYMS[sym]?._costp) Object.assign(p, E.withSym(JSON.parse(s.params), data.px || (data.D1 && data.D1.length ? data.D1[data.D1.length - 1].c : 0)));
-    if (!["swing", "deriv", "fxs"].includes(s.family) && !data.DAYS) continue;
-    const daily = ["swing", "deriv", "fxs"].includes(s.family);
+    if (!["swing", "deriv", "fxs", "ibs", "tt", "tbo"].includes(s.family) && !data.DAYS) continue;
+    const daily = ["swing", "deriv", "fxs", "ibs", "tt"].includes(s.family);
     if (s.family === "swing" && p.filt && p.filt !== "none" && data.D1) {   // COT/Realzins-Filter (v1.5)
       const cot = (await env.DB.prepare("SELECT d, mm_l, mm_s, oi FROM hub_cot WHERE sym = ? ORDER BY d").bind(sym).all()).results;
       const ry = (await env.DB.prepare("SELECT d, v FROM hub_macro WHERE series = 'DFII10' ORDER BY d").all()).results;
