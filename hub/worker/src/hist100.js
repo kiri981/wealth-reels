@@ -9,7 +9,10 @@ const N = (x) => (x == null || x === "" ? null : +x);
 export const H100 = ["FARTCOIN", "GOAT", "PNUT", "MOODENG", "CHILLGUY", "USELESS", "ZEREBRO", "FWOG", "MICHI", "RETARDIO", "SIGMA", "ACT", "LOCKIN", "ALCH",
   "GRIFFAIN", "BUTTCOIN", "HOUSE", "TROLL", "ANI", "JELLYJELLY", "VINE", "KLED", "AI16Z", "GIGA", "WIF", "BONK", "POPCAT", "MEW", "PONKE", "BOME", "SLERF", "MOTHER"];
 
-async function j(url) { const r = await fetch(url, { headers: UA }).catch(() => null); return r && r.ok ? r.json().catch(() => null) : null; }
+async function j(url) {   // v3.0b: bei 429 (zu viele Anfragen) bis zu 3× mit Pause wiederholen
+  for (let k = 0; k < 3; k++) { const r = await fetch(url, { headers: UA }).catch(() => null); if (r && r.ok) return r.json().catch(() => null); if (r && r.status !== 429) return null; await new Promise((z) => setTimeout(z, 2500 * (k + 1))); }
+  return null;
+}
 
 async function one(sym) {
   const s = await j(`${DS}/latest/dex/search?q=${encodeURIComponent(sym)}`);
@@ -30,10 +33,14 @@ async function one(sym) {
     mc_now: N(p.marketCap), x_now: N(p.priceUsd) / base, soc: (p.info?.socials || []).map((x) => x.type).concat((p.info?.websites || []).length ? ["web"] : []), liq_now: N(p.liquidity?.usd), days: L.length, narr: KNOWN[sym]?.[0] || tagNarr(p.baseToken?.name, sym), story: KNOWN[sym]?.[1] || null };
 }
 
-export async function hist100Tick(env, kvGet, kvPut, n = 8) {
-  const cur = JSON.parse((await kvGet(env, "hist100")) || "[]"); const done = new Set(cur.map((x) => x.sym));
+export async function hist100Tick(env, kvGet, kvPut, n = 2) {
+  let cur = JSON.parse((await kvGet(env, "hist100")) || "[]");
+  const tries = JSON.parse((await kvGet(env, "hist100_try")) || "{}");
+  cur = cur.filter((x) => !x.err || (tries[x.sym] || 0) >= 3);   // Fehlschläge (meist Abruf-Grenze) bis zu 3× neu versuchen
+  for (const x of cur) if (x.err) tries[x.sym] = tries[x.sym] || 3;
+  const done = new Set(cur.map((x) => x.sym));
   const todo = H100.filter((s) => !done.has(s)).slice(0, n); if (!todo.length) return "Rückblick 100×: fertig (" + cur.length + ")";
-  for (const s of todo) { try { cur.push(await one(s)); } catch (e) { cur.push({ sym: s, err: e.message }); } }
-  await kvPut(env, "hist100", JSON.stringify(cur));
+  for (const s of todo) { let r; try { r = await one(s); } catch (e) { r = { sym: s, err: e.message }; } if (r.err) { tries[s] = (tries[s] || 0) + 1; if (tries[s] >= 3) cur.push(r); } else cur.push(r); }
+  await kvPut(env, "hist100", JSON.stringify(cur)); await kvPut(env, "hist100_try", JSON.stringify(tries));
   return `Rückblick 100×: ${cur.length}/${H100.length}`;
 }

@@ -1,3 +1,4 @@
+import { rpc } from "./helius.js";
 // WC Trading Hub – Wallet-Finder (v3.0, Solana): sucht selbstständig und laufend nach Wallets, die früh in starke Gewinner einsteigen.
 // v3.0: Gewinner haben bei Erkennung meist > 8.000 Transaktionen → Start nicht erreichbar. Daher VORAB-ERFASSUNG: junge Radar-Coins
 // (≤ 8 Std., Liq. ≥ 10k) bekommen ihre ersten Käufer sofort gespeichert; wird der Coin später ein Gewinner, werden diese Käufer übernommen.
@@ -34,10 +35,6 @@ export async function finderSchema(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_wfind_early (wallet TEXT, mint TEXT, t INTEGER, sol REAL, PRIMARY KEY (wallet, mint))"),
   ]);
   for (const col of ["status TEXT DEFAULT 'manual'", "found INTEGER", "score REAL"]) { try { await env.DB.prepare("ALTER TABLE hub_wallet ADD COLUMN " + col).run(); } catch (e) {} }
-}
-async function rpc(env, body) {
-  const r = await fetch(`https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_KEY}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-  if (!r.ok) throw new Error("Helius " + r.status); return r.json();
 }
 async function j(url) { for (let k = 0; k < 3; k++) { const r = await fetch(url, { headers: UA }).catch(() => null); if (r && r.ok) return r.json(); if (r && r.status !== 429) return null; await wait(2500 * (k + 1)); } return null; }
 

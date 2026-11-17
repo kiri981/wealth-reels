@@ -1,3 +1,4 @@
+import { rpc } from "./helius.js";
 // WC Trading Hub – Smart-Wallet-Tracker (v1.9, Solana)
 // Kevin trägt erfolgreiche Wallets ein (gefunden z. B. über DexScreener „Top Traders“ oder gmgn.ai). Der Hub liest alle 5 Minuten
 // über Helius (Secret HELIUS_KEY) deren neue Transaktionen, erkennt Käufe/Verkäufe von Coins und meldet:
@@ -22,11 +23,6 @@ export async function walletSchema(env) {
 }
 let _mig = false;
 async function walletMig(env) { if (_mig) return; _mig = true; for (const col of ["status TEXT DEFAULT 'manual'", "found INTEGER", "score REAL"]) { try { await env.DB.prepare("ALTER TABLE hub_wallet ADD COLUMN " + col).run(); } catch (e) {} } }
-async function rpc(env, body) {
-  const r = await fetch(`https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_KEY}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-  if (!r.ok) throw new Error("Helius " + r.status + " " + (await r.text()).slice(0, 80));
-  return r.json();
-}
 async function dsInfo(mints) {
   const out = {};
   for (let i = 0; i < mints.length; i += 30) {

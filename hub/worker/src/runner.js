@@ -1,3 +1,4 @@
+import { rpc } from "./helius.js";
 // WC Trading Hub – Langläufer-Papier-Wallet (v3.0, Solana-Meme-Coins) – NUR SIMULIERT, kein echtes Geld, kein Schlüssel.
 // Idee (Kevin, 17.11.): Viele Meme-Coins machen ihr Vielfaches erst nach Tagen/Wochen → keine feste Haltedauer.
 //   Einstieg (Kevin 17.11.): Solana, Liquidität ≥ 10k $, Volumen 24 Std. ≥ 15k $, Marktwert ≥ 20k $, Alter 20 Min. – 6 Std., Sicherheitscheck nicht 🔴,
@@ -30,10 +31,6 @@ async function prices(tokens) {
     for (const x of Array.isArray(A) ? A : []) { const k = x.baseToken?.address; if (!out[k] || (N(x.liquidity?.usd) || 0) > (out[k].liq || 0)) out[k] = { px: N(x.priceUsd), liq: N(x.liquidity?.usd), mc: N(x.marketCap) || N(x.fdv), v24: N(x.volume?.h24), tx24: (x.txns?.h24?.buys || 0) + (x.txns?.h24?.sells || 0), soc: (x.info?.socials || []).length + (x.info?.websites || []).length, created: x.pairCreatedAt ? x.pairCreatedAt / 1000 : null }; }
   }
   return out;
-}
-async function rpc(env, body) {
-  const r = await fetch(`https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_KEY}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-  if (!r.ok) throw new Error("Helius " + r.status); return r.json();
 }
 const SYS = "11111111111111111111111111111111";
 // Axiom-ähnlich: Anteil der 10 größten ECHTEN Wallets (Pools, Bonding-Kurven und andere Programm-Konten werden herausgerechnet)
