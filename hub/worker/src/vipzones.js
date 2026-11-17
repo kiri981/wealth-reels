@@ -25,7 +25,7 @@ const EV = [
 async function schema(env) {
   await env.DB.batch([
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_vipzone (id TEXT PRIMARY KEY, t INTEGER, side INTEGER, lo REAL, hi REAL, kind TEXT, tf TEXT, targets TEXT, sl REAL, src INTEGER, events TEXT, ev TEXT, done INTEGER DEFAULT 0)"),
-    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_vipidea (id INTEGER PRIMARY KEY, t INTEGER, dr INTEGER, lo REAL, hi REAL, sl REAL, tps TEXT, msg_id INTEGER, chat TEXT, events TEXT, ev TEXT, done INTEGER DEFAULT 0)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_vipidea (id INTEGER PRIMARY KEY, t INTEGER, dr INTEGER, lo REAL, hi REAL, sl REAL, tps TEXT, msg_id INTEGER, chat TEXT, events TEXT, ev TEXT, done INTEGER DEFAULT 0, mkt INTEGER DEFAULT 0)"),
   ]);
 }
 function parseZones(text) {   // alle Zonen in einem Beitrag (Hauptzone + „nächste Zonen“)
@@ -190,7 +190,7 @@ export async function vzTick(env, say, kvGet, kvPut) {
 // ohne Ziel 2 R. Spätere Beiträge „schließen/raus/Gewinne mitnehmen“ bzw. „SL auf Einstand/BE“ werden wie von Kevin angesagt umgesetzt. Max. 72 Std.
 const PX = "(\\d{3,5}(?:[.,]\\d{1,2})?)";
 const IX = {
-  entry: new RegExp(`(?:\\bentry\\b|\\beinstieg(?:spreis)?\\b|\\b(?:kauf|kaufe|verkauf|verkaufe|buy|sell)\\s+(?:bei|ab|@)|@)\\s*[:=]?\\s*(?:bei|ab|um|zwischen|zone)?\\s*(?:${PX}(?:\\s*(?:[–-]|bis)\\s*${PX})?|(market|markt|sofort|jetzt|now|cmp))`, "i"),
+  entry: new RegExp(`(?:\\bentry\\b|\\beinstieg(?:spreis)?\\b|\\b(?:kauf|kaufe|verkauf|verkaufe|buy|sell)\\s+(?:bei|ab|@)|@)\\s*(?:now|jetzt|sofort)?\\s*[:=@]?\\s*(?:bei|ab|um|zwischen|zone)?\\s*(?:${PX}(?:\\s*(?:[–\\-/]|bis)\\s*${PX})?|(market|markt|sofort|jetzt|now|cmp))`, "i"),
   sl: new RegExp(`\\b(?:sl|stop\\s*loss|stopp?)\\b\\s*(?:über|ueber|unter|bei|@)?\\s*[:=]?\\s*${PX}`, "i"),
   tp: new RegExp(`\\b(?:tp|take\\s*profit|ziel|target)(?:\\s*\\d(?!\\d))?\\s*[:=]?\\s*${PX}`, "gi"),
   head: new RegExp(`\\b(?:gold|xauusd|xau)\\b[^\\d\\n]{0,12}?\\b(buy|sell|long|short|kauf|verkauf)\\b(?:\\s*(?:limit|stop)?\\s*(?:@|bei|ab)?\\s*${PX}(?:\\s*(?:[–-]|bis)\\s*${PX})?|\\s+(jetzt|sofort|now|market|markt|cmp))|\\b(buy|sell|long|short|kauf|verkauf)\\s+(?:gold|xauusd|xau)\\b\\s*(?:@|bei|ab)?\\s*${PX}?(?:\\s*(?:[–-]|bis)\\s*${PX})?\\s*(jetzt|sofort|now|market|markt|cmp)?`, "i"),
@@ -213,12 +213,14 @@ function parseIdea(text) {
   let tps = [...t.matchAll(IX.tp)].map((m) => num(m[1]));
   const z = t.match(IX.tps); if (!tps.length && z) tps = (z[1].match(/\d{3,5}(?:[.,]\d+)?/g) || []).map(num);
   tps = [...new Set(tps)].filter((x) => Math.abs(x - sl) < 300).sort((a, b) => (a - b) * dr);
-  return { dr, lo, hi, sl, tps, mkt: lo == null };
+  const mkt = lo == null || /\b(now|jetzt|sofort|market|markt|cmp)\b/i.test(t);   // „Gold Sell Now 3870–3873“: sofort zum Marktpreis, Zone nur zur Info
+  if (lo == null) { const z2 = t.match(new RegExp(`${PX}\\s*(?:[–\\-/]|bis)\\s*${PX}`)); if (z2) { lo = num(z2[1]); hi = num(z2[2]); if (lo > hi) [lo, hi] = [hi, lo]; if ((lo + hi) / 2 - sl === 0 || ((lo + hi) / 2 - sl) * dr <= 0) { lo = hi = null; } } }
+  return { dr, lo, hi, sl, tps, mkt };
 }
 function ideaTrade(d, C) {   // d: Idee aus hub_vipidea (tps als Array, events als Array)
   const i0 = C.findIndex((k) => k.t >= d.t); if (i0 < 0) return null;
   const dr = d.dr; let ie = -1, e = null;
-  if (d.lo == null) { ie = i0; e = C[i0].o; }
+  if (d.lo == null || d.mkt) { ie = i0; e = C[i0].o; }
   else {
     const mid = (d.lo + d.hi) / 2, p0 = C[i0].o;
     if (Math.abs(p0 - mid) <= 1.5 || (p0 >= d.lo - 0.5 && p0 <= d.hi + 0.5)) { ie = i0; e = p0; }
@@ -228,24 +230,34 @@ function ideaTrade(d, C) {   // d: Idee aus hub_vipidea (tps als Array, events a
   const R = Math.abs(e - d.sl); if (!(R > 0) || (e - d.sl) * dr <= 0) return { none: true, why: "Kurs schon hinter dem SL" };
   const tps = (d.tps || []).filter((x) => (x - e) * dr > 0).slice(0, 3); const T = tps.length ? tps : [e + dr * 2 * R];
   const parts = T.map(() => 1 / T.length);
-  let left = 1, real = 0, stop = d.sl, hit = 0; const EVs = d.events || [];
+  let left = 1, real = 0, stop = d.sl, hit = 0; const EVs = d.events || [], noTp = !tps.length;
+  // Messung für später (welcher Ausstieg passt zu Kevins Ideen?): größter Vorlauf (MFE) in R vor SL/72 Std. und feste Ausstiege 1/1,5/2/3 R
+  let mfe = 0, mae = 0; const alt = {}; const X = [1, 1.5, 2, 3];
+  for (let i = ie; i < C.length && C[i].t - C[ie].t <= 72 * 3600; i++) { const k = C[i];
+    const adv = (dr > 0 ? k.l - e : e - k.h) / R; mae = Math.min(mae, adv);
+    for (const x of X) if (alt[x] == null && (adv <= -1 || (i === ie && false))) alt[x] = -1;
+    const fav = (dr > 0 ? k.h - e : e - k.l) / R; if (adv > -1) { mfe = Math.max(mfe, fav); for (const x of X) if (alt[x] == null && fav >= x) alt[x] = x; }
+    if (adv <= -1) break; }
+  const meas = { mfe: Math.round(mfe * 100) / 100, mae: Math.round(mae * 100) / 100, alt };
   for (let i = ie; i < C.length; i++) {
     const k = C[i];
+    if (noTp && stop !== e && ((dr > 0 ? k.h - e : e - k.l) >= R)) stop = e;   // ohne Ziele: ab +1 R Einstand
     for (const [w, te] of EVs) if (te > (C[i - 1]?.t ?? 0) && te <= k.t && te >= C[ie].t) {
-      if (w === "close") { real += left * dr * (k.o - e) / R; return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: "von Kevin geschlossen", tx: k.t, open: false }; }
+      if (w === "close") { real += left * dr * (k.o - e) / R; return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: "von Kevin geschlossen", tx: k.t, open: false, ...meas }; }
       if (w === "be" && (k.o - e) * dr > 0) stop = e;
     }
     if (i > ie || k.t > d.t) {
-      if ((dr > 0 && k.l <= stop) || (dr < 0 && k.h >= stop)) { real += left * dr * (stop - e) / R; return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: hit || stop === e ? "Rest auf Einstand" : "SL", tx: k.t, open: false }; }
+      if ((dr > 0 && k.l <= stop) || (dr < 0 && k.h >= stop)) { real += left * dr * (stop - e) / R; return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: hit || stop === e ? "Einstand" : "SL", tx: k.t, open: false, ...meas }; }
       while (hit < T.length && ((dr > 0 && k.h >= T[hit]) || (dr < 0 && k.l <= T[hit]))) { real += parts[hit] * dr * (T[hit] - e) / R; left -= parts[hit]; hit++; if (hit === 1) stop = e;
-        if (left <= 1e-9) return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: `Ziel ${hit}`, tx: k.t, open: false }; }
+        if (left <= 1e-9) return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: noTp ? "2 R erreicht" : `Ziel ${hit}`, tx: k.t, open: false, ...meas }; }
     }
-    if (k.t - C[ie].t >= 72 * 3600) { real += left * dr * (k.c - e) / R; return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: "Zeit (72 Std.)", tx: k.t, open: false }; }
+    if (k.t - C[ie].t >= 72 * 3600) { real += left * dr * (k.c - e) / R; return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: "Zeit (72 Std.)", tx: k.t, open: false, ...meas }; }
   }
-  const L = C.at(-1); return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real + left * dr * (L.c - e) / R - COST / R, why: "offen", tx: L.t, open: true, hit };
+  const L = C.at(-1); return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real + left * dr * (L.c - e) / R - COST / R, why: "offen", tx: L.t, open: true, hit, ...meas };
 }
 export async function ideaTick(env, say, kvGet, kvPut) {
   await schema(env);
+  await env.DB.prepare("ALTER TABLE hub_vipidea ADD COLUMN mkt INTEGER DEFAULT 0").run().catch(() => {});
   const last = +((await kvGet(env, "vi_last")) || 0);
   const R = (await env.DB.prepare("SELECT id, t, chat, msg_id, reply_to, text FROM vipfeed WHERE id > ? AND text IS NOT NULL AND text != '' ORDER BY id LIMIT 200").bind(last).all()).results;
   let n = 0;
@@ -254,8 +266,8 @@ export async function ideaTick(env, say, kvGet, kvPut) {
     if (d) {
       const dup = await env.DB.prepare("SELECT id FROM hub_vipidea WHERE dr = ? AND ABS(sl - ?) < 0.3 AND ABS(t - ?) < 3600").bind(d.dr, d.sl, r.t).first();
       if (!dup) {
-        await env.DB.prepare("INSERT INTO hub_vipidea (id, t, dr, lo, hi, sl, tps, msg_id, chat, events) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '[]')").bind(r.id, r.t, d.dr, d.lo, d.hi, d.sl, JSON.stringify(d.tps), r.msg_id, r.chat).run(); n++;
-        await say(env, `📌 VIP-Trade-Idee erfasst (Papier): Gold ${d.dr > 0 ? "Kauf" : "Verkauf"} ${d.lo == null ? "sofort" : d.lo === d.hi ? d.lo : d.lo + "–" + d.hi}, SL ${d.sl}${d.tps.length ? ", Ziele " + d.tps.join(" · ") : " (ohne Ziel → 2 R)"}. Der Hub wertet sie mit echten Kursen aus.`).catch(() => {});
+        await env.DB.prepare("INSERT INTO hub_vipidea (id, t, dr, lo, hi, sl, tps, msg_id, chat, events, mkt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?)").bind(r.id, r.t, d.dr, d.lo, d.hi, d.sl, JSON.stringify(d.tps), r.msg_id, r.chat, d.mkt ? 1 : 0).run(); n++;
+        await say(env, `📌 VIP-Trade-Idee erfasst (Papier): Gold ${d.dr > 0 ? "Kauf" : "Verkauf"} ${d.mkt ? "sofort" + (d.lo != null ? " (Zone " + d.lo + "–" + d.hi + ")" : "") : d.lo === d.hi ? d.lo : d.lo + "–" + d.hi}, SL ${d.sl}${d.tps.length ? ", Ziele " + d.tps.join(" · ") : " (ohne Ziel: Einstand ab +1 R, Ziel 2 R, oder bis du „raus“ schreibst)"}. Der Hub wertet sie mit echten Kursen aus.`).catch(() => {});
       }
       continue;
     }
@@ -274,7 +286,7 @@ export async function ideaTick(env, say, kvGet, kvPut) {
       const tr = ideaTrade({ ...d, tps: JSON.parse(d.tps || "[]"), events: JSON.parse(d.events || "[]") }, C); if (!tr || tr.wait) continue;
       const done = tr.none || !tr.open ? 1 : 0;
       await env.DB.prepare("UPDATE hub_vipidea SET ev = ?, done = ? WHERE id = ?").bind(JSON.stringify(tr), done, d.id).run();
-      if (done && !tr.none) { closed++; await say(env, `📒 VIP-Trade-Idee Gold ${tr.dr > 0 ? "Kauf" : "Verkauf"} ab ${tr.e.toFixed(2)}: ${tr.why}, ${tr.r >= 0 ? "+" : ""}${tr.r.toFixed(2)} R (Papier).`).catch(() => {}); }
+      if (done && !tr.none) { closed++; await say(env, `📒 VIP-Trade-Idee Gold ${tr.dr > 0 ? "Kauf" : "Verkauf"} ab ${tr.e.toFixed(2)}: ${tr.why}, ${tr.r >= 0 ? "+" : ""}${tr.r.toFixed(2)} R (Papier). Lief maximal ${tr.mfe} R in deine Richtung.`).catch(() => {}); }
     }
   }
   return `VIP-Trade-Ideen: ${n} neu, ${D.length} offen geprüft, ${closed} abgeschlossen`;
