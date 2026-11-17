@@ -1,0 +1,93 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "PSYCHOLOGY",
+  "title": "Too many *trades*?",
+  "chart": "range"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Ten trades a day – and still in the red?",
+   "accent": "That's no accident.",
+   "icon": "alert",
+   "say": "Ten trades a day – and still in the red?"
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "OVERTRADING",
+   "text": "More trades than your plan allows – driven by feelings, not setups.",
+   "say": "Overtrading: trades driven by feelings, not setups."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "WARNING SIGN 01",
+   "text": "You hunt for a reason to enter – instead of waiting for your setup.",
+   "say": "One: you hunt for a reason to enter."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "WARNING SIGN 02 · Example",
+   "from": 3,
+   "to": 12,
+   "decimals": 0,
+   "prefix": "",
+   "suffix": " trades",
+   "color": "red",
+   "sub": "Plan: 3 a day – taken: 12.",
+   "say": "Two: three trades planned, twelve by evening."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "WARNING SIGN 03",
+   "text": "You keep dropping to lower timeframes until you find something.",
+   "say": "Three: you keep dropping to lower timeframes."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "The antidote",
+   "items": [
+    {
+     "left": "01",
+     "right": "Max. 3 trades per day"
+    },
+    {
+     "left": "02",
+     "right": "Only setups from your plan",
+     "hot": true
+    },
+    {
+     "left": "03",
+     "right": "Limit hit? Close the chart."
+    }
+   ],
+   "say": "The antidote: a fixed daily limit."
+  },
+  {
+   "type": "words",
+   "dur": 3.4,
+   "kicker": "REMEMBER",
+   "text": "Not every candle is a chance. Fewer trades, better trades.",
+   "say": "Remember: fewer trades, better trades."
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Trade less. Trade better.",
+   "button": "Comment GOLD",
+   "say": "I share planned setups live in my free group. Comment GOLD."
+  }
+ ],
+ "lang": "en"
+}

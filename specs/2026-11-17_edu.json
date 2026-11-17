@@ -1,0 +1,92 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "PSYCHOLOGIE",
+  "title": "Zu viele *Trades*?",
+  "chart": "range"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Zehn Trades am Tag – und trotzdem im Minus?",
+   "accent": "Das ist kein Zufall.",
+   "icon": "alert",
+   "say": "Zehn Trades am Tag – und trotzdem im Minus?"
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "OVERTRADING",
+   "text": "Mehr Trades, als dein Plan erlaubt – aus Gefühl statt Setup.",
+   "say": "Overtrading: Trades aus Gefühl statt Setup."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "WARNZEICHEN 01",
+   "text": "Du suchst nach einem Grund zum Einsteigen – statt auf dein Setup zu warten.",
+   "say": "Eins: Du suchst einen Grund zum Einsteigen."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "WARNZEICHEN 02 · Beispiel",
+   "from": 3,
+   "to": 12,
+   "decimals": 0,
+   "prefix": "",
+   "suffix": " Trades",
+   "color": "red",
+   "sub": "Plan: 3 pro Tag – gemacht: 12.",
+   "say": "Zwei: Geplant drei Trades, am Abend zwölf."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "WARNZEICHEN 03",
+   "text": "Du wechselst ständig auf kleinere Zeiteinheiten, bis du etwas findest.",
+   "say": "Drei: Du springst auf immer kleinere Zeiteinheiten."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "Das Gegenmittel",
+   "items": [
+    {
+     "left": "01",
+     "right": "Max. 3 Trades pro Tag"
+    },
+    {
+     "left": "02",
+     "right": "Nur Setups aus dem Plan",
+     "hot": true
+    },
+    {
+     "left": "03",
+     "right": "Limit erreicht? Chart zu."
+    }
+   ],
+   "say": "Das Gegenmittel: ein festes Tageslimit."
+  },
+  {
+   "type": "words",
+   "dur": 3.4,
+   "kicker": "MERKE",
+   "text": "Nicht jede Kerze ist eine Chance. Weniger Trades, bessere Trades.",
+   "say": "Merke: Weniger Trades, bessere Trades."
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Weniger traden. Besser traden.",
+   "button": "Kommentiere GOLD",
+   "say": "Geplante Setups zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}
