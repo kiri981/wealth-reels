@@ -1,0 +1,12 @@
+{
+ "caption": "3 Fehler bei Ausbrüchen im Gold-Chart ⚠️\n\nDer Kurs bricht über das Hoch, du steigst ein – und Minuten später ist alles wieder zurück. So erkennst du Fehlausbrüche früher.\n\n📌 Speicher dir das\n\n💬 Kommentiere GOLD und ich schick dir den Link zur kostenlosen Gold-Community.\n\nKeine Anlageberatung.\n\n#gold #xauusd #trading #chartanalyse #tradingdeutsch",
+ "slides": [
+  {"type": "cover", "pill": "TECHNIK · AUSBRÜCHE", "title": "3 Fehler bei *Ausbrüchen* im Gold-Chart", "sub": "Warum so viele Breakouts schnell wieder zurückfallen.", "chart": "sweep", "tag": "Fehlausbruch"},
+  {"type": "text", "title": "Was ist ein *Fakeout*?", "body": "Der Kurs bricht kurz über ein Hoch oder unter ein Tief – und kehrt dann schnell zurück. Wer zu früh einsteigt, steht plötzlich auf der falschen Seite."},
+  {"type": "step", "n": 1, "label": "FEHLER", "title": "Beim *Docht* einsteigen", "body": "Ein Docht unter der Zone zeigt nur, dass der Kurs kurz dort war. Entscheidend ist, wo die Kerze schließt.", "chart": "sweep", "tag": "Nur Docht"},
+  {"type": "step", "n": 2, "label": "FEHLER", "title": "Nur auf *M1* schauen", "body": "Ein Ausbruch im 1-Minuten-Chart ist oft nur Rauschen. Prüfe den Kerzenschluss auf einem höheren Zeitrahmen, z. B. M15 oder H1.", "quote": "Erst der Kerzenschluss zählt."},
+  {"type": "step", "n": 3, "label": "FEHLER", "title": "Ohne *Bestätigung* rein", "body": "Viele Trader warten nach dem Ausbruch auf einen Rücklauf an die gebrochene Zone – und steigen erst ein, wenn sie dort hält.", "quote": "Lieber später rein als falsch rein."},
+  {"type": "list", "title": "*Merke* dir", "items": ["Kerzenschluss statt Docht", "Höheren Zeitrahmen prüfen", "Rücklauf an die Zone abwarten", "Stop hinter die Zone, Risiko klein"]},
+  {"type": "cta", "title": "Willst du meine *Gold-Setups* live?", "body": "Jeden Tag Briefing, Lern-Reels und Trade-Ideen mit Entry, Stop und Ziel.", "button": "Kommentiere GOLD"}
+ ]
+}
