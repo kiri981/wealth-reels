@@ -15,6 +15,7 @@ async function schema(env) {
   await env.DB.batch([
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_hl_wallet (addr TEXT PRIMARY KEY, label TEXT, status TEXT DEFAULT 'probe', added TEXT, stats TEXT, note TEXT)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_hl_pos (addr TEXT, coin TEXT, szi REAL, entry REAL, lev REAL, val REAL, t INTEGER, PRIMARY KEY (addr, coin))"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_hl_cons (t INTEGER, coin TEXT, long INTEGER, short INTEGER, lv REAL, sv REAL, PRIMARY KEY (t, coin))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_hl_trade (id INTEGER PRIMARY KEY AUTOINCREMENT, addr TEXT, coin TEXT, dr INTEGER, t_open INTEGER, px_open REAL, lev REAL, val REAL, t_close INTEGER, px_close REAL, pnl REAL, why TEXT)"),
   ]);
 }
@@ -63,6 +64,13 @@ export async function hlTick(env, say, kvGet, kvPut) {
     if (first) await kvPut(env, "hl_init_" + w.addr, String(now));
   }
   await kvPut(env, "hl_cons", JSON.stringify({ t: now, n: seen, cons }));
+  // v3.5 Verlauf (alle 5 Min., 90 Tage) – damit der Filter-Prüfer später „Profis gleiche Richtung?“ zum Einstiegszeitpunkt nachsehen kann
+  if (seen >= Math.max(3, W.length * 0.7)) {
+    const tb = now - (now % 300), st = Object.entries(cons).map(([coin, c]) => env.DB.prepare("INSERT OR REPLACE INTO hub_hl_cons (t, coin, long, short, lv, sv) VALUES (?, ?, ?, ?, ?, ?)").bind(tb, coin, c.long, c.short, c.lv, c.sv));
+    st.push(env.DB.prepare("INSERT OR REPLACE INTO hub_hl_cons (t, coin, long, short, lv, sv) VALUES (?, '_n', ?, 0, 0, 0)").bind(tb, seen));
+    for (let i = 0; i < st.length; i += 100) await env.DB.batch(st.slice(i, i + 100));
+    await env.DB.prepare("DELETE FROM hub_hl_cons WHERE t < ?").bind(now - 90 * 86400).run();
+  }
   // Tageszusammenfassung 21 Uhr (Bukarest)
   const d = new Date(), loc = (d.getUTCHours() + 2) % 24, day = d.toISOString().slice(0, 10);
   if (loc === 21 && (await kvGet(env, "hl_day")) !== day) {

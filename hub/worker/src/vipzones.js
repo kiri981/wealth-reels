@@ -170,7 +170,7 @@ export async function vzTick(env, say, kvGet, kvPut) {
   // v3.1 Zonen als Filter für die übrigen Gold-Strategien – nur MESSEN (nicht eingreifen): Ø R mit / gegen / ohne aktive Zone in der Nähe
   try {
     const ZZ = (await env.DB.prepare("SELECT t, side, lo, hi, ev FROM hub_vipzone").all()).results.map((z) => ({ ...z, e: z.ev ? JSON.parse(z.ev) : {} }));
-    const TR = (await env.DB.prepare("SELECT t.sid, t.t, t.dr, t.e, t.r FROM hub_trades t JOIN hub_strats s ON s.id = t.sid WHERE t.closed = 1 AND COALESCE(t.sym, 'XAUUSD') = 'XAUUSD' AND s.family != 'vipz' AND t.t > ?").bind(Math.floor(Date.now() / 1000) - 90 * 86400).all()).results;
+    const TR = (await env.DB.prepare("SELECT t.sid, t.t, t.dr, t.e, t.r FROM hub_trades t JOIN hub_strats s ON s.id = t.sid WHERE t.closed = 1 AND COALESCE(t.sym, 'XAUUSD') = 'XAUUSD' AND s.family NOT IN ('vipz', 'filt') AND t.t > ?").bind(Math.floor(Date.now() / 1000) - 90 * 86400).all()).results;
     const F = {};
     for (const x of TR) {
       const act = ZZ.filter((z) => z.t <= x.t && x.t - z.t < 2 * 86400 && !(z.e.broken && z.e.broken <= x.t) && Math.min(Math.abs(x.e - z.lo), Math.abs(x.e - z.hi)) <= 15);

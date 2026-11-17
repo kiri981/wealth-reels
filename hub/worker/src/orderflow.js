@@ -149,7 +149,7 @@ export async function ofTick(env, say, kvGet, kvPut) {
   // Messung (stündlich): Ø R unserer geschlossenen Papier-Trades mit / gegen / ohne Orderflow (Delta der Stunde VOR dem Einstieg)
   if (new Date().getUTCMinutes() < 5) {
     try {
-      const TR = (await env.DB.prepare("SELECT t.t, t.dr, t.r, COALESCE(t.sym, 'XAUUSD') sym FROM hub_trades t WHERE t.closed = 1 AND t.t > ?").bind(now - 60 * 86400).all()).results;
+      const TR = (await env.DB.prepare("SELECT t.t, t.dr, t.r, COALESCE(t.sym, 'XAUUSD') sym FROM hub_trades t WHERE t.closed = 1 AND t.sid NOT LIKE '%|%' AND t.t > ?").bind(now - 60 * 86400).all()).results;
       const F = {}, BY = {};
       for (const x of TR) if (OF[x.sym]) (BY[x.sym] ||= []).push(x);
       for (const [sym, L] of Object.entries(BY)) {
