@@ -16,6 +16,7 @@ import { hist100Tick } from "./hist100.js";
 import { narrTick } from "./narrative.js";
 import { vzTick, vzTradesAll, ideaTick } from "./vipzones.js";
 import { hlTick } from "./hltrack.js";
+import { ofTick } from "./orderflow.js";
 import { sigTick, sigPage, sigData } from "./signals.js";
 import { memeLearn, mlPage } from "./memelearn.js";
 import { olTick } from "./outlook.js";
@@ -23,7 +24,7 @@ import { altLearn, PARTS } from "./altlearn.js";
 import { czMap, hist } from "./alts.js";
 import { mpRules, mpFast, fwCheck } from "./mpaper.js";
 
-const VERSION = "3.3";
+const VERSION = "3.4";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -650,6 +651,7 @@ export default {
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/sigrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Fremd-Ideen: " + e.message)));   // v2.6 Telegram-Kanäle
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/runrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Langläufer: " + e.message)));   // v3.0
     if (env.SELF && env.HUB_KEY && !/fertig/.test((await kvGet(env, "log_hist100")) || "")) ctx.waitUntil(env.SELF.fetch("https://wc-hub/hist100run?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Rückblick: " + e.message)));   // v3.0 einmaliger 100×-Rückblick
+    if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/ofrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Orderflow: " + e.message)));   // v3.4 alle 5 Min.
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/hlrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Hyperliquid: " + e.message)));   // v3.3 alle 5 Min.
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/vzrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("VIP-Zonen: " + e.message)));   // v3.1 alle 5 Min.
     if (m >= 45 && m < 50 && env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/narrrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Narrative: " + e.message)));   // v3.0 stündlich
@@ -684,6 +686,7 @@ export default {
     if (url.pathname === "/sig") return new Response(await sigPage(env), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/sigjson") return Response.json(await sigData(env));
     if (url.pathname === "/fxrun") return new Response(await fxRun(env));
+    if (url.pathname === "/ofrun") { try { const msg = await ofTick(env, say, kvGet, kvPut); await kvPut(env, "log_of", new Date().toISOString() + " " + msg.slice(0, 900)); return new Response(msg); } catch (e) { await kvPut(env, "log_of", "Fehler " + e.message); return new Response("Orderflow-Fehler " + e.message); } }
     if (url.pathname === "/hlrun") { try { const msg = await hlTick(env, say, kvGet, kvPut); await kvPut(env, "log_hl", new Date().toISOString() + " " + msg); return new Response(msg); } catch (e) { await kvPut(env, "log_hl", "Fehler " + e.message); return new Response("Hyperliquid-Fehler " + e.message); } }
     if (url.pathname === "/vzrun") { try { const msg = await vzTick(env, say, kvGet, kvPut); const m2 = await ideaTick(env, say, kvGet, kvPut).catch((e) => "VIP-Trade-Ideen-Fehler " + e.message); await kvPut(env, "log_vz", msg + " · " + m2); await kvPut(env, "log_vi", m2); return new Response(msg); } catch (e) { return new Response("VIP-Zonen-Fehler " + e.message); } }
     if (url.pathname === "/narrrun") { try { const msg = await narrTick(env, say, kvGet, kvPut); await kvPut(env, "log_narr", msg); return new Response(msg); } catch (e) { return new Response("Narrativ-Fehler " + e.message); } }
