@@ -25,6 +25,7 @@ const EV = [
 async function schema(env) {
   await env.DB.batch([
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_vipzone (id TEXT PRIMARY KEY, t INTEGER, side INTEGER, lo REAL, hi REAL, kind TEXT, tf TEXT, targets TEXT, sl REAL, src INTEGER, events TEXT, ev TEXT, done INTEGER DEFAULT 0)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_vipidea (id INTEGER PRIMARY KEY, t INTEGER, dr INTEGER, lo REAL, hi REAL, sl REAL, tps TEXT, msg_id INTEGER, chat TEXT, events TEXT, ev TEXT, done INTEGER DEFAULT 0)"),
   ]);
 }
 function parseZones(text) {   // alle Zonen in einem Beitrag (Hauptzone + „nächste Zonen“)
@@ -101,6 +102,7 @@ export async function vzTradesAll(env) {   // für die Papier-Engine: Trades je 
   const out = { A: [], B: [] };
   for (const z of Z) { const e = JSON.parse(z.ev); for (const v of ["A", "B"]) if (e.tr?.[v]) out[v].push(e.tr[v]); }
   for (const v of ["A", "B"]) out[v].sort((a, b) => a.t - b.t);
+  out.K = await viTradesAll(env).catch(() => []);   // v3.2 Kevins echte Trade-Ideen
   return out;
 }
 
@@ -179,4 +181,106 @@ export async function vzTick(env, say, kvGet, kvPut) {
   } catch (e) { console.log("vz_filter", e.message); }
   return `VIP-Zonen: ${R.length} Beiträge, ${nz} neue Zonen, ${ne} Ereignisse, ${Z.length} ausgewertet`;
 }
-export { parseZones, zoneOf, zoneTrades };
+
+// ---------- v3.2 Kevins echte Trade-Ideen aus der VIP-Gruppe (Kevin 17.11.: „richtige Entry- und SL-Signale, nicht die Setup-Erklärung“) ----------
+// Erfasst wird ein Beitrag NUR, wenn ausdrücklich ein Einstieg (Entry/Einstieg/Kauf bei/Verkauf bei) MIT Zahl UND ein SL/Stopp mit Zahl drinsteht.
+// Zonen-Beiträge („Achte auf … SL über 3869“) haben keinen Einstieg mit Zahl und bleiben reine Zonen.
+// Nur Gold (die VIP-Gruppe ist Gold; anderes Symbol im Text → übersprungen). Einstieg als Bereich → Limit in der Mitte, sonst Marktpreis,
+// wenn der Kurs nah ist (≤ 1,5 $), sonst Limit bis 12 Std. Ziele: TP1/TP2/TP3 bzw. „Ziele …“; je Ziel gleicher Anteil, nach Ziel 1 Einstand,
+// ohne Ziel 2 R. Spätere Beiträge „schließen/raus/Gewinne mitnehmen“ bzw. „SL auf Einstand/BE“ werden wie von Kevin angesagt umgesetzt. Max. 72 Std.
+const PX = "(\\d{3,5}(?:[.,]\\d{1,2})?)";
+const IX = {
+  entry: new RegExp(`(?:\\bentry\\b|\\beinstieg(?:spreis)?\\b|\\b(?:kauf|kaufe|verkauf|verkaufe|buy|sell)\\s+(?:bei|ab|@)|@)\\s*[:=]?\\s*(?:bei|ab|um|zwischen|zone)?\\s*(?:${PX}(?:\\s*(?:[–-]|bis)\\s*${PX})?|(market|markt|sofort|jetzt|now|cmp))`, "i"),
+  sl: new RegExp(`\\b(?:sl|stop\\s*loss|stopp?)\\b\\s*(?:über|ueber|unter|bei|@)?\\s*[:=]?\\s*${PX}`, "i"),
+  tp: new RegExp(`\\b(?:tp|take\\s*profit|ziel|target)(?:\\s*\\d(?!\\d))?\\s*[:=]?\\s*${PX}`, "gi"),
+  head: new RegExp(`\\b(?:gold|xauusd|xau)\\b[^\\d\\n]{0,12}?\\b(buy|sell|long|short|kauf|verkauf)\\b(?:\\s*(?:limit|stop)?\\s*(?:@|bei|ab)?\\s*${PX}(?:\\s*(?:[–-]|bis)\\s*${PX})?|\\s+(jetzt|sofort|now|market|markt|cmp))|\\b(buy|sell|long|short|kauf|verkauf)\\s+(?:gold|xauusd|xau)\\b\\s*(?:@|bei|ab)?\\s*${PX}?(?:\\s*(?:[–-]|bis)\\s*${PX})?\\s*(jetzt|sofort|now|market|markt|cmp)?`, "i"),
+  tps: /\bziele\s*:?\s*([\d.,\s·|/]+)/i,
+  other: /\b(BTC|ETH|EURUSD|GBPUSD|USDJPY|NAS(?:DAQ|100)?|US30|US500|SPX|DAX|GER40|XAGUSD|SILBER|SILVER|OIL|WTI)\b/i,
+  close: /(schließ|schliess|\bclose\b|\bgeschlossen\b|\braus\b|gewinne? mitnehmen|glattstellen|\bexit\b)/i,
+  be: /(einstand|break\s*-?\s*even|\bBE\b)/i,
+};
+function parseIdea(text) {
+  const t = String(text || ""); if (IX.other.test(t) && !/(gold|xau)/i.test(t)) return null;
+  const s = t.match(IX.sl); if (!s) return null;
+  let e = t.match(IX.entry);
+  if (!e) { const h = t.match(IX.head); if (!h) return null;   // Kopfzeile „GOLD SELL 3870–3873“ / „Kauf Gold jetzt“
+    if (h[1]) e = [null, h[2], h[3], h[4]]; else e = [null, h[6], h[7], h[8]];
+    if (!e[1] && !e[3]) return null; }
+  const sl = num(s[1]); let lo = e[1] ? num(e[1]) : null, hi = e[2] ? num(e[2]) : lo; if (lo != null && lo > hi) [lo, hi] = [hi, lo];
+  let dr = /\b(sell|short|verkauf|verkaufe|verkaufen)\b/i.test(t) ? -1 : /\b(buy|long|kauf|kaufe|kaufen)\b/i.test(t) ? 1 : 0;
+  if (lo != null) { const mid = (lo + hi) / 2; if (!dr) dr = mid > sl ? 1 : -1; if ((mid - sl) * dr <= 0 || Math.abs(mid - sl) > 80 || Math.abs(mid - sl) < 0.3) return null; }
+  else if (!dr) return null;
+  let tps = [...t.matchAll(IX.tp)].map((m) => num(m[1]));
+  const z = t.match(IX.tps); if (!tps.length && z) tps = (z[1].match(/\d{3,5}(?:[.,]\d+)?/g) || []).map(num);
+  tps = [...new Set(tps)].filter((x) => Math.abs(x - sl) < 300).sort((a, b) => (a - b) * dr);
+  return { dr, lo, hi, sl, tps, mkt: lo == null };
+}
+function ideaTrade(d, C) {   // d: Idee aus hub_vipidea (tps als Array, events als Array)
+  const i0 = C.findIndex((k) => k.t >= d.t); if (i0 < 0) return null;
+  const dr = d.dr; let ie = -1, e = null;
+  if (d.lo == null) { ie = i0; e = C[i0].o; }
+  else {
+    const mid = (d.lo + d.hi) / 2, p0 = C[i0].o;
+    if (Math.abs(p0 - mid) <= 1.5 || (p0 >= d.lo - 0.5 && p0 <= d.hi + 0.5)) { ie = i0; e = p0; }
+    else for (let i = i0; i < C.length && C[i].t - d.t <= 12 * 3600; i++) if (C[i].l <= mid && C[i].h >= mid) { ie = i; e = mid; break; }
+  }
+  if (ie < 0) return C.at(-1).t - d.t > 12 * 3600 ? { none: true, why: "Einstieg nicht erreicht (12 Std.)" } : { wait: true };
+  const R = Math.abs(e - d.sl); if (!(R > 0) || (e - d.sl) * dr <= 0) return { none: true, why: "Kurs schon hinter dem SL" };
+  const tps = (d.tps || []).filter((x) => (x - e) * dr > 0).slice(0, 3); const T = tps.length ? tps : [e + dr * 2 * R];
+  const parts = T.map(() => 1 / T.length);
+  let left = 1, real = 0, stop = d.sl, hit = 0; const EVs = d.events || [];
+  for (let i = ie; i < C.length; i++) {
+    const k = C[i];
+    for (const [w, te] of EVs) if (te > (C[i - 1]?.t ?? 0) && te <= k.t && te >= C[ie].t) {
+      if (w === "close") { real += left * dr * (k.o - e) / R; return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: "von Kevin geschlossen", tx: k.t, open: false }; }
+      if (w === "be" && (k.o - e) * dr > 0) stop = e;
+    }
+    if (i > ie || k.t > d.t) {
+      if ((dr > 0 && k.l <= stop) || (dr < 0 && k.h >= stop)) { real += left * dr * (stop - e) / R; return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: hit || stop === e ? "Rest auf Einstand" : "SL", tx: k.t, open: false }; }
+      while (hit < T.length && ((dr > 0 && k.h >= T[hit]) || (dr < 0 && k.l <= T[hit]))) { real += parts[hit] * dr * (T[hit] - e) / R; left -= parts[hit]; hit++; if (hit === 1) stop = e;
+        if (left <= 1e-9) return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: `Ziel ${hit}`, tx: k.t, open: false }; }
+    }
+    if (k.t - C[ie].t >= 72 * 3600) { real += left * dr * (k.c - e) / R; return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real - COST / R, why: "Zeit (72 Std.)", tx: k.t, open: false }; }
+  }
+  const L = C.at(-1); return { t: C[ie].t, dr, e, sl: d.sl, tp: T.at(-1), r: real + left * dr * (L.c - e) / R - COST / R, why: "offen", tx: L.t, open: true, hit };
+}
+export async function ideaTick(env, say, kvGet, kvPut) {
+  await schema(env);
+  const last = +((await kvGet(env, "vi_last")) || 0);
+  const R = (await env.DB.prepare("SELECT id, t, chat, msg_id, reply_to, text FROM vipfeed WHERE id > ? AND text IS NOT NULL AND text != '' ORDER BY id LIMIT 200").bind(last).all()).results;
+  let n = 0;
+  for (const r of R) {
+    const d = parseIdea(r.text);
+    if (d) {
+      const dup = await env.DB.prepare("SELECT id FROM hub_vipidea WHERE dr = ? AND ABS(sl - ?) < 0.3 AND ABS(t - ?) < 3600").bind(d.dr, d.sl, r.t).first();
+      if (!dup) {
+        await env.DB.prepare("INSERT INTO hub_vipidea (id, t, dr, lo, hi, sl, tps, msg_id, chat, events) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '[]')").bind(r.id, r.t, d.dr, d.lo, d.hi, d.sl, JSON.stringify(d.tps), r.msg_id, r.chat).run(); n++;
+        await say(env, `📌 VIP-Trade-Idee erfasst (Papier): Gold ${d.dr > 0 ? "Kauf" : "Verkauf"} ${d.lo == null ? "sofort" : d.lo === d.hi ? d.lo : d.lo + "–" + d.hi}, SL ${d.sl}${d.tps.length ? ", Ziele " + d.tps.join(" · ") : " (ohne Ziel → 2 R)"}. Der Hub wertet sie mit echten Kursen aus.`).catch(() => {});
+      }
+      continue;
+    }
+    const w = IX.close.test(r.text) ? "close" : IX.be.test(r.text) && /(sl|stop)/i.test(r.text) ? "be" : null;
+    if (w) {   // bezieht sich auf die beantwortete Idee, sonst die jüngste offene der letzten 72 Std.
+      const x = (r.reply_to && (await env.DB.prepare("SELECT id, events FROM hub_vipidea WHERE chat = ? AND msg_id = ?").bind(r.chat, r.reply_to).first()))
+        || (await env.DB.prepare("SELECT id, events FROM hub_vipidea WHERE done = 0 AND t <= ? AND t > ? ORDER BY t DESC LIMIT 1").bind(r.t, r.t - 72 * 3600).first());
+      if (x) { const E = JSON.parse(x.events || "[]"); E.push([w, r.t]); await env.DB.prepare("UPDATE hub_vipidea SET events = ? WHERE id = ?").bind(JSON.stringify(E), x.id).run(); }
+    }
+  }
+  if (R.length) await kvPut(env, "vi_last", String(R[R.length - 1].id));
+  const D = (await env.DB.prepare("SELECT * FROM hub_vipidea WHERE done = 0").all()).results; let closed = 0;
+  if (D.length) {
+    const C = (await env.DB.prepare("SELECT t, o, h, l, c FROM hub_candles WHERE tf = '5m' AND t >= ? ORDER BY t").bind(Math.min(...D.map((d) => d.t)) - 600).all()).results;
+    for (const d of D) {
+      const tr = ideaTrade({ ...d, tps: JSON.parse(d.tps || "[]"), events: JSON.parse(d.events || "[]") }, C); if (!tr || tr.wait) continue;
+      const done = tr.none || !tr.open ? 1 : 0;
+      await env.DB.prepare("UPDATE hub_vipidea SET ev = ?, done = ? WHERE id = ?").bind(JSON.stringify(tr), done, d.id).run();
+      if (done && !tr.none) { closed++; await say(env, `📒 VIP-Trade-Idee Gold ${tr.dr > 0 ? "Kauf" : "Verkauf"} ab ${tr.e.toFixed(2)}: ${tr.why}, ${tr.r >= 0 ? "+" : ""}${tr.r.toFixed(2)} R (Papier).`).catch(() => {}); }
+    }
+  }
+  return `VIP-Trade-Ideen: ${n} neu, ${D.length} offen geprüft, ${closed} abgeschlossen`;
+}
+export async function viTradesAll(env) {
+  const D = (await env.DB.prepare("SELECT ev FROM hub_vipidea WHERE ev IS NOT NULL").all().catch(() => ({ results: [] }))).results || [];
+  return D.map((d) => JSON.parse(d.ev)).filter((x) => x && !x.none && x.t).sort((a, b) => a.t - b.t);
+}
+export { parseZones, zoneOf, zoneTrades, parseIdea, ideaTrade };

@@ -12257,6 +12257,34 @@
    "live": {
     "n": 0
    }
+  },
+  {
+   "id": "vipz:K",
+   "name": "Gold · Kevins VIP-Trade-Ideen (Einstieg/SL/Ziele wie gepostet, Management wie angesagt)",
+   "family": "vipz",
+   "params": {
+    "sym": "XAUUSD",
+    "v": "K",
+    "tf": "5m"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "backtest": {
+    "n": 0,
+    "mean": null,
+    "win": null,
+    "pf": null,
+    "dd": null,
+    "tdev": null,
+    "thr": null,
+    "hold_mean": null,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "nur Vorwärtstest (Zonen aus dem VIP-Kanal ab 17.11.)"
+   },
+   "live": {
+    "n": 0
+   }
   }
  ],
  "log": [
@@ -12378,6 +12406,13 @@
    "von": "neu",
    "nach": "paper",
    "grund": "Kevin 17.11.: VIP-Zonen mittesten"
+  },
+  {
+   "id": "vipz:K",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: eigene VIP-Trade-Ideen (Entry/SL) mitschreiben und auswerten",
+   "d": "2026-11-17"
   }
  ],
  "updated": "2026-11-17T08:14:46+00:00"
