@@ -19,6 +19,7 @@ import { hlTick } from "./hltrack.js";
 import { ofTick } from "./orderflow.js";
 import { filtTick } from "./filtvar.js";
 import { exTick } from "./explore.js";
+import { scalpTick } from "./scalp.js";
 import { sigTick, sigPage, sigData } from "./signals.js";
 import { memeLearn, mlPage } from "./memelearn.js";
 import { olTick } from "./outlook.js";
@@ -26,7 +27,7 @@ import { altLearn, PARTS } from "./altlearn.js";
 import { czMap, hist } from "./alts.js";
 import { mpRules, mpFast, fwCheck } from "./mpaper.js";
 
-const VERSION = "3.7";
+const VERSION = "3.8";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -643,6 +644,7 @@ export default {
     if (String(ev.cron).startsWith("2-59")) { ctx.waitUntil(memeRun(env)); return; }   // falls ein zweiter Zeitplan aktiv ist
     // v2.8: Zeitplan jede Minute – Meme-Papier-Positionen alle ~15 Sek. prüfen (eigener Lauf); alles andere wie bisher nur alle 5 Minuten
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/mpfast?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Papier schnell: " + e.message)));
+    if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/scrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Scalper: " + e.message)));   // v3.7 jede Minute
     if (new Date().getUTCMinutes() % 5 !== 0) return;
     ctx.waitUntil(tick(env));
     // Meme-Radar + Smart-Wallets als EIGENER Lauf (eigenes Rechenzeit-Budget) über die Selbst-Verbindung SELF – braucht keinen zweiten Zeitplan
@@ -691,6 +693,7 @@ export default {
     if (url.pathname === "/sig") return new Response(await sigPage(env), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/sigjson") return Response.json(await sigData(env));
     if (url.pathname === "/fxrun") return new Response(await fxRun(env));
+    if (url.pathname === "/scrun") { try { const msg = await scalpTick(env, say, kvGet, kvPut); await kvPut(env, "log_sc", new Date().toISOString() + " " + msg.slice(0, 900)); return new Response(msg); } catch (e) { await kvPut(env, "log_sc", "Fehler " + e.message); return new Response("Scalper-Fehler " + e.message); } }
     if (url.pathname === "/exrun") { try { const msg = await exTick(env, say, kvGet, kvPut); await kvPut(env, "log_ex", new Date().toISOString() + " " + msg); return new Response(msg); } catch (e) { await kvPut(env, "log_ex", "Fehler " + e.message); return new Response("Entdecker-Fehler " + e.message); } }
     if (url.pathname === "/filtrun") { try { const msg = await filtTick(env, say, kvGet, kvPut); await kvPut(env, "log_filt", new Date().toISOString() + " " + msg); return new Response(msg); } catch (e) { await kvPut(env, "log_filt", "Fehler " + e.message); return new Response("Filter-Prüfer-Fehler " + e.message); } }
     if (url.pathname === "/ofrun") { try { const msg = await ofTick(env, say, kvGet, kvPut); await kvPut(env, "log_of", new Date().toISOString() + " " + msg.slice(0, 900)); return new Response(msg); } catch (e) { await kvPut(env, "log_of", "Fehler " + e.message); return new Response("Orderflow-Fehler " + e.message); } }

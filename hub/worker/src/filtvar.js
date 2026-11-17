@@ -22,6 +22,13 @@ export const FILTERS = {
   vz_nichtgegen: { name: "nicht gegen eine VIP-Zone", src: "vz", pass: (l) => l.vz !== -1 },
   hl_mit: { name: "Hyperliquid-Profis gleiche Richtung", src: "hl", pass: (l) => l.hl === 1 },
   hl_nichtgegen: { name: "Profis nicht dagegen", src: "hl", pass: (l) => l.hl !== -1 },
+  // v3.7 Marktphase (aus den eigenen Kerzen, 24 Std. vor dem Einstieg) und Zeit
+  trend_mit: { name: "mit dem 24-Std.-Trend", src: "reg", pass: (l) => l.reg === 1 },
+  keine_seitw: { name: "kein Seitwärtsmarkt", src: "reg", pass: (l) => l.reg !== 0 },
+  vola_ok: { name: "keine tote (ruhige) Phase", src: "vola", pass: (l) => l.vola !== -1 },
+  vola_ruhig: { name: "keine hektische Phase", src: "vola", pass: (l) => l.vola !== 1 },
+  sess_haupt: { name: "nur London/New York (7–21 Uhr UTC)", src: "sess", pass: (l) => l.sess === 1 },
+  wt_mitte: { name: "nur Dienstag–Donnerstag", src: "wt", pass: (l) => l.wt === 1 },
 };
 
 // ---------- Kontext je Markt laden und Trades beschriften ----------
@@ -33,6 +40,14 @@ async function ctx(env, sym, from) {
   }
   if (CMESYM.has(sym)) C.cme = new Map((await env.DB.prepare("SELECT t, vol FROM hub_cme WHERE sym = ? AND t > ?").bind(sym, from - 17 * DAY).all().catch(() => ({ results: [] }))).results.map((r) => [r.t, r.vol]));
   if (sym === "XAUUSD") C.vz = (await env.DB.prepare("SELECT t, side, lo, hi, ev FROM hub_vipzone").all().catch(() => ({ results: [] }))).results.map((z) => ({ ...z, e: z.ev ? JSON.parse(z.ev) : {} }));
+  {   // Stundenkerzen (eigene Tabelle, sonst aus 5-Min. zusammengesetzt)
+    const tk = sym === "XAUUSD" ? "" : sym + ":";
+    let H = (await env.DB.prepare("SELECT t, h, l, c FROM hub_candles WHERE tf = ? AND t > ? ORDER BY t").bind(tk + "1h", from - 25 * DAY).all().catch(() => ({ results: [] }))).results;
+    if (H.length < 200) { const F = (await env.DB.prepare("SELECT t, h, l, c FROM hub_candles WHERE tf = ? AND t > ? ORDER BY t").bind(tk + "5m", from - 25 * DAY).all().catch(() => ({ results: [] }))).results;
+      const M = new Map(); for (const k of F) { const b = k.t - (k.t % 3600), o = M.get(b); if (!o) M.set(b, { t: b, h: k.h, l: k.l, c: k.c }); else { o.h = Math.max(o.h, k.h); o.l = Math.min(o.l, k.l); o.c = k.c; } }
+      H = [...M.values()].sort((a, b) => a.t - b.t); }
+    C.h1 = H;
+  }
   if (HLC[sym]) C.hl = (await env.DB.prepare("SELECT t, long, short FROM hub_hl_cons WHERE coin = ? AND t > ? ORDER BY t").bind(HLC[sym], from - DAY).all().catch(() => ({ results: [] }))).results;
   return C;
 }
@@ -47,6 +62,15 @@ function label(C, x) {
     L.vz = !act.length ? 0 : act.every((z) => z.side === x.dr) ? 1 : act.every((z) => z.side !== x.dr) ? -1 : 0; }
   if (C.hl?.length) { let c = null; for (const r of C.hl) { if (r.t > x.t) break; if (r.t >= x.t - 1800) c = r; }
     if (c && c.long + c.short >= 3) { const net = (c.long - c.short) / (c.long + c.short); L.hl = Math.abs(net) < 0.2 ? 0 : Math.sign(net) === x.dr ? 1 : -1; } }
+  if (C.h1?.length > 48) {   // Marktphase: Effizienz (Netto-Weg / Gesamt-Weg) der letzten 24 Std.; Volatilität: Spanne 24 Std. vs. Median der 20 Tage davor
+    let j = -1; for (let i = C.h1.length - 1; i >= 0; i--) if (C.h1[i].t + 3600 <= x.t) { j = i; break; }
+    if (j >= 24) { const W = C.h1.slice(j - 23, j + 1); let path = 0; for (let i = 1; i < W.length; i++) path += Math.abs(W[i].c - W[i - 1].c);
+      const net = W[W.length - 1].c - W[0].c, er = path ? Math.abs(net) / path : 0; L.reg = er >= 0.35 ? (Math.sign(net) === x.dr ? 1 : -1) : er <= 0.15 ? 0 : 2;
+      if (j >= 24 * 21) { const rng = (A) => A.reduce((a, k) => a + (k.h - k.l), 0) / A.length, now_ = rng(W), P = [];
+        for (let d = 1; d <= 20; d++) P.push(rng(C.h1.slice(j - 23 - d * 24, j + 1 - d * 24))); P.sort((a, b) => a - b); const med = P[10];
+        L.vola = now_ > 1.3 * med ? 1 : now_ < 0.7 * med ? -1 : 0; } } }
+  const hh = new Date(x.t * 1000).getUTCHours(), wd = new Date(x.t * 1000).getUTCDay();
+  L.sess = hh >= 7 && hh < 21 ? 1 : 0; L.wt = wd >= 2 && wd <= 4 ? 1 : 0;
   return L;
 }
 const stat = (A) => { const n = A.length, m = n ? A.reduce((a, x) => a + x.r, 0) / n : null; return { n, m, w: n ? A.filter((x) => x.r > 0).length / n : null }; };
@@ -124,7 +148,7 @@ export async function filtTick(env, say, kvGet, kvPut) {
   if (d.getUTCDay() === 0 && loc >= 20 && (await kvGet(env, "flt_week")) !== day) {
     await kvPut(env, "flt_week", day);
     const src = {}; for (const m of M) { const k = FILTERS[m.f].src; const a = (src[k] ||= { n: 0, plus: 0, best: null }); a.n++; if (m.edge > 0.1) a.plus++; if (!a.best || m.edge > a.best.edge) a.best = m; }
-    const NM = { of: "Orderflow", cme: "CME-Volumen", vz: "VIP-Zonen", hl: "Hyperliquid-Profis" };
+    const NM = { of: "Orderflow", cme: "CME-Volumen", vz: "VIP-Zonen", hl: "Hyperliquid-Profis", reg: "Marktphase", vola: "Volatilität", sess: "Handelszeit", wt: "Wochentag" };
     const lines = Object.entries(src).map(([k, a]) => `• ${NM[k]}: hilft bei ${a.plus} von ${a.n} Prüfungen${a.best && a.best.edge > 0.1 ? ` – am meisten bei „${a.best.name}“ (${a.best.fn}: +${a.best.edge.toFixed(2)} R)` : ""}`);
     const nv = (await env.DB.prepare("SELECT COUNT(*) n FROM hub_strats WHERE family = 'filt' AND status != 'retired'").first())?.n || 0;
     await say(env, `🔗 Wochenbericht Verknüpfung\n${lines.length ? lines.join("\n") : "Noch zu wenige Trades für belastbare Vergleiche (je Strategie mind. 40 geschlossene)."}\nAktive Filter-Varianten: ${nv}\nNur Papier, keine Anlageberatung.`).catch(() => {});

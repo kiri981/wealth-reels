@@ -103,6 +103,11 @@ async function klines(sym, fromMs, iv) {   // → { ex, C: [{t,o,h,l,c}] aufstei
     if (r.ok) { const J = await r.json(); if (J.data?.length) return done("OKX", J.data.map((k) => ({ t: +k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4] }))); errs.push("OKX leer"); }
     else errs.push("OKX " + r.status);
   } catch (e) { errs.push("OKX " + e.message); }
+  try {   // v3.7 Gate.io als vierte Quelle (von Cloudflare aus erreichbar)
+    const r = await fetch(`https://api.gateio.ws/api/v4/futures/usdt/candlesticks?contract=${sym}_USDT&interval=${iv}&from=${Math.floor(fromMs / 1000)}&to=${Math.floor(Math.min(now, fromMs + 1999 * ms) / 1000)}`, { headers: UA });
+    if (r.ok) { const J = await r.json(); if (Array.isArray(J) && J.length) return done("Gate", J.map((k) => ({ t: +k.t * 1000, o: +k.o, h: +k.h, l: +k.l, c: +k.c }))); errs.push("Gate leer"); }
+    else errs.push("Gate " + r.status);
+  } catch (e) { errs.push("Gate " + e.message); }
   throw new Error(errs.join(", "));
 }
 

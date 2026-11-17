@@ -1,5 +1,5 @@
 import { rpc } from "./helius.js";
-import { chase, copycat } from "./memeguard.js";
+import { chase, copycat, devBundle } from "./memeguard.js";
 // WC Trading Hub – Langläufer-Papier-Wallet (v3.0, Solana-Meme-Coins) – NUR SIMULIERT, kein echtes Geld, kein Schlüssel.
 // Idee (Kevin, 17.11.): Viele Meme-Coins machen ihr Vielfaches erst nach Tagen/Wochen → keine feste Haltedauer.
 //   Einstieg (Kevin 17.11.): Solana, Liquidität ≥ 10k $, Volumen 24 Std. ≥ 15k $, Marktwert ≥ 20k $, Alter 20 Min. – 6 Std., Sicherheitscheck nicht 🔴,
@@ -25,18 +25,18 @@ async function schema(env) {
   ]);
 }
 // v3.2 (17.11.): Ein Kurssprung zählt nur, wenn echter Handel dahintersteht. Sonst Datenfehler (Schein-Pool: Marktwert 32 Mio., Liquidität 23 Mio., 100 $ Volumen/Std.)
-function plausible(p, q) {
+export function plausible(p, q) {
   if (q.mc && q.liq && q.liq > q.mc * 1.2) return false;
   const ref = p.last_px || p.px;
   if (q.px > ref * 3 && !((q.v1h || 0) >= (q.mc || 0) * 0.02 && (q.v1h || 0) >= 5000)) return false;
   return true;
 }
-async function prices(tokens) {
+export async function prices(tokens) {
   const out = {};
   for (let i = 0; i < tokens.length; i += 30) {
     const r = await fetch(`${DS}/tokens/v1/solana/${tokens.slice(i, i + 30).join(",")}`, { headers: { "User-Agent": "Mozilla/5.0 wc-hub" } }).catch(() => null);
     const A = r && r.ok ? await r.json().catch(() => []) : [];
-    for (const x of Array.isArray(A) ? A : []) { const k = x.baseToken?.address; if (!out[k] || (N(x.volume?.h24) || 0) > (out[k].v24 || 0)) out[k] = { px: N(x.priceUsd), liq: N(x.liquidity?.usd), mc: N(x.marketCap) || N(x.fdv), v1h: N(x.volume?.h1), v24: N(x.volume?.h24), tx24: (x.txns?.h24?.buys || 0) + (x.txns?.h24?.sells || 0), soc: (x.info?.socials || []).length + (x.info?.websites || []).length, created: x.pairCreatedAt ? x.pairCreatedAt / 1000 : null }; }
+    for (const x of Array.isArray(A) ? A : []) { const k = x.baseToken?.address; if (!out[k] || (N(x.volume?.h24) || 0) > (out[k].v24 || 0)) out[k] = { px: N(x.priceUsd), b5: x.txns?.m5?.buys || 0, s5: x.txns?.m5?.sells || 0, c5: N(x.priceChange?.m5), c1h: N(x.priceChange?.h1), v5: N(x.volume?.m5), pool: x.pairAddress, liq: N(x.liquidity?.usd), mc: N(x.marketCap) || N(x.fdv), v1h: N(x.volume?.h1), v24: N(x.volume?.h24), tx24: (x.txns?.h24?.buys || 0) + (x.txns?.h24?.sells || 0), soc: (x.info?.socials || []).length + (x.info?.websites || []).length, created: x.pairCreatedAt ? x.pairCreatedAt / 1000 : null }; }
   }
   return out;
 }
@@ -116,7 +116,9 @@ export async function runnerTick(env, say) {
         log.push(`${c.sym} abgelehnt (${h ? "Top10 " + Math.round(h.top10 * 100) + " %" : "keine Halterdaten"})`); continue;
       }
       const qty = RN.size / (q.px * (1 + RN.cost));
-      const f = JSON.stringify({ ...(c.f ? JSON.parse(c.f) : {}), top10: h.top10, top1: h.top1, ins_cluster: ins?.cluster ?? null, ins_fresh: ins?.fresh ?? null, soc_now: q.soc, narr: tagNarr(c.name, c.sym), mc_in: q.mc, liq_in: q.liq, v24_in: q.v24, tx24_in: q.tx24, volmc: vm, liqmc: lm });
+      let db_ = null; try { db_ = await devBundle(env, c.token); } catch (e) { log.push("Entwickler-Prüfung " + e.message); }   // v3.7
+      if (db_?.bad) { await env.DB.prepare("UPDATE hub_meme SET risk = json_set(COALESCE(risk, '{}'), '$.holders_bad', ?) WHERE id = ?").bind(db_.bad, c.id).run().catch(() => {}); log.push(`${c.sym} abgelehnt (${db_.bad})`); continue; }
+      const f = JSON.stringify({ ...(c.f ? JSON.parse(c.f) : {}), dev: db_?.dev || null, bundle: db_?.bundle ?? null, dev_n: db_?.hist?.n ?? null, dev_best: db_?.hist?.best ?? null, top10: h.top10, top1: h.top1, ins_cluster: ins?.cluster ?? null, ins_fresh: ins?.fresh ?? null, soc_now: q.soc, narr: tagNarr(c.name, c.sym), mc_in: q.mc, liq_in: q.liq, v24_in: q.v24, tx24_in: q.tx24, volmc: vm, liqmc: lm });
       await env.DB.prepare("INSERT OR IGNORE INTO hub_rpos (id, t, token, sym, px, qty, cost, peak, last_px, last_liq, last_seen, f) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(c.id, now, c.token, c.sym, q.px, qty, RN.size, q.px, q.px, q.liq, now, f).run();
       today++; free -= RN.size; log.push(`Kauf ${c.sym} (Top10 ${Math.round(h.top10 * 100)} %)`);
