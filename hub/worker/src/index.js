@@ -14,7 +14,7 @@ import { finderTick, finderData } from "./finder.js";
 import { runnerTick, runnerData } from "./runner.js";
 import { hist100Tick } from "./hist100.js";
 import { narrTick } from "./narrative.js";
-import { vzTick } from "./vipzones.js";
+import { vzTick, vzTradesAll } from "./vipzones.js";
 import { sigTick, sigPage, sigData } from "./signals.js";
 import { memeLearn, mlPage } from "./memelearn.js";
 import { olTick } from "./outlook.js";
@@ -466,6 +466,7 @@ async function paper(env) {
       const ry = (await env.DB.prepare("SELECT d, v FROM hub_macro WHERE series = 'DFII10' ORDER BY d").all()).results;
       p._filt = E.swingFilter(data.D1, p.filt, cot, ry);
     }
+    if (s.family === "vipz") { DATA.VZ ||= await vzTradesAll(env); data.VZ = DATA.VZ; }   // v3.1
     let tr; try { tr = E.trades(s.family, p, data); } catch (e) { console.log("Engine", s.id, e.message); continue; }
     const born = Math.floor(new Date((s.created || "2000-01-01") + "T00:00:00Z").getTime() / 1000) + 86400;   // nur Trades NACH der Aufnahme zählen (echter Vorwärtstest)
     for (const x of tr.filter((x) => (x.t >= recent || x.open) && x.t >= born && !inNews(x.t))) {

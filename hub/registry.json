@@ -12201,6 +12201,62 @@
     "mean": null,
     "win": null
    }
+  },
+  {
+   "id": "vipz:A",
+   "name": "Gold · VIP-Zonen A: Einstieg erst bei CHoCH-Bestätigung aus dem VIP-Kanal, SL/Ziele wie angesagt (je 1/3), nach Ziel 1 Einstand",
+   "family": "vipz",
+   "params": {
+    "sym": "XAUUSD",
+    "v": "A",
+    "tf": "5m"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "backtest": {
+    "n": 0,
+    "mean": null,
+    "win": null,
+    "pf": null,
+    "dd": null,
+    "tdev": null,
+    "thr": null,
+    "hold_mean": null,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "nur Vorwärtstest (Zonen aus dem VIP-Kanal ab 17.11.)"
+   },
+   "live": {
+    "n": 0
+   }
+  },
+  {
+   "id": "vipz:B",
+   "name": "Gold · VIP-Zonen B (Vergleich): Einstieg sofort bei Zonenberührung, SL wie angesagt, ganzes Ziel 1",
+   "family": "vipz",
+   "params": {
+    "sym": "XAUUSD",
+    "v": "B",
+    "tf": "5m"
+   },
+   "status": "paper",
+   "created": "2026-11-17",
+   "backtest": {
+    "n": 0,
+    "mean": null,
+    "win": null,
+    "pf": null,
+    "dd": null,
+    "tdev": null,
+    "thr": null,
+    "hold_mean": null,
+    "blocks_pos": null,
+    "mfe05": null,
+    "src": "nur Vorwärtstest (Zonen aus dem VIP-Kanal ab 17.11.)"
+   },
+   "live": {
+    "n": 0
+   }
   }
  ],
  "log": [
@@ -12308,6 +12364,20 @@
    "von": "neu",
    "nach": "paper",
    "grund": "Kevin 17.11.: aus MT5-Nachtest übernommen"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "vipz:A",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: VIP-Zonen mittesten"
+  },
+  {
+   "d": "2026-11-17",
+   "id": "vipz:B",
+   "von": "neu",
+   "nach": "paper",
+   "grund": "Kevin 17.11.: VIP-Zonen mittesten"
   }
  ],
  "updated": "2026-11-17T08:14:46+00:00"

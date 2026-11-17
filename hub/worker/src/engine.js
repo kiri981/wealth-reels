@@ -270,6 +270,7 @@ export function trades(fam, p, data) {
   if (fam === "swing") return data.D1 ? runSwing(data.D1, p) : [];
   if (fam === "deriv") return data.DD ? runDeriv(data.DD, p) : [];
   if (fam === "fxs") return data.FXCUR ? runFxs(data.FXCUR, p) : [];
+  if (fam === "vipz") return data.VZ ? (data.VZ[p.v] || []) : [];   // v3.1 VIP-Zonen (Trades kommen fertig aus vipzones.js)
   if (fam === "ibs") return data.D1 ? runIbs(data.D1, p) : [];
   if (fam === "tt") return data.D1 ? runTt(data.D1, p) : [];
   if (fam === "tbo") return data.H1 && data.H1.length > 250 ? runTbo(data.H1, p) : [];
