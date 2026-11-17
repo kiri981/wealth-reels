@@ -201,6 +201,7 @@ const IX = {
 };
 function parseIdea(text) {
   const t = String(text || ""); if (IX.other.test(t) && !/(gold|xau)/i.test(t)) return null;
+  if (/#[A-Z]{3}\d{6,10}/.test(t) || /S&P|SP500|NASDAQ|DOW|ORB/i.test(t)) return null;   // automatische Bot-Ideen (ORB/TBO mit #ID) und Indizes sind keine Gold-Ideen von Kevin
   const s = t.match(IX.sl); if (!s) return null;
   let e = t.match(IX.entry);
   if (!e) { const h = t.match(IX.head); if (!h) return null;   // Kopfzeile „GOLD SELL 3870–3873“ / „Kauf Gold jetzt“
