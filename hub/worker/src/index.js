@@ -27,7 +27,7 @@ import { altLearn, PARTS } from "./altlearn.js";
 import { czMap, hist } from "./alts.js";
 import { mpRules, mpFast, fwCheck } from "./mpaper.js";
 
-const VERSION = "3.9";
+const VERSION = "3.9b";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -497,10 +497,20 @@ async function paper(env) {
     }
   }
   if (BT) {
-    await env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_bt (sid TEXT, t INTEGER, dr INTEGER, e REAL, r REAL, sym TEXT, PRIMARY KEY (sid, t))").run();
-    const st = BT.map((b) => env.DB.prepare("INSERT OR REPLACE INTO hub_bt (sid, t, dr, e, r, sym) VALUES (?, ?, ?, ?, ?, ?)").bind(...b));
+    await env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_bt (sid TEXT, t INTEGER, dr INTEGER, e REAL, r REAL, sym TEXT, lab TEXT, PRIMARY KEY (sid, t))").run();
+    await env.DB.prepare("ALTER TABLE hub_bt ADD COLUMN lab TEXT").run().catch(() => {});
+    try {   // v3.9b einmalige Lang-Historie aus Kevins MT5-Export (hub/data/bt_hist.json, mit vorberechneten Kerzen-Merkmalen) – nur wenn neue Fassung
+      const r = await fetch(`https://raw.githubusercontent.com/${REPO(env)}/main/hub/data/bt_hist.json?ts=${Date.now()}`, { headers: { "User-Agent": "wc-hub" } });
+      if (r.ok) { const J = await r.json();
+        if (J?.ver && (await kvGet(env, "bt_hist_ver")) !== J.ver) {
+          const S2 = (J.rows || []).map((x) => env.DB.prepare("INSERT INTO hub_bt (sid, t, dr, e, r, sym, lab) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(sid, t) DO UPDATE SET lab = excluded.lab").bind(...x));
+          for (let i = 0; i < S2.length; i += 100) await env.DB.batch(S2.slice(i, i + 100));
+          await kvPut(env, "bt_hist_ver", J.ver); await kvPut(env, "log_bthist", `${new Date().toISOString()} Lang-Historie ${J.ver}: ${S2.length} Trades übernommen`);
+        } }
+    } catch (e) { await kvPut(env, "log_bthist", "Fehler " + e.message); }
+    const st = BT.map((b) => env.DB.prepare("INSERT INTO hub_bt (sid, t, dr, e, r, sym) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(sid, t) DO UPDATE SET r = excluded.r").bind(...b));
     for (let i = 0; i < st.length; i += 100) await env.DB.batch(st.slice(i, i + 100));
-    await env.DB.prepare("DELETE FROM hub_bt WHERE t < ?").bind(now - 400 * 86400).run();
+    await env.DB.prepare("DELETE FROM hub_bt WHERE t < ?").bind(now - 6 * 365 * 86400).run();
     await kvPut(env, "bt_day", btDay); await kvPut(env, "log_bt", `${new Date().toISOString()} Historie: ${BT.length} Backtest-Trades gespeichert`);
   }
   return n;
