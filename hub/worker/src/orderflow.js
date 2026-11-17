@@ -22,8 +22,42 @@ export const OF = {
 };
 const BIG = { BTCUSD: 500000, ETHUSD: 300000, XAUUSD: 100000 };   // „große Order“ ab … $ (sonst 100.000 $)
 
+// v3.4b CME-Futures über Yahoo (kostenlos, ~10–15 Min. verzögert): echtes Börsenvolumen in Kontrakten, aber KEINE Käufer/Verkäufer-Seite
+export const CME = { XAUUSD: "GC=F", XAGUSD: "SI=F", NAS100: "NQ=F", SP500: "ES=F" };
+async function yahoo(tk, range) {
+  const r = await j(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(tk)}?interval=5m&range=${range}`);
+  const R = r?.chart?.result?.[0]; if (!R?.timestamp) return null; const q = R.indicators?.quote?.[0] || {};
+  return R.timestamp.map((t, i) => ({ t: Math.floor(t / 300) * 300, px: q.close?.[i], vol: q.volume?.[i] })).filter((x) => x.px != null && x.vol != null);
+}
+async function cmeTick(env, kvGet, kvPut, log) {
+  const now = Math.floor(Date.now() / 1000), out = {};
+  for (const [sym, tk] of Object.entries(CME)) {
+    try {
+      const first = !(await kvGet(env, "cme_init_" + sym));
+      const B = await yahoo(tk, first ? "60d" : "1d"); if (!B?.length) { log.push(`${sym} CME –`); continue; }
+      const L = B.slice(0, -1);   // letzte (laufende) Kerze weglassen
+      const st = L.map((x) => env.DB.prepare("INSERT INTO hub_cme (sym, t, px, vol) VALUES (?, ?, ?, ?) ON CONFLICT(sym, t) DO UPDATE SET px = excluded.px, vol = excluded.vol").bind(sym, x.t, x.px, x.vol));
+      for (let i = 0; i < st.length; i += 100) await env.DB.batch(st.slice(i, i + 100));
+      if (first) await kvPut(env, "cme_init_" + sym, String(now));
+      log.push(`${sym} ${tk}:${L.length}`);
+      // Relatives Volumen: letzte Stunde vs. dieselbe Uhrzeit an den letzten 15 Handelstagen (Gold ist nachts ruhig, zur US-Eröffnung laut)
+      const last = L[L.length - 1].t, slots = []; for (let k = 0; k < 12; k++) slots.push((last - k * 300) % 86400);
+      const H = (await env.DB.prepare(`SELECT t, vol FROM hub_cme WHERE sym = ? AND t > ? AND (t % 86400) IN (${slots.join(",")})`).bind(sym, last - 16 * 86400).all()).results;
+      const cur = H.filter((x) => x.t > last - 3600).reduce((a, x) => a + x.vol, 0);
+      const days = {}; for (const x of H) if (x.t <= last - 3600) { const d = Math.floor((last - x.t) / 86400); days[d] = (days[d] || 0) + x.vol; }
+      const past = Object.values(days).filter((v) => v > 0), avg = past.length ? past.reduce((a, v) => a + v, 0) / past.length : null;
+      const lastBar = L[L.length - 1], slotAvg = (() => { const S5 = H.filter((x) => x.t % 86400 === last % 86400 && x.t < last); return S5.length ? S5.reduce((a, x) => a + x.vol, 0) / S5.length : null; })();
+      out[sym] = { tk, px: lastBar.px, t: last, vol1h: cur, rvol: avg ? +(cur / avg).toFixed(2) : null, spike: slotAvg ? +(lastBar.vol / slotAvg).toFixed(1) : null, delay: Math.round((now - last) / 60) };
+    } catch (e) { log.push(`${sym} CME Fehler ${e.message}`); }
+  }
+  await env.DB.prepare("DELETE FROM hub_cme WHERE t < ?").bind(now - 70 * 86400).run();
+  await kvPut(env, "cme_now", JSON.stringify({ t: now, S: out }));
+  return out;
+}
+
 async function schema(env) {
   await env.DB.batch([
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_cme (sym TEXT, t INTEGER, px REAL, vol REAL, PRIMARY KEY (sym, t))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_oflow (sym TEXT, src TEXT, t INTEGER, px REAL, buy REAL, sell REAL, delta REAL, imb REAL, bigb REAL, bigs REAL, PRIMARY KEY (sym, src, t))"),
   ]);
 }
@@ -89,6 +123,7 @@ export async function ofTick(env, say, kvGet, kvPut) {
     } catch (e) { log.push(`${sym} Fehler ${e.message}`); }
   }
   if (first) await kvPut(env, "of_init", String(now));
+  const CM = await cmeTick(env, kvGet, kvPut, log).catch((e) => { log.push("CME " + e.message); return {}; });
   await env.DB.prepare("DELETE FROM hub_oflow WHERE t < ?").bind(now - 60 * 86400).run();
 
   // Lage je Markt: Delta 1 Std./4 Std., Kursänderung, Divergenz, Orderbuch, große Orders (für AURUM/Briefing)
@@ -130,6 +165,22 @@ export async function ofTick(env, say, kvGet, kvPut) {
         }
       }
       await kvPut(env, "of_filter", JSON.stringify({ t: now, F }));
+      // CME-Volumen (Yahoo) vor dem Einstieg: lief Gold/Silber/Indizes besser bei hohem oder niedrigem Börsenvolumen?
+      const G = {};
+      for (const [sym, L] of Object.entries(BY)) {
+        if (!CME[sym]) continue;
+        const R = (await env.DB.prepare("SELECT t, vol FROM hub_cme WHERE sym = ? AND t > ? ORDER BY t").bind(sym, now - 61 * 86400).all()).results; if (R.length < 500) continue;
+        const byT = new Map(R.map((r) => [r.t, r.vol]));
+        for (const x of L) {
+          const h = (t0) => { let v = 0, n = 0; for (let t = t0 - 3600; t < t0; t += 300) { const q = byT.get(t - (t % 300)); if (q != null) { v += q; n++; } } return n >= 6 ? v : null; };
+          const cur = h(x.t - (x.t % 300)); if (cur == null) continue;
+          const P = []; for (let d = 1; d <= 15; d++) { const v = h(x.t - (x.t % 300) - d * 86400); if (v) P.push(v); } if (P.length < 5) continue;
+          const rv = cur / (P.reduce((a, v) => a + v, 0) / P.length);
+          const k = rv >= 1.5 ? "hohes CME-Volumen" : rv <= 0.7 ? "niedriges CME-Volumen" : "normales CME-Volumen";
+          const f = (G[k] ||= { n: 0, sum: 0, win: 0 }); f.n++; f.sum += x.r; f.win += x.r > 0 ? 1 : 0;
+        }
+      }
+      await kvPut(env, "cme_filter", JSON.stringify({ t: now, F: G }));
     } catch (e) { log.push("Messung " + e.message); }
   }
 
@@ -143,6 +194,9 @@ export async function ofTick(env, say, kvGet, kvPut) {
       return `• ${n}: ${dir} (Delta 1 Std. ${v.rel > 0 ? "+" : ""}${Math.round(v.rel * 100)} %)${v.imb != null ? `, Orderbuch ${v.imb > 0.1 ? "kauflastig" : v.imb < -0.1 ? "verkaufslastig" : "ausgeglichen"}` : ""}${v.div ? ` ⚠️ ${v.div}` : ""}`; }).filter(Boolean);
     let ff = ""; try { const F = JSON.parse((await kvGet(env, "of_filter")) || "{}").F || {}; const a = F["mit Orderflow"], g = F["gegen Orderflow"];
       if (a?.n >= 10 && g?.n >= 10) ff = `\nUnsere Trades mit Orderflow: Ø ${(a.sum / a.n).toFixed(2)} R (${a.n}) · gegen: Ø ${(g.sum / g.n).toFixed(2)} R (${g.n})`; } catch (e) {}
+    const NC = { XAUUSD: "Gold", XAGUSD: "Silber", SP500: "S&P 500", NAS100: "Nasdaq" };
+    const cl = Object.entries(CM || {}).filter(([, v]) => v.rvol != null).map(([k, v]) => `${NC[k]} ${v.rvol >= 1.5 ? "🔥 " : ""}${Math.round(v.rvol * 100)} %`);
+    if (cl.length) lines.push(`• CME-Volumen letzte Std. vs. üblich (Yahoo, ~15 Min. verzögert): ${cl.join(" · ")}`);
     if (lines.length) await say(env, `🌊 Orderflow-Lage (wer drückt gerade?)\n${lines.join("\n")}${ff}\nNur Beobachtung, keine Anlageberatung.`).catch(() => {});
   }
   return "Orderflow: " + log.join(" · ");
