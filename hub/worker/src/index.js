@@ -18,6 +18,7 @@ import { vzTick, vzTradesAll, ideaTick } from "./vipzones.js";
 import { hlTick } from "./hltrack.js";
 import { ofTick } from "./orderflow.js";
 import { filtTick } from "./filtvar.js";
+import { exTick } from "./explore.js";
 import { sigTick, sigPage, sigData } from "./signals.js";
 import { memeLearn, mlPage } from "./memelearn.js";
 import { olTick } from "./outlook.js";
@@ -25,7 +26,7 @@ import { altLearn, PARTS } from "./altlearn.js";
 import { czMap, hist } from "./alts.js";
 import { mpRules, mpFast, fwCheck } from "./mpaper.js";
 
-const VERSION = "3.5";
+const VERSION = "3.6";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -443,7 +444,7 @@ async function paper(env) {
   const inNews = (t) => NW.some(([a, b]) => t >= a && t <= b);
   const RS = await riskState(env, now);
   for (const s of strats) {
-    if (s.family === "filt") continue;   // v3.5 Filter-Varianten füllt filtvar.js aus den Trades des Originals
+    if (s.family === "filt" || s.family === "expl") continue;   // v3.5/3.6 Filter-Varianten füllt filtvar.js aus den Trades des Originals
     const p = E.withSym(JSON.parse(s.params)); const sym = p.sym || "XAUUSD";
     if (s.family === "fxs" && !DATA.FX) {   // v2.5: Währungsstärke – Tageskerzen aller 7 Hauptpaare
       const D = {}; for (const leg of E.FX_LEGS) D[leg] = await load(env, `${leg}:1d`, 0);
@@ -654,6 +655,7 @@ export default {
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/runrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Langläufer: " + e.message)));   // v3.0
     if (env.SELF && env.HUB_KEY && !/fertig/.test((await kvGet(env, "log_hist100")) || "")) ctx.waitUntil(env.SELF.fetch("https://wc-hub/hist100run?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Rückblick: " + e.message)));   // v3.0 einmaliger 100×-Rückblick
     if (m >= 10 && m < 15 && env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/filtrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Filter-Prüfer: " + e.message)));   // v3.5 stündlich
+    if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/exrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Entdecker: " + e.message)));   // v3.6 alle 5 Min.
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/ofrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Orderflow: " + e.message)));   // v3.4 alle 5 Min.
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/hlrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("Hyperliquid: " + e.message)));   // v3.3 alle 5 Min.
     if (env.SELF && env.HUB_KEY) ctx.waitUntil(env.SELF.fetch("https://wc-hub/vzrun?key=" + encodeURIComponent(env.HUB_KEY)).then((r) => r.text()).then((t) => console.log(t)).catch((e) => console.log("VIP-Zonen: " + e.message)));   // v3.1 alle 5 Min.
@@ -689,6 +691,7 @@ export default {
     if (url.pathname === "/sig") return new Response(await sigPage(env), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/sigjson") return Response.json(await sigData(env));
     if (url.pathname === "/fxrun") return new Response(await fxRun(env));
+    if (url.pathname === "/exrun") { try { const msg = await exTick(env, say, kvGet, kvPut); await kvPut(env, "log_ex", new Date().toISOString() + " " + msg); return new Response(msg); } catch (e) { await kvPut(env, "log_ex", "Fehler " + e.message); return new Response("Entdecker-Fehler " + e.message); } }
     if (url.pathname === "/filtrun") { try { const msg = await filtTick(env, say, kvGet, kvPut); await kvPut(env, "log_filt", new Date().toISOString() + " " + msg); return new Response(msg); } catch (e) { await kvPut(env, "log_filt", "Fehler " + e.message); return new Response("Filter-Prüfer-Fehler " + e.message); } }
     if (url.pathname === "/ofrun") { try { const msg = await ofTick(env, say, kvGet, kvPut); await kvPut(env, "log_of", new Date().toISOString() + " " + msg.slice(0, 900)); return new Response(msg); } catch (e) { await kvPut(env, "log_of", "Fehler " + e.message); return new Response("Orderflow-Fehler " + e.message); } }
     if (url.pathname === "/hlrun") { try { const msg = await hlTick(env, say, kvGet, kvPut); await kvPut(env, "log_hl", new Date().toISOString() + " " + msg); return new Response(msg); } catch (e) { await kvPut(env, "log_hl", "Fehler " + e.message); return new Response("Hyperliquid-Fehler " + e.message); } }
