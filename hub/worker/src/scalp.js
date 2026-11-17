@@ -11,41 +11,41 @@ import { copycat, devBundle } from "./memeguard.js";
 export const SC = { start: 5000, size: 100, perDay: 30, maxOpen: 6, cost: 0.03, minAgeMin: 8, maxAgeMin: 45, liq: 10000, vol: 15000, mc: 20000,
   sl: -0.25, tp1: 0.5, trail: 0.3, slowMin: 45, slowGain: 0.2, maxH: 6, liqDead: 2000, top10: 0.35, top1: 0.12 };
 async function schema(env) {
-  await env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_spos (id TEXT PRIMARY KEY, t INTEGER, token TEXT, sym TEXT, px REAL, qty REAL, cost REAL, peak REAL, half INTEGER DEFAULT 0, cash REAL DEFAULT 0, last_px REAL, last_seen INTEGER, t_close INTEGER, px_close REAL, pnl REAL, why TEXT, f TEXT)").run();
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_scpos (id TEXT PRIMARY KEY, t INTEGER, token TEXT, sym TEXT, px REAL, qty REAL, cost REAL, peak REAL, half INTEGER DEFAULT 0, cash REAL DEFAULT 0, last_px REAL, last_seen INTEGER, t_close INTEGER, px_close REAL, pnl REAL, why TEXT, f TEXT)").run();
 }
 export async function scalpTick(env, say, kvGet, kvPut) {
   await schema(env);
   const now = Math.floor(Date.now() / 1000), day = Math.floor(now / 86400) * 86400, log = [];
   // 1) offene Positionen führen
-  const P = (await env.DB.prepare("SELECT * FROM hub_spos WHERE t_close IS NULL").all()).results;
+  const P = (await env.DB.prepare("SELECT * FROM hub_scpos WHERE t_close IS NULL").all()).results;
   if (P.length) {
     const Q = await prices(P.map((p) => p.token));
     for (const p of P) {
       const q = Q[p.token]; let why = null, at = null;
       if (!q?.px) { if (now - (p.last_seen || p.t) > 1800) { why = "kein Kurs seit 30 Min."; at = 0; } }
-      else if (!plausible(p, q)) { await env.DB.prepare("UPDATE hub_spos SET last_seen = ? WHERE id = ?").bind(now, p.id).run(); continue; }
+      else if (!plausible(p, q)) { await env.DB.prepare("UPDATE hub_scpos SET last_seen = ? WHERE id = ?").bind(now, p.id).run(); continue; }
       else {
         const peak = Math.max(p.peak, q.px), g = q.px / p.px - 1, age = (now - p.t) / 60;
-        await env.DB.prepare("UPDATE hub_spos SET last_px = ?, last_seen = ?, peak = ? WHERE id = ?").bind(q.px, now, peak, p.id).run();
+        await env.DB.prepare("UPDATE hub_scpos SET last_px = ?, last_seen = ?, peak = ? WHERE id = ?").bind(q.px, now, peak, p.id).run();
         if ((q.liq || 0) < SC.liqDead) { why = "Rug (Liquidität weg)"; at = 0; }
         else if (g <= SC.sl) { why = "Stopp −25 %"; at = q.px; }
         else if (!p.half && g >= SC.tp1) { const sell = p.qty / 2, cash = sell * q.px * (1 - SC.cost);
-          await env.DB.prepare("UPDATE hub_spos SET half = 1, qty = ?, cash = ? WHERE id = ?").bind(p.qty - sell, cash, p.id).run(); }
+          await env.DB.prepare("UPDATE hub_scpos SET half = 1, qty = ?, cash = ? WHERE id = ?").bind(p.qty - sell, cash, p.id).run(); }
         else if (p.half && q.px <= peak * (1 - SC.trail)) { why = `nachgezogen (Hoch ${(peak / p.px).toFixed(1)}×)`; at = q.px; }
         else if (!p.half && age >= SC.slowMin && g < SC.slowGain) { why = "zu langsam (45 Min.)"; at = q.px; }
         else if (age >= SC.maxH * 60) { why = "Zeit (6 Std.)"; at = q.px; }
         if (peak >= p.px * 5 && p.peak < p.px * 5) await say(env, `⚡ Früh-Scalper ${p.sym}: 5× seit Einstieg (Papier).`).catch(() => {});
       }
-      if (why) { const cur = await env.DB.prepare("SELECT qty, cash FROM hub_spos WHERE id = ?").bind(p.id).first();
+      if (why) { const cur = await env.DB.prepare("SELECT qty, cash FROM hub_scpos WHERE id = ?").bind(p.id).first();
         const pnl = (cur.cash || 0) + cur.qty * at * (1 - SC.cost) - p.cost;
-        await env.DB.prepare("UPDATE hub_spos SET t_close = ?, px_close = ?, pnl = ?, why = ? WHERE id = ? AND t_close IS NULL").bind(now, at, pnl, why, p.id).run(); log.push(`${p.sym} zu (${why}, ${pnl >= 0 ? "+" : ""}${pnl.toFixed(0)} $)`); }
+        await env.DB.prepare("UPDATE hub_scpos SET t_close = ?, px_close = ?, pnl = ?, why = ? WHERE id = ? AND t_close IS NULL").bind(now, at, pnl, why, p.id).run(); log.push(`${p.sym} zu (${why}, ${pnl >= 0 ? "+" : ""}${pnl.toFixed(0)} $)`); }
     }
   }
   // 2) neue Einstiege
-  const bal = await env.DB.prepare("SELECT COALESCE(SUM(CASE WHEN t_close IS NOT NULL THEN pnl END), 0) re, COALESCE(SUM(CASE WHEN t_close IS NULL THEN cost - COALESCE(cash, 0) END), 0) inv, SUM(t > ?) today, SUM(t_close IS NULL) open FROM hub_spos").bind(day).first();
+  const bal = await env.DB.prepare("SELECT COALESCE(SUM(CASE WHEN t_close IS NOT NULL THEN pnl END), 0) re, COALESCE(SUM(CASE WHEN t_close IS NULL THEN cost - COALESCE(cash, 0) END), 0) inv, SUM(t > ?) today, SUM(t_close IS NULL) open FROM hub_scpos").bind(day).first();
   let free = SC.start + (bal?.re || 0) - (bal?.inv || 0), today = bal?.today || 0, open = bal?.open || 0;
   if (today < SC.perDay && open < SC.maxOpen && free >= SC.size) {
-    const C = (await env.DB.prepare(`SELECT m.id, m.token, m.sym, m.name, m.created, m.risk FROM hub_meme m LEFT JOIN hub_spos s ON s.id = m.id
+    const C = (await env.DB.prepare(`SELECT m.id, m.token, m.sym, m.name, m.created, m.risk FROM hub_meme m LEFT JOIN hub_scpos s ON s.id = m.id
       WHERE m.chain = 'solana' AND s.id IS NULL AND m.last_t > ? AND m.created BETWEEN ? AND ? AND COALESCE(m.risk, '') NOT LIKE '%"danger"%' AND COALESCE(m.risk, '') NOT LIKE '%scalp_bad%'
       ORDER BY m.score DESC LIMIT 15`).bind(now - 600, now - SC.maxAgeMin * 60, now - SC.minAgeMin * 60).all()).results;
     if (C.length) {
@@ -68,7 +68,7 @@ export async function scalpTick(env, say, kvGet, kvPut) {
         if (d?.bad) { await bad(d.bad); continue; }
         const buy = q.px * (1 + SC.cost), qty = SC.size / buy;
         const f = JSON.stringify({ age_min: Math.round((now - c.created) / 60), mc: q.mc, liq: q.liq, v24: q.v24, c5: q.c5, c1h: q.c1h, b5: q.b5, s5: q.s5, top10: h.top10, top1: h.top1, bundle: d?.bundle ?? null, dev_n: d?.hist?.n ?? null });
-        const ins = await env.DB.prepare("INSERT OR IGNORE INTO hub_spos (id, t, token, sym, px, qty, cost, peak, last_px, last_seen, f) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        const ins = await env.DB.prepare("INSERT OR IGNORE INTO hub_scpos (id, t, token, sym, px, qty, cost, peak, last_px, last_seen, f) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
           .bind(c.id, now, c.token, c.sym, q.px, qty, SC.size, q.px, q.px, now, f).run();
         if (ins.meta?.changes) { today++; open++; free -= SC.size; log.push(`${c.sym} gekauft (${Math.round((now - c.created) / 60)} Min. alt, Marktwert ${Math.round(q.mc / 1000)}k $)`); }
       }
@@ -78,8 +78,8 @@ export async function scalpTick(env, say, kvGet, kvPut) {
   const dd = new Date(), loc = (dd.getUTCHours() + 2) % 24, dk = dd.toISOString().slice(0, 10);
   if (loc === 22 && (await kvGet(env, "sc_day")) !== dk) {
     await kvPut(env, "sc_day", dk);
-    const S = await env.DB.prepare("SELECT COUNT(*) n, SUM(pnl > 0) w, SUM(pnl) p, MAX(pnl) best FROM hub_spos WHERE t_close IS NOT NULL AND t > ?").bind(now - 86400).first();
-    const A = await env.DB.prepare("SELECT COUNT(*) n, SUM(pnl) p FROM hub_spos WHERE t_close IS NOT NULL").first();
+    const S = await env.DB.prepare("SELECT COUNT(*) n, SUM(pnl > 0) w, SUM(pnl) p, MAX(pnl) best FROM hub_scpos WHERE t_close IS NOT NULL AND t > ?").bind(now - 86400).first();
+    const A = await env.DB.prepare("SELECT COUNT(*) n, SUM(pnl) p FROM hub_scpos WHERE t_close IS NOT NULL").first();
     if (S?.n) await say(env, `⚡ Früh-Scalper (ab 8 Min., Papier): heute ${S.n} Trades, ${S.w || 0} im Plus, ${(S.p || 0) >= 0 ? "+" : ""}${(S.p || 0).toFixed(0)} $ (bester +${(S.best || 0).toFixed(0)} $).\nGesamt: ${A.n} Trades, ${(A.p || 0) >= 0 ? "+" : ""}${(A.p || 0).toFixed(0)} $ auf 5.000 $ Startkapital.\nNur Papier, keine Anlageberatung.`).catch(() => {});
   }
   return "Scalper: " + (log.join(" · ") || "nichts");
