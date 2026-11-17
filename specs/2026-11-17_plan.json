@@ -1,0 +1,22 @@
+{
+ "cover": {"kicker": "TAGESAUSBLICK", "title": "Gold *bärisch* – Mi 18.11.", "chart": "down"},
+ "music": "drive",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 3.0, "text": "Mein Gold-Plan für Mittwoch steht.", "accent": "Hier sind meine Zonen.", "icon": "down"},
+  {"type": "shot", "dur": 5.0, "image": "https://raw.githubusercontent.com/kiri981/wealth-reels/main/outlooks/2026-11-18/otonycn_1.jpg", "kicker": "15M · DETAIL", "time": "4H & 1H abwärts – Bias bärisch"},
+  {"type": "cards", "dur": 4.6, "title": "Meine Zonen", "items": [
+    {"left": "Supply", "right": "1H FVG · 3858.27 – 3861.94", "hot": true},
+    {"left": "Supply", "right": "15m OB · 3866.26 – 3869.40", "hot": true},
+    {"left": "Supply", "right": "4H OB · 3878.53 – 3907.98", "hot": true}
+  ]},
+  {"type": "cards", "dur": 4.6, "title": "Liquidität & Termine", "items": [
+    {"left": "PDH ⬆️", "right": "3890.91"},
+    {"left": "PWH ⬆️", "right": "4148.54"},
+    {"left": "PDL ⬇️", "right": "3836.84"},
+    {"left": "Mi 20:00", "right": "FOMC Minutes", "hot": true}
+  ]},
+  {"type": "words", "dur": 4.8, "kicker": "MEIN PLAN", "text": "Pullback in die 1H FVG, CHOCH auf 5m, Short Richtung 3836.84. 1H-Schluss über 3890.91: Bild ungültig."},
+  {"type": "cta", "dur": 3.0, "title": "Erst die Zone, dann die Bestätigung.", "button": "Kommentiere GOLD"}
+ ]
+}
