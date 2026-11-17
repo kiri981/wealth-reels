@@ -1,4 +1,5 @@
 import { rpc } from "./helius.js";
+import { chase, copycat } from "./memeguard.js";
 // WC Trading Hub – Langläufer-Papier-Wallet (v3.0, Solana-Meme-Coins) – NUR SIMULIERT, kein echtes Geld, kein Schlüssel.
 // Idee (Kevin, 17.11.): Viele Meme-Coins machen ihr Vielfaches erst nach Tagen/Wochen → keine feste Haltedauer.
 //   Einstieg (Kevin 17.11.): Solana, Liquidität ≥ 10k $, Volumen 24 Std. ≥ 15k $, Marktwert ≥ 20k $, Alter 20 Min. – 6 Std., Sicherheitscheck nicht 🔴,
@@ -85,7 +86,7 @@ export async function runnerTick(env, say) {
   // 1) neue Käufe
   const bal = await env.DB.prepare("SELECT COALESCE(SUM(CASE WHEN t_close IS NOT NULL THEN pnl END), 0) re, COALESCE(SUM(CASE WHEN t_close IS NULL THEN cost - COALESCE(cash, 0) END), 0) inv, SUM(CASE WHEN t > ? THEN 1 ELSE 0 END) today FROM hub_rpos").bind(day * 86400).first();
   let free = RN.start + (bal?.re || 0) - (bal?.inv || 0), today = bal?.today || 0;
-  const C = (await env.DB.prepare(`SELECT m.id, m.token, m.sym, m.name, f.f FROM hub_meme m LEFT JOIN hub_meme_feat f ON f.id = m.id AND f.kind = 'seen' LEFT JOIN hub_rpos r ON r.id = m.id
+  const C = (await env.DB.prepare(`SELECT m.id, m.token, m.sym, m.name, m.created, m.data, f.f FROM hub_meme m LEFT JOIN hub_meme_feat f ON f.id = m.id AND f.kind = 'seen' LEFT JOIN hub_rpos r ON r.id = m.id
     WHERE m.chain = 'solana' AND r.id IS NULL AND m.last_t > ? AND m.created BETWEEN ? AND ? AND COALESCE(m.risk, '') NOT LIKE '%"danger"%'
       AND json_extract(m.data, '$.liq') >= ? AND json_extract(m.data, '$.mc') >= ? AND COALESCE(json_extract(m.data, '$.v24'), json_extract(m.data, '$.v6h'), 0) >= ?
       AND COALESCE(m.risk, '') NOT LIKE '%holders_bad%' ORDER BY m.score DESC LIMIT 20`)
@@ -98,6 +99,9 @@ export async function runnerTick(env, say) {
       // Plausibilität (Muster „Scam vs. Gem“): Volumen muss zum Marktwert passen, Liquidität nicht unplausibel, Marktwert nicht durch wenige Trades aufgeblasen
       const vm = q.v24 / q.mc, lm = q.liq / q.mc, mpt = q.tx24 ? q.mc / q.tx24 : 1e9;
       if (vm < RN.minVolMc || lm < RN.liqMc[0] || lm > RN.liqMc[1] || mpt > RN.maxMcPerTx) { log.push(`${c.sym} unplausibel (Vol/MC ${vm.toFixed(2)}, Liq/MC ${lm.toFixed(2)}, MC/Trade ${Math.round(mpt)} $)`); continue; }
+      { let d = {}; try { d = JSON.parse(c.data || "{}"); } catch (e) {}
+        const g = chase(d) || (await copycat(env, { id: c.id, token: c.token, sym: c.sym, name: c.name, created: c.created, mc: q.mc }).catch(() => null));
+        if (g) { await env.DB.prepare("UPDATE hub_meme SET risk = json_set(COALESCE(risk, '{}'), '$.holders_bad', ?) WHERE id = ?").bind(g, c.id).run().catch(() => {}); log.push(`${c.sym} abgelehnt (${g})`); continue; } }   // v3.7
       let h = null; checks++;
       try { h = env.HELIUS_KEY ? await holders(env, c.token) : null; } catch (e) { log.push("Halter-Fehler " + e.message); }
       let ins = null;

@@ -1,4 +1,5 @@
 import { mpOpen, mpManage } from "./mpaper.js";
+import { chase, copycat } from "./memeguard.js";
 import { feats, loadModel, learnedScore, mlSchema } from "./memelearn.js";
 // WC Trading Hub – Meme-Radar (v1.8)
 // Alle 5 Minuten (eigener Cron-Lauf, damit der Hub-Takt nicht langsamer wird):
@@ -253,6 +254,7 @@ export async function memeTick(env, say, kvGet, kvPut) {
     const sec = r.sec || (r.o?.risk ? JSON.parse(r.o.risk) : null);
     if (!sec || sec.level === "danger" || sec.level === "unknown" || (r.x.liq || 0) < 20000) continue;   // nur mit Sicherheitscheck und genug Liquidität
     if (!kevinOk(r.x, r.m)) continue;   // v3.0 Kevins Mindestwerte
+    { const g = chase(r.x) || (await copycat(env, { ...r.x, id: r.id }).catch(() => null)); if (g) { log.push(`${r.x.sym} übersprungen (${g})`); await env.DB.prepare("UPDATE hub_meme SET alert_t = ? WHERE id = ?").bind(now, r.id).run().catch(() => {}); continue; } }   // v3.7
     const x = r.x, m = r.m, f = (v, d = 0) => (v == null ? "–" : (v >= 0 ? "+" : "") + v.toFixed(d));
     const amp = sec.level === "ok" ? "🟢" : sec.level === "warn" ? "🟡" : "⚪";
     await say(env, `🚀 Meme-Radar: ${x.sym} (${x.chain})\nHeiß-Wert ${m.score}/100 · Alter ${m.age != null ? (m.age < 1 ? Math.round(m.age * 60) + " Min." : m.age.toFixed(1) + " Std.") : "?"}\n` +
