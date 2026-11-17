@@ -61,11 +61,36 @@ async function schema(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_oflow (sym TEXT, src TEXT, t INTEGER, px REAL, buy REAL, sell REAL, delta REAL, imb REAL, bigb REAL, bigs REAL, PRIMARY KEY (sym, src, t))"),
   ]);
 }
+// v3.6b Ersatzquelle Gate.io (Binance sperrt die Cloudflare-Server): 5-Min.-Statistik mit Taker-Kauf/-Verkauf (Kontrakte × Multiplikator × Kurs = $),
+// Orderbuch und letzte Trades. Kontrakte: BTC_USDT, …, XAU_USDT, XAG_USDT.
+const GT = "https://api.gateio.ws/api/v4/futures/usdt";
+const gtC = (bn) => bn.replace(/USDT$/, "_USDT");
+async function gtMult(env, c, kvGet, kvPut) {
+  const M = JSON.parse((await kvGet(env, "gate_mult")) || "{}"); if (M[c]) return M[c];
+  const x = await j(`${GT}/contracts/${c}`); const m = +x?.quanto_multiplier || null; if (m) { M[c] = m; await kvPut(env, "gate_mult", JSON.stringify(M)); } return m;
+}
+async function gtStats(c, mult) {
+  const A = await j(`${GT}/contract_stats?contract=${c}&interval=5m&limit=500`); if (!Array.isArray(A) || A.length < 2) return null;
+  return A.slice(0, -1).map((x) => { const b = (+x.long_taker_size || 0) * mult * x.mark_price, s = (+x.short_taker_size || 0) * mult * x.mark_price; return { t: x.time, px: +x.mark_price, buy: b, sell: s, delta: b - s }; });
+}
+async function gtBook(c) {
+  const d = await j(`${GT}/order_book?contract=${c}&limit=50`); if (!d?.bids?.length) return null;
+  const mid = (+d.bids[0].p + +d.asks[0].p) / 2;
+  const b = d.bids.filter((x) => +x.p >= mid * 0.995).reduce((a, x) => a + +x.s, 0), s = d.asks.filter((x) => +x.p <= mid * 1.005).reduce((a, x) => a + +x.s, 0);
+  return b + s ? (b - s) / (b + s) : null;
+}
+async function gtBig(c, mult, min) {
+  const A = await j(`${GT}/trades?contract=${c}&limit=1000`); if (!Array.isArray(A)) return null;
+  const since = Date.now() / 1000 - 300; let bigb = 0, bigs = 0;
+  for (const x of A) { if (+x.create_time < since) continue; const v = Math.abs(+x.size) * mult * +x.price; if (v < min) continue; if (+x.size > 0) bigb += v; else bigs += v; }
+  return { bigb, bigs };
+}
+let BNST = "";   // letzter Binance-Status (für das Protokoll)
 const b5 = (ms) => Math.floor(ms / 300000) * 300;
 
 // Binance: 5-Min.-Kerzen (Feld 9 = Taker-Kaufvolumen in Basis, 10 = in USDT) → Kauf/Verkauf in $; gleich ~40 Std. Historie
 async function bnKlines(base, sym) {
-  const k = await j(`${base}${base === FAPI ? "/fapi/v1" : "/api/v3"}/klines?symbol=${sym}&interval=5m&limit=500`);
+  const k = await fetch(`${base}${base === FAPI ? "/fapi/v1" : "/api/v3"}/klines?symbol=${sym}&interval=5m&limit=500`, { headers: UA }).then((r) => { BNST = String(r.status); return r.ok ? r.json() : null; }).catch((e) => { BNST = "Fehler"; return null; });
   if (!Array.isArray(k) || !k.length) return null;
   return k.slice(0, -1).map((x) => { const q = +x[7], tb = +x[10]; return { t: Math.floor(x[0] / 1000), px: +x[4], buy: tb, sell: q - tb, delta: 2 * tb - q }; });   // letzte (offene) Kerze weglassen
 }
@@ -113,7 +138,18 @@ export async function ofTick(env, say, kvGet, kvPut) {
           const rows = first ? K : K.slice(-3), st = [];
           for (const r of rows) st.push(up(env, sym, "bn:" + bs, { ...r, ...(r.t === cur ? big || {} : {}) }, r.t === cur ? imb : null));
           for (let i = 0; i < st.length; i += 100) await env.DB.batch(st.slice(i, i + 100)); log.push(`${sym} ${bs}:${rows.length}`);
-        } else log.push(`${sym} Binance –`);
+        } else {   // Ersatz: Gate.io
+          const c = gtC(s.bn), mult = await gtMult(env, c, kvGet, kvPut), K2 = mult ? await gtStats(c, mult) : null;
+          if (K2) {
+            const fk = "of_init_gt:" + c, f2 = !(await kvGet(env, fk));
+            const [imb, big] = await Promise.all([gtBook(c), gtBig(c, mult, min)]);
+            const last = K2[K2.length - 1].t, rows = f2 ? K2 : K2.slice(-3), st = [];
+            for (const r of rows) st.push(up(env, sym, "gt:" + c, { ...r, ...(r.t === last ? big || {} : {}) }, r.t === last ? imb : null));
+            for (let i = 0; i < st.length; i += 100) await env.DB.batch(st.slice(i, i + 100));
+            if (f2) await kvPut(env, fk, String(now));
+            log.push(`${sym} Gate ${c}:${rows.length} (Binance ${BNST})`);
+          } else log.push(`${sym} Binance ${BNST} / Gate –`);
+        }
       }
       if (s.hl) {
         const F = await hlFlow(s.hl, min);
@@ -154,7 +190,7 @@ export async function ofTick(env, say, kvGet, kvPut) {
       for (const x of TR) if (OF[x.sym]) (BY[x.sym] ||= []).push(x);
       for (const [sym, L] of Object.entries(BY)) {
         // je Markt EINE Quelle (Binance bevorzugt), damit nichts doppelt zählt
-        const src = (await env.DB.prepare("SELECT src FROM hub_oflow WHERE sym = ? GROUP BY src ORDER BY (src LIKE 'bn:%') DESC, COUNT(*) DESC LIMIT 1").bind(sym).first())?.src; if (!src) continue;
+        const src = (await env.DB.prepare("SELECT src FROM hub_oflow WHERE sym = ? GROUP BY src ORDER BY (src LIKE 'bn:%' OR src LIKE 'gt:%') DESC, COUNT(*) DESC LIMIT 1").bind(sym).first())?.src; if (!src) continue;
         const R = (await env.DB.prepare("SELECT t, delta, buy + sell v FROM hub_oflow WHERE sym = ? AND src = ? AND t > ? ORDER BY t").bind(sym, src, now - 61 * 86400).all()).results;
         if (!R.length) continue;
         for (const x of L) {

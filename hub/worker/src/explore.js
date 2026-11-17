@@ -40,7 +40,7 @@ const tstat = (A) => { const n = A.length; if (n < 2) return 0; const m = A.redu
 async function triggers(env, sym, C, now) {
   const out = [], last = C[C.length - 1], c24 = C.filter((k) => k.t > last.t - DAY);
   // Orderflow (Binance bevorzugt)
-  const src = (await env.DB.prepare("SELECT src FROM hub_oflow WHERE sym = ? AND src LIKE 'bn:%' LIMIT 1").bind(sym).first().catch(() => null))?.src;
+  const src = (await env.DB.prepare("SELECT src FROM hub_oflow WHERE sym = ? AND (src LIKE 'bn:%' OR src LIKE 'gt:%') ORDER BY src LIKE 'bn:%' DESC LIMIT 1").bind(sym).first().catch(() => null))?.src;
   if (src) {
     const O = (await env.DB.prepare("SELECT t, px, delta, buy + sell v, imb, bigb, bigs FROM hub_oflow WHERE sym = ? AND src = ? AND t > ? ORDER BY t").bind(sym, src, now - DAY - 600).all()).results;
     if (O.length > 50) {

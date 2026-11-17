@@ -28,7 +28,7 @@ export const FILTERS = {
 async function ctx(env, sym, from) {
   const C = {};
   if (OFSYM.has(sym)) {
-    const src = (await env.DB.prepare("SELECT src FROM hub_oflow WHERE sym = ? GROUP BY src ORDER BY (src LIKE 'bn:%') DESC, COUNT(*) DESC LIMIT 1").bind(sym).first().catch(() => null))?.src;
+    const src = (await env.DB.prepare("SELECT src FROM hub_oflow WHERE sym = ? GROUP BY src ORDER BY (src LIKE 'bn:%' OR src LIKE 'gt:%') DESC, COUNT(*) DESC LIMIT 1").bind(sym).first().catch(() => null))?.src;
     if (src) C.of = (await env.DB.prepare("SELECT t, delta d, buy + sell v FROM hub_oflow WHERE sym = ? AND src = ? AND t > ? ORDER BY t").bind(sym, src, from - DAY).all()).results;
   }
   if (CMESYM.has(sym)) C.cme = new Map((await env.DB.prepare("SELECT t, vol FROM hub_cme WHERE sym = ? AND t > ?").bind(sym, from - 17 * DAY).all().catch(() => ({ results: [] }))).results.map((r) => [r.t, r.vol]));
