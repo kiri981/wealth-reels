@@ -1,0 +1,209 @@
+{
+ "cover": {
+  "kicker": "REPLAY",
+  "title": "S&P 500 *+2 R* ORB",
+  "chart": "down"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.6,
+   "text": "S&P 500: +2R",
+   "accent": "So lief der Trade.",
+   "icon": "down",
+   "say": "S&P 500. Plus zwei R. So lief der Trade."
+  },
+  {
+   "type": "signal",
+   "dur": 5.5,
+   "channel": "NASDAQ | S&P500 OPEN",
+   "time": "17.11.2026 · 17:10 Uhr",
+   "lines": [
+    "🔴 S&P500 ORB SHORT #SPX261117",
+    "Einstieg: 7391.98",
+    "SL: 7409.23",
+    "TP: 7357.49  (CRV 1:2)"
+   ],
+   "say": "So stand die Trade-Idee im VIP-Kanal."
+  },
+  {
+   "type": "candles",
+   "dur": 7.5,
+   "candles": [
+    [
+     7407.98,
+     7411.98,
+     7407.98,
+     7409.23
+    ],
+    [
+     7408.98,
+     7411.23,
+     7406.98,
+     7410.23
+    ],
+    [
+     7410.23,
+     7411.73,
+     7407.48,
+     7408.23
+    ],
+    [
+     7408.23,
+     7409.98,
+     7402.98,
+     7402.98
+    ],
+    [
+     7403.23,
+     7408.23,
+     7395.48,
+     7395.48
+    ],
+    [
+     7395.48,
+     7403.98,
+     7393.48,
+     7400.23
+    ],
+    [
+     7399.98,
+     7415.98,
+     7395.98,
+     7397.23
+    ],
+    [
+     7397.23,
+     7409.73,
+     7397.23,
+     7407.98
+    ],
+    [
+     7407.98,
+     7412.48,
+     7399.23,
+     7410.48
+    ],
+    [
+     7410.48,
+     7416.98,
+     7403.48,
+     7412.48
+    ],
+    [
+     7412.73,
+     7415.23,
+     7394.23,
+     7399.48
+    ],
+    [
+     7399.48,
+     7400.73,
+     7386.48,
+     7387.23
+    ],
+    [
+     7387.23,
+     7398.48,
+     7382.23,
+     7391.98
+    ],
+    [
+     7391.98,
+     7395.23,
+     7379.23,
+     7384.23
+    ],
+    [
+     7384.48,
+     7391.73,
+     7380.73,
+     7386.23
+    ],
+    [
+     7386.23,
+     7390.98,
+     7381.48,
+     7384.98
+    ],
+    [
+     7384.98,
+     7386.48,
+     7361.23,
+     7361.98
+    ],
+    [
+     7381.98,
+     7381.98,
+     7381.98,
+     7381.98
+    ]
+   ],
+   "step": "REPLAY · US500 · 5M · 17.11.",
+   "title": "ORB: *SELL*",
+   "levels": [
+    {
+     "price": 7391.98,
+     "text": "ENTRY 7.392",
+     "color": "white",
+     "from_i": 12
+    },
+    {
+     "price": 7409.23,
+     "text": "STOP 7.409",
+     "color": "red",
+     "from_i": 12
+    },
+    {
+     "price": 7357.49,
+     "text": "FULL TP 7.357",
+     "color": "green",
+     "from_i": 12
+    }
+   ],
+   "tags": [
+    {
+     "i": 12,
+     "price": 7391.98,
+     "text": "SELL",
+     "color": "white"
+    },
+    {
+     "i": 17,
+     "price": 7357.49,
+     "text": "ZIEL ERREICHT",
+     "color": "green"
+    }
+   ],
+   "footer": "Echte Kurse (Futures, angeglichen) · ausgewählter Trade",
+   "say": "Einstieg bei 7392. Stopp bei 7409. Ziel bei 7357."
+  },
+  {
+   "type": "words",
+   "dur": 3.0,
+   "kicker": "ERGEBNIS",
+   "text": "+2,0 R in 30 Minuten.",
+   "say": "Ziel erreicht: plus zwei R in 30 Minuten."
+  },
+  {
+   "type": "words",
+   "dur": 3.0,
+   "kicker": "WICHTIG",
+   "text": "Ausgewählter Trade – nicht jeder Trade geht auf.",
+   "say": "Wichtig: Das ist ein ausgewählter Trade. Nicht jeder geht auf."
+  },
+  {
+   "type": "cta",
+   "dur": 2.8,
+   "title": "S&P 500. Mit Plan.",
+   "button": "Kommentiere VIP",
+   "sub": "Live-Trade-Ideen im VIP-Kanal",
+   "say": "Live-Trade-Ideen im VIP. Kommentiere VIP für Infos."
+  }
+ ]
+}
