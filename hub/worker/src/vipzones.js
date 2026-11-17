@@ -16,7 +16,7 @@ const RX = {
 const EV = [
   ["broken", /(gebrochen|ungültig|ungueltig|invalid)/i],
   ["target", /(ziel\s*\d?\s*erreicht|tp\s*\d?\s*(erreicht|hit)|🎯)/i],
-  ["active", /(choch.*(bestätigt|bestaetigt|da|kam)|setup aktiv|aktives setup ist|einstieg)/i],
+  ["active", /(choch[^.\n]{0,40}\b(bestätigt|bestaetigt|ist da|kam|gebildet)\b|setup (ist )?aktiv\b|✅\s*einstieg|einstieg (jetzt|aktiv))/i],
   ["reject", /(ablehnung)/i],
   ["reached", /(zone erreicht)/i],
   ["near", /(nähert sich|naehert sich|erinnerung)/i],
