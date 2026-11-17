@@ -1,0 +1,1152 @@
+{
+ "id": "ac03_en",
+ "title": "Liquidity *explained*",
+ "yt_title": "Liquidity Explained – Stop Hunts, Equal Highs/Lows & Sweep vs. Real Breakout on Gold",
+ "thumb": [
+  "LIQUIDITY",
+  "Sweep or breakout?"
+ ],
+ "thumb_clip": "gleiche-hochs",
+ "tags": [
+  "Gold Trading",
+  "XAUUSD",
+  "Liquidity",
+  "Stop Hunt",
+  "Liquidity Sweep",
+  "Smart Money",
+  "Learn Trading",
+  "Equal Highs",
+  "Breakout",
+  "Price Action"
+ ],
+ "chapters": [
+  {
+   "kind": "intro",
+   "title": "Liquidity explained",
+   "segs": [
+    {
+     "say": "Sound familiar? You put your stop just below a low, price spikes right into it – and then turns in your direction. That's not bad luck. That's liquidity."
+    },
+    {
+     "say": "In this video we'll look at where liquidity sits on the chart, how a stop hunt plays out, why equal highs and equal lows matter so much – and how to tell a sweep from a real breakout.",
+     "agenda": [
+      "Where liquidity sits",
+      "The stop hunt",
+      "Equal highs & lows",
+      "Sweep vs. breakout"
+     ]
+    },
+    {
+     "say": "Important up front: this is educational content, not investment advice. Trading involves risk of loss. Practise new strategies on a demo account first.",
+     "disclaimer": true
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "What is *liquidity*?",
+   "clip": "liq-pools",
+   "hook": "This is where most traders' stops sit",
+   "clip_data": {
+    "c": [
+     [
+      44,
+      46,
+      43.5,
+      45.5
+     ],
+     [
+      45.5,
+      48.5,
+      45,
+      48
+     ],
+     [
+      48,
+      51,
+      47.6,
+      50.5
+     ],
+     [
+      50.5,
+      54,
+      50,
+      53.5
+     ],
+     [
+      53.5,
+      56,
+      53,
+      55.2
+     ],
+     [
+      55.2,
+      55.6,
+      52.5,
+      53
+     ],
+     [
+      53,
+      53.4,
+      50,
+      50.6
+     ],
+     [
+      50.6,
+      51,
+      47.5,
+      48.2
+     ],
+     [
+      48.2,
+      50.5,
+      47.9,
+      50.2
+     ],
+     [
+      50.2,
+      52.8,
+      49.8,
+      52.4
+     ],
+     [
+      52.4,
+      54.6,
+      52,
+      54.1
+     ],
+     [
+      54.1,
+      55.3,
+      53.2,
+      53.6
+     ],
+     [
+      53.6,
+      55,
+      52.4,
+      54.6
+     ],
+     [
+      54.6,
+      55.6,
+      54,
+      55.3
+     ]
+    ],
+    "steps": [
+     {
+      "to": 5,
+      "add": {
+       "a": [
+        [
+         4,
+         57,
+         "High"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "a": [
+        [
+         7,
+         46.5,
+         "Low"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "l": [
+        [
+         56.3,
+         "Stops above",
+         "red"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "l": [
+        [
+         47.2,
+         "Stops below",
+         "red"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 14,
+      "add": {
+       "a": [
+        [
+         10,
+         51,
+         "Magnet"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "Liquidity sounds complicated, but it's simple: it's the places on the chart where a lot of orders are waiting. And most of them are stop-loss orders.",
+     "step": -1
+    },
+    {
+     "say": "The market rises and forms a clear high. Everyone sees it, everyone draws it.",
+     "step": 0
+    },
+    {
+     "say": "Then comes a pullback, and a clear low forms.",
+     "step": 1
+    },
+    {
+     "say": "Above the high, the sellers' stops pile up – plus the buy orders of traders waiting for a breakout.",
+     "step": 2,
+     "point": "Above highs: *stops* & breakout orders"
+    },
+    {
+     "say": "Below the low sit the buyers' stops. Exactly where most textbooks tell you to put your stop.",
+     "step": 3,
+     "point": "Below lows: *buyers'* stops"
+    },
+    {
+     "say": "Why does that matter? Big market players need someone on the other side of their positions. Triggered stops provide exactly those orders. That's why these areas often act like a magnet for price.",
+     "step": 4,
+     "point": "Liquidity acts like a *magnet*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "The *stop hunt*",
+   "clip": "stop-hunt",
+   "hook": "How a stop hunt plays out on gold",
+   "segs": [
+    {
+     "say": "Now let's look at what happens when price goes and takes that liquidity. This is called a stop hunt or liquidity sweep.",
+     "step": -1
+    },
+    {
+     "say": "The market drops and forms a low.",
+     "step": 0
+    },
+    {
+     "say": "Price comes back to roughly the same level once more. Now there are a lot of stops sitting below these lows.",
+     "step": 1,
+     "point": "Below the lows: *stops*"
+    },
+    {
+     "say": "Then a candle spikes below with a long wick. The stops get triggered – that's the sweep.",
+     "step": 2,
+     "point": "Wick below = *sweep*"
+    },
+    {
+     "say": "What matters is what happens next: price immediately returns above the old low. The sellers who got stopped out or went short there are now on the wrong side.",
+     "step": 3,
+     "point": "Fast *return* above the low"
+    },
+    {
+     "say": "Often a strong impulse follows in the other direction. But careful: a sweep alone is not a trade idea yet. It's only the first clue.",
+     "step": 4,
+     "point": "Sweep alone = *not yet* an entry"
+    }
+   ],
+   "clip_data": {
+    "c": [
+     [
+      60,
+      60.13,
+      56.91,
+      57
+     ],
+     [
+      57,
+      57.16,
+      53.96,
+      54
+     ],
+     [
+      54,
+      54.35,
+      51.89,
+      52
+     ],
+     [
+      52,
+      53.68,
+      51.91,
+      53.5
+     ],
+     [
+      53.5,
+      55.29,
+      53.34,
+      55
+     ],
+     [
+      55,
+      55.14,
+      52.87,
+      53
+     ],
+     [
+      53,
+      53.05,
+      51.22,
+      51.6
+     ],
+     [
+      51.6,
+      53.42,
+      51.19,
+      53
+     ],
+     [
+      53,
+      54.83,
+      52.85,
+      54.5
+     ],
+     [
+      54.5,
+      54.9,
+      52.36,
+      52.5
+     ],
+     [
+      52.5,
+      52.72,
+      51.44,
+      51.5
+     ],
+     [
+      51.5,
+      51.98,
+      45.55,
+      50
+     ],
+     [
+      50,
+      54.32,
+      49.51,
+      54
+     ],
+     [
+      54,
+      57.47,
+      53.76,
+      57
+     ],
+     [
+      57,
+      60.05,
+      56.87,
+      60
+     ],
+     [
+      60,
+      63.27,
+      59.95,
+      63
+     ]
+    ],
+    "steps": [
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         7,
+         50.3,
+         "L_LOW"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 11,
+      "add": {
+       "l": [
+        [
+         51.1,
+         "L_STOPS",
+         "red"
+        ]
+       ],
+       "a": [
+        [
+         10,
+         50.3,
+         "L_LOW"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 12,
+      "add": {
+       "a": [
+        [
+         11,
+         44.6,
+         "Sweep"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 13,
+      "add": {
+       "a": [
+        [
+         12,
+         55.4,
+         "L_RETURN"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 16,
+      "add": {
+       "a": [
+        [
+         15,
+         64.3,
+         "L_IMPULSE"
+        ]
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "kind": "chart",
+   "title": "Equal *highs*",
+   "clip": "gleiche-hochs",
+   "hook": "Equal highs are not resistance",
+   "clip_data": {
+    "c": [
+     [
+      48,
+      50,
+      47.5,
+      49.6
+     ],
+     [
+      49.6,
+      53,
+      49.2,
+      52.6
+     ],
+     [
+      52.6,
+      56.4,
+      52.2,
+      56
+     ],
+     [
+      56,
+      59.9,
+      55.6,
+      59.2
+     ],
+     [
+      59.2,
+      59.6,
+      56.4,
+      57
+     ],
+     [
+      57,
+      57.4,
+      54.6,
+      55.2
+     ],
+     [
+      55.2,
+      57.8,
+      54.8,
+      57.5
+     ],
+     [
+      57.5,
+      60,
+      57.1,
+      59.4
+     ],
+     [
+      59.4,
+      59.7,
+      57.2,
+      57.6
+     ],
+     [
+      57.6,
+      58.4,
+      56.2,
+      58
+     ],
+     [
+      58,
+      62.3,
+      57.8,
+      58.6
+     ],
+     [
+      58.6,
+      58.9,
+      55.4,
+      55.8
+     ],
+     [
+      55.8,
+      56.2,
+      52.6,
+      53
+     ],
+     [
+      53,
+      53.6,
+      50.2,
+      50.6
+     ],
+     [
+      50.6,
+      51.4,
+      48.6,
+      49.2
+     ]
+    ],
+    "steps": [
+     {
+      "to": 4,
+      "add": {
+       "a": [
+        [
+         3,
+         61,
+         "High"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         7,
+         61,
+         "equal high"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "l": [
+        [
+         60,
+         "L_EQHIGHS",
+         "red"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 11,
+      "add": {
+       "a": [
+        [
+         10,
+         63.4,
+         "Sweep"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 13,
+      "add": {
+       "a": [
+        [
+         12,
+         51.4,
+         "BOS ↓"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 15,
+      "add": {
+       "a": [
+        [
+         14,
+         47.5,
+         "Sell-off"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "A particularly strong magnet is equal highs and equal lows. Many traders see them as safe resistance. In reality it's often the opposite.",
+     "step": -1
+    },
+    {
+     "say": "Here gold rises and forms a high.",
+     "step": 0
+    },
+    {
+     "say": "After a pullback, price runs right back up to the same level – and turns away again. A textbook double top.",
+     "step": 1,
+     "point": "Two highs at the *same* level"
+    },
+    {
+     "say": "Now there are twice as many stops and breakout orders above this line. The cleaner the highs, the more liquidity builds up there.",
+     "step": 2,
+     "point": "Equal highs = *liquidity*"
+    },
+    {
+     "say": "And then it happens: a wick shoots above the highs, takes the stops – but the candle closes back below. The breakout buyers are trapped.",
+     "step": 3,
+     "point": "Wick above, *close* below"
+    },
+    {
+     "say": "Shortly after, price breaks below the last low. A break of structure to the downside confirms that the sellers have taken over.",
+     "step": 4,
+     "point": "BOS down = *confirmation*"
+    },
+    {
+     "say": "The sell-off often keeps going until it reaches the next liquidity below. With equal lows, it works exactly the other way round.",
+     "step": 5
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Sweep or *breakout*?",
+   "clip": "echter-ausbruch",
+   "hook": "Sweep or real breakout? How to tell",
+   "clip_data": {
+    "c": [
+     [
+      50,
+      52.4,
+      49.6,
+      52
+     ],
+     [
+      52,
+      55.6,
+      51.7,
+      55.2
+     ],
+     [
+      55.2,
+      59.9,
+      54.9,
+      59.3
+     ],
+     [
+      59.3,
+      59.7,
+      56.8,
+      57.2
+     ],
+     [
+      57.2,
+      57.6,
+      55.3,
+      55.8
+     ],
+     [
+      55.8,
+      58.3,
+      55.4,
+      58
+     ],
+     [
+      58,
+      60,
+      57.6,
+      59.2
+     ],
+     [
+      59.2,
+      59.5,
+      57.4,
+      57.9
+     ],
+     [
+      57.9,
+      59.6,
+      57.5,
+      59.4
+     ],
+     [
+      59.4,
+      63.2,
+      59.2,
+      62.9
+     ],
+     [
+      62.9,
+      63.4,
+      61.2,
+      61.6
+     ],
+     [
+      61.6,
+      62,
+      60.3,
+      60.9
+     ],
+     [
+      60.9,
+      63.8,
+      60.6,
+      63.5
+     ],
+     [
+      63.5,
+      66.2,
+      63.2,
+      65.8
+     ],
+     [
+      65.8,
+      68.4,
+      65.4,
+      68
+     ]
+    ],
+    "steps": [
+     {
+      "to": 9,
+      "add": {
+       "l": [
+        [
+         60,
+         "equal highs",
+         "gold"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 10,
+      "add": {
+       "a": [
+        [
+         9,
+         64.4,
+         "L_CLOSEABOVE"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 12,
+      "add": {
+       "a": [
+        [
+         11,
+         59.2,
+         "Retest holds"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 15,
+      "add": {
+       "a": [
+        [
+         14,
+         69.6,
+         "Continuation"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "Of course, not every break above a high is a sweep. Sometimes the breakout is real. So the key question is: how do you tell the difference?",
+     "step": -1
+    },
+    {
+     "say": "Again we see several highs at the same level. Here too, liquidity sits above the line.",
+     "step": 0
+    },
+    {
+     "say": "This time a candle with a big body closes clearly above the highs. No long wick, no quick drop back.",
+     "step": 1,
+     "point": "Breakout: clear *candle close*"
+    },
+    {
+     "say": "Price comes back to the old line but stays above it. The former resistance now holds as support. That's called a retest.",
+     "step": 2,
+     "point": "Retest: old line *holds*"
+    },
+    {
+     "say": "After that, the move continues. That's the difference: with a sweep, price returns quickly. With a real breakout, it closes above and holds the level.",
+     "step": 3,
+     "point": "Sweep reverses, breakout *holds*"
+    },
+    {
+     "say": "If you're unsure, wait. One or two candles of patience cost you little – an entry in the wrong direction costs more.",
+     "step": 3
+    }
+   ]
+  },
+  {
+   "kind": "remember",
+   "title": "*Remember*",
+   "cards": [
+    [
+     "Sweep",
+     "wick above, *back* inside"
+    ],
+    [
+     "Breakout",
+     "close above, *holds*"
+    ]
+   ],
+   "segs": [
+    {
+     "say": "So remember:",
+     "card": -1
+    },
+    {
+     "say": "With a sweep, only the wick spikes beyond the level, and price comes back quickly.",
+     "card": 0
+    },
+    {
+     "say": "With a breakout, the candle closes beyond it, and the level holds.",
+     "card": 1
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Liquidity in the *setup*",
+   "clip": "setup-liq",
+   "hook": "From sweep to trade idea in 4 steps",
+   "segs": [
+    {
+     "say": "Finally, let's put it all together. This is how a sweep can become the starting point for a well-thought-out trade idea.",
+     "step": -1
+    },
+    {
+     "say": "The five-minute chart is correcting lower, while the higher-timeframe trend points up.",
+     "step": 0
+    },
+    {
+     "say": "The stops sit below the last low. A wick takes them out – the sweep.",
+     "step": 1,
+     "point": "1. *Sweep* below the low"
+    },
+    {
+     "say": "Then a candle closes above the last lower high. The change of character shows that the buyers are back.",
+     "step": 2,
+     "point": "2. *CHoCH* to the upside"
+    },
+    {
+     "say": "The impulse leaves a fair value gap in the discount area. That's where you wait for the pullback.",
+     "step": 3,
+     "point": "3. *FVG* in discount"
+    },
+    {
+     "say": "The entry comes in the gap, and the stop goes below the sweep low. The market has already taken the liquidity there.",
+     "step": 4,
+     "point": "4. Stop below the *sweep*"
+    },
+    {
+     "say": "If the plan works, the next target is often the liquidity above the highs. But this setup can fail too – the stop always belongs in the plan.",
+     "step": 5
+    }
+   ],
+   "clip_data": {
+    "c": [
+     [
+      64,
+      64.16,
+      60.57,
+      61
+     ],
+     [
+      61,
+      61.26,
+      57.82,
+      58
+     ],
+     [
+      58,
+      58.42,
+      54.57,
+      55
+     ],
+     [
+      55,
+      57.57,
+      54.59,
+      57
+     ],
+     [
+      57,
+      57.38,
+      53.6,
+      54
+     ],
+     [
+      54,
+      54.01,
+      50.78,
+      51
+     ],
+     [
+      51,
+      53.58,
+      50.72,
+      53
+     ],
+     [
+      53,
+      53.13,
+      50.14,
+      50.5
+     ],
+     [
+      50.5,
+      50.85,
+      45.27,
+      49
+     ],
+     [
+      49,
+      53.35,
+      48.64,
+      53
+     ],
+     [
+      53,
+      57.36,
+      52.7,
+      57
+     ],
+     [
+      57,
+      60.59,
+      56.8,
+      60
+     ],
+     [
+      60,
+      60.21,
+      57.62,
+      58
+     ],
+     [
+      58,
+      58.32,
+      55.46,
+      55.5
+     ],
+     [
+      55.5,
+      56.07,
+      53.42,
+      54
+     ],
+     [
+      54,
+      56.04,
+      53.98,
+      56
+     ],
+     [
+      56,
+      60.46,
+      55.74,
+      60
+     ],
+     [
+      60,
+      64.12,
+      59.92,
+      64
+     ],
+     [
+      64,
+      67.26,
+      63.68,
+      67
+     ],
+     [
+      67,
+      70.46,
+      66.42,
+      70
+     ]
+    ],
+    "steps": [
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         0,
+         65,
+         "L_PULLBACK"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "l": [
+        [
+         50,
+         "L_LOWSTOPS",
+         "red"
+        ]
+       ],
+       "a": [
+        [
+         8,
+         44.6,
+         "Sweep"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 12,
+      "add": {
+       "l": [
+        [
+         57.6,
+         "",
+         "gold"
+        ]
+       ],
+       "a": [
+        [
+         11,
+         61.6,
+         "CHoCH ↑"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 12,
+      "add": {
+       "z": [
+        [
+         10,
+         19,
+         53.4,
+         56.8,
+         "FVG / Discount",
+         "gold"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 15,
+      "add": {
+       "a": [
+        [
+         14,
+         52.4,
+         "Entry"
+        ],
+        [
+         8,
+         43.2,
+         "SL ↓"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 20,
+      "add": {
+       "a": [
+        [
+         19,
+         71.5,
+         "TP ✓"
+        ]
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "kind": "summary",
+   "title": "The *summary*",
+   "hook": "Liquidity in 5 rules",
+   "segs": [
+    {
+     "say": "Let's sum up.",
+     "bullet": null
+    },
+    {
+     "say": "Liquidity sits where lots of stops sit: above highs and below lows.",
+     "bullet": "Stops above highs & below lows"
+    },
+    {
+     "say": "Equal highs and equal lows aren't safe resistance – they're a magnet for price.",
+     "bullet": "Equal highs/lows = magnet"
+    },
+    {
+     "say": "A sweep is a wick beyond the level with a fast return. A real breakout closes beyond it and holds on the retest.",
+     "bullet": "Sweep reverses · breakout holds"
+    },
+    {
+     "say": "A sweep alone isn't enough. Wait for a change of character as confirmation.",
+     "bullet": "First sweep, then CHoCH"
+    },
+    {
+     "say": "And don't put your stop where everyone else puts theirs. Risk only one to two percent of your account per trade.",
+     "bullet": "Max. 1–2 % risk per trade"
+    }
+   ]
+  },
+  {
+   "kind": "outro",
+   "title": "Wealth Club",
+   "segs": [
+    {
+     "say": "If you want to see liquidity live on the gold chart every day: join our free gold group on Telegram. You'll find the link in the description. Our bootcamp with fifty-five lessons and daily trade ideas are waiting for you there too. See you in the next video!"
+    }
+   ]
+  }
+ ],
+ "lang": "en"
+}

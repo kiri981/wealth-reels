@@ -26,19 +26,19 @@ CLIPS = json.load(open(os.path.join(HERE, "clips.json")))
 LBL = CLIPS["LABELS"]["de"]
 # Bildschirmtexte je Sprache (spec "lang": de | en | pl | fr) – für die Partner-Fassungen
 UI = {
- "de": dict(kap="KAPITEL", learn="Das lernst du heute", disc=["Bildungsinhalt – *keine Anlageberatung*.", "Trading birgt Verlustrisiken.", "Neue Strategien zuerst im *Demokonto* üben."],
+ "de": dict(imp="Wichtig", kap="KAPITEL", learn="Das lernst du heute", disc=["Bildungsinhalt – *keine Anlageberatung*.", "Trading birgt Verlustrisiken.", "Neue Strategien zuerst im *Demokonto* üben."],
             grp="Kostenlose *Gold-Gruppe*", perks=["Täglich *Trade-Ideen* auf Gold", "Jeden Morgen das *Gold-Briefing*", "*Bootcamp* mit 55 Lektionen"], link="Link in der Beschreibung  →",
             rem="Merke dir", whole="Das ganze Video:", yt="auf YouTube – Link in Bio", intro="Einleitung", chap="Kapitel", dgrp="🔗 Kostenlose Gold-Gruppe auf Telegram (Trade-Ideen, Gold-Briefing, Bootcamp mit 55 Lektionen):",
             ddisc="⚠️ Bildungsinhalt, keine Anlageberatung. Trading birgt Verlustrisiken."),
- "en": dict(kap="CHAPTER", learn="What you'll learn today", disc=["Educational content – *not investment advice*.", "Trading involves risk of loss.", "Practise new strategies on a *demo account* first."],
+ "en": dict(imp="Important", kap="CHAPTER", learn="What you'll learn today", disc=["Educational content – *not investment advice*.", "Trading involves risk of loss.", "Practise new strategies on a *demo account* first."],
             grp="Free *Gold Group*", perks=["Daily *trade ideas* on gold", "*Gold briefing* every morning", "*Bootcamp* with 55 lessons"], link="Link in the description  →",
             rem="Remember", whole="Full video:", yt="on YouTube – link in bio", intro="Intro", chap="Chapters", dgrp="🔗 Free gold group on Telegram (trade ideas, gold briefing, bootcamp with 55 lessons):",
             ddisc="⚠️ Educational content, not investment advice. Trading involves risk of loss."),
- "pl": dict(kap="ROZDZIAŁ", learn="Czego się dziś nauczysz", disc=["Treści edukacyjne – *nie porada inwestycyjna*.", "Trading wiąże się z ryzykiem strat.", "Nowe strategie najpierw ćwicz na *koncie demo*."],
+ "pl": dict(imp="Ważne", kap="ROZDZIAŁ", learn="Czego się dziś nauczysz", disc=["Treści edukacyjne – *nie porada inwestycyjna*.", "Trading wiąże się z ryzykiem strat.", "Nowe strategie najpierw ćwicz na *koncie demo*."],
             grp="Darmowa *grupa o złocie*", perks=["Codziennie *pomysły tradingowe*", "Co rano *briefing złota*", "*Bootcamp* z 55 lekcjami"], link="Link w opisie  →",
             rem="Zapamiętaj", whole="Cały film:", yt="na YouTube – link w bio", intro="Wstęp", chap="Rozdziały", dgrp="🔗 Darmowa grupa o złocie na Telegramie (pomysły tradingowe, briefing złota, bootcamp z 55 lekcjami):",
             ddisc="⚠️ Treści edukacyjne, nie porada inwestycyjna. Trading wiąże się z ryzykiem strat."),
- "fr": dict(kap="CHAPITRE", learn="Ce que tu vas apprendre", disc=["Contenu éducatif – *pas un conseil en investissement*.", "Le trading comporte un risque de perte.", "Teste d'abord les stratégies sur un *compte démo*."],
+ "fr": dict(imp="Important", kap="CHAPITRE", learn="Ce que tu vas apprendre", disc=["Contenu éducatif – *pas un conseil en investissement*.", "Le trading comporte un risque de perte.", "Teste d'abord les stratégies sur un *compte démo*."],
             grp="*Groupe Or* gratuit", perks=["Des *idées de trading* sur l'or chaque jour", "Le *briefing or* chaque matin", "*Bootcamp* de 55 leçons"], link="Lien dans la description  →",
             rem="À retenir", whole="La vidéo complète :", yt="sur YouTube – lien en bio", intro="Introduction", chap="Chapitres", dgrp="🔗 Groupe or gratuit sur Telegram (idées de trading, briefing or, bootcamp de 55 leçons) :",
             ddisc="⚠️ Contenu éducatif, pas un conseil en investissement. Le trading comporte un risque de perte."),
@@ -381,7 +381,7 @@ def agenda(cv, im, items, t0, t, cy):
 def disclaimer_box(cv, im, a, cy):
     d = ImageDraw.Draw(im, "RGBA"); W = cv.W; bw, bh = (1060, 250) if not cv.v else (940, 300); x0 = (W - bw) / 2; y0 = cy
     d.rounded_rectangle((x0, y0, x0 + bw, y0 + bh), radius=24, fill=(20, 17, 11, int(240 * a)), outline=GOLD + (int(220 * a),), width=3)
-    d.text((W / 2, y0 + 66), "⚠  Wichtig", font=F(BLACK, 46), fill=GOLD + (int(255 * a),), anchor="ms")
+    d.text((W / 2, y0 + 66), "⚠  " + T_.get("imp", "Wichtig"), font=F(BLACK, 46), fill=GOLD + (int(255 * a),), anchor="ms")
     for i, l in enumerate(T_["disc"]):
         rich(d, W / 2, y0 + 128 + i * 44, l, F(SEMI, 32), a, anchor="m", base=(215, 215, 220))
 

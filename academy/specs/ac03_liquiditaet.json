@@ -1,0 +1,1151 @@
+{
+ "id": "ac03",
+ "title": "Liquidität *verstehen*",
+ "yt_title": "Liquidität verstehen – Stop-Hunts, gleiche Hochs/Tiefs & Sweep vs. echter Ausbruch bei Gold",
+ "thumb": [
+  "LIQUIDITÄT",
+  "Sweep oder Ausbruch?"
+ ],
+ "thumb_clip": "gleiche-hochs",
+ "tags": [
+  "Gold Trading",
+  "XAUUSD",
+  "Liquidität",
+  "Stop Hunt",
+  "Liquidity Sweep",
+  "Smart Money",
+  "Trading lernen",
+  "Gleiche Hochs",
+  "Ausbruch",
+  "Price Action"
+ ],
+ "chapters": [
+  {
+   "kind": "intro",
+   "title": "Liquidität verstehen",
+   "segs": [
+    {
+     "say": "Kennst du das? Du setzt deinen Stop knapp unter ein Tief, der Preis sticht genau dort hinein – und dreht danach in deine Richtung. Das ist kein Pech. Das ist Liquidität."
+    },
+    {
+     "say": "In diesem Video schauen wir uns an, wo die Liquidität im Chart liegt, wie ein Stop-Hunt abläuft, warum gleiche Hochs und gleiche Tiefs so wichtig sind – und wie du einen Sweep von einem echten Ausbruch unterscheidest.",
+     "agenda": [
+      "Wo Liquidität liegt",
+      "Der Stop-Hunt",
+      "Gleiche Hochs & Tiefs",
+      "Sweep vs. Ausbruch"
+     ]
+    },
+    {
+     "say": "Wichtig vorab: Das ist Bildungsinhalt, keine Anlageberatung. Trading birgt Verlustrisiken. Übe neue Strategien zuerst auf einem Demokonto.",
+     "disclaimer": true
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Was ist *Liquidität*?",
+   "clip": "liq-pools",
+   "hook": "Hier liegen die Stops der meisten Trader",
+   "clip_data": {
+    "c": [
+     [
+      44,
+      46,
+      43.5,
+      45.5
+     ],
+     [
+      45.5,
+      48.5,
+      45,
+      48
+     ],
+     [
+      48,
+      51,
+      47.6,
+      50.5
+     ],
+     [
+      50.5,
+      54,
+      50,
+      53.5
+     ],
+     [
+      53.5,
+      56,
+      53,
+      55.2
+     ],
+     [
+      55.2,
+      55.6,
+      52.5,
+      53
+     ],
+     [
+      53,
+      53.4,
+      50,
+      50.6
+     ],
+     [
+      50.6,
+      51,
+      47.5,
+      48.2
+     ],
+     [
+      48.2,
+      50.5,
+      47.9,
+      50.2
+     ],
+     [
+      50.2,
+      52.8,
+      49.8,
+      52.4
+     ],
+     [
+      52.4,
+      54.6,
+      52,
+      54.1
+     ],
+     [
+      54.1,
+      55.3,
+      53.2,
+      53.6
+     ],
+     [
+      53.6,
+      55,
+      52.4,
+      54.6
+     ],
+     [
+      54.6,
+      55.6,
+      54,
+      55.3
+     ]
+    ],
+    "steps": [
+     {
+      "to": 5,
+      "add": {
+       "a": [
+        [
+         4,
+         57,
+         "Hoch"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "a": [
+        [
+         7,
+         46.5,
+         "Tief"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "l": [
+        [
+         56.3,
+         "Stops darüber",
+         "red"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "l": [
+        [
+         47.2,
+         "Stops darunter",
+         "red"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 14,
+      "add": {
+       "a": [
+        [
+         10,
+         51,
+         "Magnet"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "Liquidität klingt kompliziert, ist aber einfach: Es sind die Stellen im Chart, an denen besonders viele Orders liegen. Und die meisten davon sind Stop-Loss-Orders.",
+     "step": -1
+    },
+    {
+     "say": "Der Markt steigt und bildet ein klares Hoch. Jeder sieht es, jeder zeichnet es ein.",
+     "step": 0
+    },
+    {
+     "say": "Dann kommt ein Rücksetzer, und es entsteht ein klares Tief.",
+     "step": 1
+    },
+    {
+     "say": "Über dem Hoch sammeln sich die Stops der Verkäufer – und dazu die Kauforders von Tradern, die auf einen Ausbruch warten.",
+     "step": 2,
+     "point": "Über Hochs: *Stops* & Ausbruchs-Orders"
+    },
+    {
+     "say": "Unter dem Tief liegen die Stops der Käufer. Genau dort, wo die meisten Lehrbücher den Stop empfehlen.",
+     "step": 3,
+     "point": "Unter Tiefs: Stops der *Käufer*"
+    },
+    {
+     "say": "Warum ist das wichtig? Große Marktteilnehmer brauchen für ihre Positionen eine Gegenseite. Ausgelöste Stops liefern genau diese Orders. Deshalb wirken solche Zonen oft wie ein Magnet auf den Preis.",
+     "step": 4,
+     "point": "Liquidität wirkt wie ein *Magnet*"
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Der *Stop-Hunt*",
+   "clip": "stop-hunt",
+   "hook": "So läuft ein Stop-Hunt bei Gold ab",
+   "segs": [
+    {
+     "say": "Schauen wir uns jetzt an, was passiert, wenn der Preis diese Liquidität holt. Man spricht von einem Stop-Hunt oder Liquidity Sweep.",
+     "step": -1
+    },
+    {
+     "say": "Der Markt fällt und bildet ein Tief.",
+     "step": 0
+    },
+    {
+     "say": "Der Preis kommt noch einmal auf ungefähr dieselbe Höhe zurück. Unter diesen Tiefs liegen jetzt besonders viele Stops.",
+     "step": 1,
+     "point": "Unter den Tiefs: *Stops*"
+    },
+    {
+     "say": "Dann sticht eine Kerze mit einem langen Docht darunter. Die Stops werden ausgelöst – das ist der Sweep.",
+     "step": 2,
+     "point": "Docht darunter = *Sweep*"
+    },
+    {
+     "say": "Entscheidend ist, was danach passiert: Der Preis kehrt sofort über das alte Tief zurück. Die Verkäufer, die dort ausgestoppt wurden oder short gegangen sind, stehen jetzt auf der falschen Seite.",
+     "step": 3,
+     "point": "Schnelle *Rückkehr* über das Tief"
+    },
+    {
+     "say": "Oft folgt ein kräftiger Impuls in die Gegenrichtung. Aber Achtung: Ein Sweep allein ist noch keine Trade-Idee. Er ist nur der erste Hinweis.",
+     "step": 4,
+     "point": "Sweep allein = *noch kein* Einstieg"
+    }
+   ],
+   "clip_data": {
+    "c": [
+     [
+      60,
+      60.13,
+      56.91,
+      57
+     ],
+     [
+      57,
+      57.16,
+      53.96,
+      54
+     ],
+     [
+      54,
+      54.35,
+      51.89,
+      52
+     ],
+     [
+      52,
+      53.68,
+      51.91,
+      53.5
+     ],
+     [
+      53.5,
+      55.29,
+      53.34,
+      55
+     ],
+     [
+      55,
+      55.14,
+      52.87,
+      53
+     ],
+     [
+      53,
+      53.05,
+      51.22,
+      51.6
+     ],
+     [
+      51.6,
+      53.42,
+      51.19,
+      53
+     ],
+     [
+      53,
+      54.83,
+      52.85,
+      54.5
+     ],
+     [
+      54.5,
+      54.9,
+      52.36,
+      52.5
+     ],
+     [
+      52.5,
+      52.72,
+      51.44,
+      51.5
+     ],
+     [
+      51.5,
+      51.98,
+      45.55,
+      50
+     ],
+     [
+      50,
+      54.32,
+      49.51,
+      54
+     ],
+     [
+      54,
+      57.47,
+      53.76,
+      57
+     ],
+     [
+      57,
+      60.05,
+      56.87,
+      60
+     ],
+     [
+      60,
+      63.27,
+      59.95,
+      63
+     ]
+    ],
+    "steps": [
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         7,
+         50.3,
+         "L_LOW"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 11,
+      "add": {
+       "l": [
+        [
+         51.1,
+         "L_STOPS",
+         "red"
+        ]
+       ],
+       "a": [
+        [
+         10,
+         50.3,
+         "L_LOW"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 12,
+      "add": {
+       "a": [
+        [
+         11,
+         44.6,
+         "Sweep"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 13,
+      "add": {
+       "a": [
+        [
+         12,
+         55.4,
+         "L_RETURN"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 16,
+      "add": {
+       "a": [
+        [
+         15,
+         64.3,
+         "L_IMPULSE"
+        ]
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "kind": "chart",
+   "title": "Gleiche *Hochs*",
+   "clip": "gleiche-hochs",
+   "hook": "Gleiche Hochs sind kein Widerstand",
+   "clip_data": {
+    "c": [
+     [
+      48,
+      50,
+      47.5,
+      49.6
+     ],
+     [
+      49.6,
+      53,
+      49.2,
+      52.6
+     ],
+     [
+      52.6,
+      56.4,
+      52.2,
+      56
+     ],
+     [
+      56,
+      59.9,
+      55.6,
+      59.2
+     ],
+     [
+      59.2,
+      59.6,
+      56.4,
+      57
+     ],
+     [
+      57,
+      57.4,
+      54.6,
+      55.2
+     ],
+     [
+      55.2,
+      57.8,
+      54.8,
+      57.5
+     ],
+     [
+      57.5,
+      60,
+      57.1,
+      59.4
+     ],
+     [
+      59.4,
+      59.7,
+      57.2,
+      57.6
+     ],
+     [
+      57.6,
+      58.4,
+      56.2,
+      58
+     ],
+     [
+      58,
+      62.3,
+      57.8,
+      58.6
+     ],
+     [
+      58.6,
+      58.9,
+      55.4,
+      55.8
+     ],
+     [
+      55.8,
+      56.2,
+      52.6,
+      53
+     ],
+     [
+      53,
+      53.6,
+      50.2,
+      50.6
+     ],
+     [
+      50.6,
+      51.4,
+      48.6,
+      49.2
+     ]
+    ],
+    "steps": [
+     {
+      "to": 4,
+      "add": {
+       "a": [
+        [
+         3,
+         61,
+         "Hoch"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         7,
+         61,
+         "gleiches Hoch"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "l": [
+        [
+         60,
+         "L_EQHIGHS",
+         "red"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 11,
+      "add": {
+       "a": [
+        [
+         10,
+         63.4,
+         "Sweep"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 13,
+      "add": {
+       "a": [
+        [
+         12,
+         51.4,
+         "BOS ↓"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 15,
+      "add": {
+       "a": [
+        [
+         14,
+         47.5,
+         "Abverkauf"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "Ein besonders starker Magnet sind gleiche Hochs und gleiche Tiefs. Viele Trader sehen darin einen sicheren Widerstand. In Wahrheit ist es oft das Gegenteil.",
+     "step": -1
+    },
+    {
+     "say": "Hier steigt Gold und bildet ein Hoch.",
+     "step": 0
+    },
+    {
+     "say": "Nach einem Rücksetzer läuft der Preis erneut genau bis auf diese Höhe – und dreht wieder ab. Ein Doppel-Hoch, wie aus dem Lehrbuch.",
+     "step": 1,
+     "point": "Zwei Hochs auf *gleicher* Höhe"
+    },
+    {
+     "say": "Jetzt liegen über dieser Linie doppelt so viele Stops und Ausbruchs-Orders. Je sauberer die Hochs, desto mehr Liquidität sammelt sich dort.",
+     "step": 2,
+     "point": "Gleiche Hochs = *Liquidität*"
+    },
+    {
+     "say": "Und dann passiert es: Ein Docht schießt über die Hochs, holt die Stops – aber die Kerze schließt wieder darunter. Die Ausbruchskäufer sitzen in der Falle.",
+     "step": 3,
+     "point": "Docht drüber, *Schluss* darunter"
+    },
+    {
+     "say": "Kurz danach bricht der Preis unter das letzte Tief. Ein Break of Structure nach unten bestätigt, dass die Verkäufer übernommen haben.",
+     "step": 4,
+     "point": "BOS nach unten = *Bestätigung*"
+    },
+    {
+     "say": "Der Abverkauf läuft oft weiter, bis zur nächsten Liquidität darunter. Bei gleichen Tiefs funktioniert das genau spiegelverkehrt.",
+     "step": 5
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Sweep oder *Ausbruch*?",
+   "clip": "echter-ausbruch",
+   "hook": "Sweep oder echter Ausbruch? So erkennst du es",
+   "clip_data": {
+    "c": [
+     [
+      50,
+      52.4,
+      49.6,
+      52
+     ],
+     [
+      52,
+      55.6,
+      51.7,
+      55.2
+     ],
+     [
+      55.2,
+      59.9,
+      54.9,
+      59.3
+     ],
+     [
+      59.3,
+      59.7,
+      56.8,
+      57.2
+     ],
+     [
+      57.2,
+      57.6,
+      55.3,
+      55.8
+     ],
+     [
+      55.8,
+      58.3,
+      55.4,
+      58
+     ],
+     [
+      58,
+      60,
+      57.6,
+      59.2
+     ],
+     [
+      59.2,
+      59.5,
+      57.4,
+      57.9
+     ],
+     [
+      57.9,
+      59.6,
+      57.5,
+      59.4
+     ],
+     [
+      59.4,
+      63.2,
+      59.2,
+      62.9
+     ],
+     [
+      62.9,
+      63.4,
+      61.2,
+      61.6
+     ],
+     [
+      61.6,
+      62,
+      60.3,
+      60.9
+     ],
+     [
+      60.9,
+      63.8,
+      60.6,
+      63.5
+     ],
+     [
+      63.5,
+      66.2,
+      63.2,
+      65.8
+     ],
+     [
+      65.8,
+      68.4,
+      65.4,
+      68
+     ]
+    ],
+    "steps": [
+     {
+      "to": 9,
+      "add": {
+       "l": [
+        [
+         60,
+         "gleiche Hochs",
+         "gold"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 10,
+      "add": {
+       "a": [
+        [
+         9,
+         64.4,
+         "L_CLOSEABOVE"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 12,
+      "add": {
+       "a": [
+        [
+         11,
+         59.2,
+         "Retest hält"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 15,
+      "add": {
+       "a": [
+        [
+         14,
+         69.6,
+         "Fortsetzung"
+        ]
+       ]
+      }
+     }
+    ]
+   },
+   "segs": [
+    {
+     "say": "Natürlich ist nicht jeder Bruch über ein Hoch ein Sweep. Manchmal ist der Ausbruch echt. Die wichtigste Frage ist also: Woran erkennst du den Unterschied?",
+     "step": -1
+    },
+    {
+     "say": "Wieder sehen wir mehrere Hochs auf derselben Höhe. Auch hier liegt Liquidität über der Linie.",
+     "step": 0
+    },
+    {
+     "say": "Diesmal schließt eine Kerze mit großem Körper klar über den Hochs. Kein langer Docht, kein schnelles Zurückfallen.",
+     "step": 1,
+     "point": "Ausbruch: klarer *Kerzenschluss*"
+    },
+    {
+     "say": "Der Preis kommt zurück an die alte Linie, bleibt aber darüber. Der frühere Widerstand hält jetzt als Unterstützung. Das nennt man Retest.",
+     "step": 2,
+     "point": "Retest: alte Linie *hält*"
+    },
+    {
+     "say": "Danach setzt sich die Bewegung fort. Das ist der Unterschied: Beim Sweep kehrt der Preis schnell zurück. Beim echten Ausbruch schließt er darüber und hält das Niveau.",
+     "step": 3,
+     "point": "Sweep kehrt um, Ausbruch *hält*"
+    },
+    {
+     "say": "Wenn du unsicher bist, warte ab. Ein bis zwei Kerzen Geduld kosten dich wenig – ein Einstieg in die falsche Richtung kostet mehr.",
+     "step": 3
+    }
+   ]
+  },
+  {
+   "kind": "remember",
+   "title": "Merke *dir*",
+   "cards": [
+    [
+     "Sweep",
+     "Docht drüber, *zurück*"
+    ],
+    [
+     "Ausbruch",
+     "Schluss drüber, *hält*"
+    ]
+   ],
+   "segs": [
+    {
+     "say": "Merke dir also:",
+     "card": -1
+    },
+    {
+     "say": "Beim Sweep sticht nur der Docht über das Niveau, und der Preis kommt schnell zurück.",
+     "card": 0
+    },
+    {
+     "say": "Beim Ausbruch schließt die Kerze darüber, und das Niveau hält.",
+     "card": 1
+    }
+   ]
+  },
+  {
+   "kind": "chart",
+   "title": "Liquidität im *Setup*",
+   "clip": "setup-liq",
+   "hook": "Vom Sweep zur Trade-Idee in 4 Schritten",
+   "segs": [
+    {
+     "say": "Zum Schluss setzen wir alles zusammen. So kann ein Sweep der Startpunkt für eine durchdachte Trade-Idee werden.",
+     "step": -1
+    },
+    {
+     "say": "Der Fünf-Minuten-Chart korrigiert nach unten, während der übergeordnete Trend nach oben zeigt.",
+     "step": 0
+    },
+    {
+     "say": "Unter dem letzten Tief liegen die Stops. Ein Docht holt sie ab – der Sweep.",
+     "step": 1,
+     "point": "1. *Sweep* unter dem Tief"
+    },
+    {
+     "say": "Dann schließt eine Kerze über dem letzten tieferen Hoch. Der Change of Character zeigt, dass die Käufer zurück sind.",
+     "step": 2,
+     "point": "2. *CHoCH* nach oben"
+    },
+    {
+     "say": "Der Impuls hinterlässt eine Fair Value Gap im Discount-Bereich. Dort wartest du auf den Rücklauf.",
+     "step": 3,
+     "point": "3. *FVG* im Discount"
+    },
+    {
+     "say": "Der Einstieg erfolgt in der Lücke, der Stop liegt unter dem Sweep-Tief. Dort hat der Markt die Liquidität schon geholt.",
+     "step": 4,
+     "point": "4. Stop unter dem *Sweep*"
+    },
+    {
+     "say": "Läuft der Plan, wird das nächste Ziel oft die Liquidität über den Hochs. Aber auch dieses Setup kann scheitern – der Stop gehört immer dazu.",
+     "step": 5
+    }
+   ],
+   "clip_data": {
+    "c": [
+     [
+      64,
+      64.16,
+      60.57,
+      61
+     ],
+     [
+      61,
+      61.26,
+      57.82,
+      58
+     ],
+     [
+      58,
+      58.42,
+      54.57,
+      55
+     ],
+     [
+      55,
+      57.57,
+      54.59,
+      57
+     ],
+     [
+      57,
+      57.38,
+      53.6,
+      54
+     ],
+     [
+      54,
+      54.01,
+      50.78,
+      51
+     ],
+     [
+      51,
+      53.58,
+      50.72,
+      53
+     ],
+     [
+      53,
+      53.13,
+      50.14,
+      50.5
+     ],
+     [
+      50.5,
+      50.85,
+      45.27,
+      49
+     ],
+     [
+      49,
+      53.35,
+      48.64,
+      53
+     ],
+     [
+      53,
+      57.36,
+      52.7,
+      57
+     ],
+     [
+      57,
+      60.59,
+      56.8,
+      60
+     ],
+     [
+      60,
+      60.21,
+      57.62,
+      58
+     ],
+     [
+      58,
+      58.32,
+      55.46,
+      55.5
+     ],
+     [
+      55.5,
+      56.07,
+      53.42,
+      54
+     ],
+     [
+      54,
+      56.04,
+      53.98,
+      56
+     ],
+     [
+      56,
+      60.46,
+      55.74,
+      60
+     ],
+     [
+      60,
+      64.12,
+      59.92,
+      64
+     ],
+     [
+      64,
+      67.26,
+      63.68,
+      67
+     ],
+     [
+      67,
+      70.46,
+      66.42,
+      70
+     ]
+    ],
+    "steps": [
+     {
+      "to": 8,
+      "add": {
+       "a": [
+        [
+         0,
+         65,
+         "L_PULLBACK"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 9,
+      "add": {
+       "l": [
+        [
+         50,
+         "L_LOWSTOPS",
+         "red"
+        ]
+       ],
+       "a": [
+        [
+         8,
+         44.6,
+         "Sweep"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 12,
+      "add": {
+       "l": [
+        [
+         57.6,
+         "",
+         "gold"
+        ]
+       ],
+       "a": [
+        [
+         11,
+         61.6,
+         "CHoCH ↑"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 12,
+      "add": {
+       "z": [
+        [
+         10,
+         19,
+         53.4,
+         56.8,
+         "FVG / Discount",
+         "gold"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 15,
+      "add": {
+       "a": [
+        [
+         14,
+         52.4,
+         "Entry"
+        ],
+        [
+         8,
+         43.2,
+         "SL ↓"
+        ]
+       ]
+      }
+     },
+     {
+      "to": 20,
+      "add": {
+       "a": [
+        [
+         19,
+         71.5,
+         "TP ✓"
+        ]
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "kind": "summary",
+   "title": "Die *Zusammenfassung*",
+   "hook": "Liquidität in 5 Regeln",
+   "segs": [
+    {
+     "say": "Fassen wir zusammen.",
+     "bullet": null
+    },
+    {
+     "say": "Liquidität liegt dort, wo viele Stops liegen: über Hochs und unter Tiefs.",
+     "bullet": "Stops über Hochs & unter Tiefs"
+    },
+    {
+     "say": "Gleiche Hochs und gleiche Tiefs sind kein sicherer Widerstand, sondern ein Magnet für den Preis.",
+     "bullet": "Gleiche Hochs/Tiefs = Magnet"
+    },
+    {
+     "say": "Ein Sweep ist ein Docht über das Niveau mit schneller Rückkehr. Ein echter Ausbruch schließt darüber und hält beim Retest.",
+     "bullet": "Sweep kehrt um · Ausbruch hält"
+    },
+    {
+     "say": "Ein Sweep allein reicht nicht. Warte auf einen Change of Character als Bestätigung.",
+     "bullet": "Erst Sweep, dann CHoCH"
+    },
+    {
+     "say": "Und setze deinen Stop nicht dorthin, wo alle ihn setzen. Riskiere pro Trade nur ein bis zwei Prozent deines Kontos.",
+     "bullet": "Max. 1–2 % Risiko pro Trade"
+    }
+   ]
+  },
+  {
+   "kind": "outro",
+   "title": "Wealth Club",
+   "segs": [
+    {
+     "say": "Wenn du Liquidität jeden Tag live am Goldchart sehen willst: Komm in unsere kostenlose Gold-Gruppe auf Telegram. Den Link findest du in der Beschreibung. Dort warten auch unser Bootcamp mit fünfundfünfzig Lektionen und tägliche Trade-Ideen auf dich. Bis zum nächsten Video!"
+    }
+   ]
+  }
+ ]
+}

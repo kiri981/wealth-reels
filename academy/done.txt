@@ -1,2 +1,3 @@
 ac01 Das komplette Gold-Setup in 4 Schritten
 ac02 Marktstruktur komplett
+ac03 Liquidität verstehen
