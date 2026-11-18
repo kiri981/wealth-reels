@@ -1,0 +1,13 @@
+{
+ "cover": {"kicker": "MARKT", "title": "Zentralbanken kaufen, *Gold* fällt", "chart": "down"},
+ "music": "drive",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 3.2, "text": "Zentralbanken kaufen massiv Gold.", "accent": "Und trotzdem fällt der Preis.", "icon": "alert"},
+  {"type": "counter", "dur": 3.8, "label": "Zentralbank-Käufe im 3. Quartal", "from": 0, "to": 321, "decimals": 0, "suffix": " t", "color": "green", "sub": "+42 % zum Vorjahr · Quelle: World Gold Council"},
+  {"type": "cards", "dur": 4.4, "title": "Und der Preis?", "items": [{"left": "Gold", "right": "unter 3.800 $", "hot": true}, {"left": "Tief seit", "right": "Sept. 2025"}, {"left": "Fed Dez.", "right": "Zinserhöhung erwartet"}, {"left": "Dollar", "right": "fester"}]},
+  {"type": "words", "dur": 4.4, "kicker": "DER WIDERSPRUCH", "text": "Zentralbanken kaufen langfristig. Den Kurs von heute bewegen Zinsen und Dollar."},
+  {"type": "notify", "dur": 3.8, "title": "Keine Zeit, den Markt *selbst* zu analysieren?", "items": [{"text": "Gold unter 3.800 $", "time": "jetzt"}, {"text": "Zinsen & Dollar im Blick", "time": "1 Min.", "color": "gold"}, {"text": "Live-Updates in der Gruppe", "time": "2 Min."}]},
+  {"type": "cta", "dur": 3.2, "title": "Nachfrage ist nicht gleich Timing.", "button": "Kommentiere GOLD"}
+ ]
+}
