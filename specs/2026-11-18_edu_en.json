@@ -1,0 +1,90 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "RISK",
+  "title": "The *leverage* that kills accounts",
+  "chart": "down"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "Gold drops $10",
+   "accent": "…and your account is empty?",
+   "icon": "alert",
+   "say": "Gold drops ten dollars – and your account is empty?"
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "LEVERAGE",
+   "text": "Move a big position with little money. Gains and losses grow with it.",
+   "say": "Leverage: little capital, big position. Losses included."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "STEP 01 · Example",
+   "items": [
+    {
+     "left": "Account",
+     "right": "$1,000"
+    },
+    {
+     "left": "1 lot gold",
+     "right": "100 oz ≈ $400,000"
+    },
+    {
+     "left": "Leverage",
+     "right": "1:500 → margin $800"
+    },
+    {
+     "left": "Broker says",
+     "right": "“Go ahead!”",
+     "hot": true
+    }
+   ],
+   "say": "Step one: With leverage of one to five hundred, eight hundred dollars buys one lot."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "STEP 02 · Example",
+   "from": 0,
+   "to": -1000,
+   "decimals": 0,
+   "prefix": "",
+   "suffix": " $",
+   "color": "red",
+   "sub": "Gold −$10 × 100 oz = account gone",
+   "say": "Step two: Ten dollars down – minus one thousand. Account gone."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "STEP 03",
+   "text": "Leverage is only permission. Your risk sets the position size – not your free margin.",
+   "say": "Step three: Leverage is just permission. Your risk sets the size."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "TYPICAL MISTAKE",
+   "text": "“I still have free margin – so one more trade fits.”",
+   "say": "Typical mistake: Free margin doesn't mean one more trade."
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Leverage is a tool, not a turbo.",
+   "button": "Comment GOLD",
+   "say": "I show my planning live in my free group. Comment GOLD."
+  }
+ ],
+ "lang": "en"
+}

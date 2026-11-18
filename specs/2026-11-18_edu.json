@@ -1,0 +1,89 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "RISIKO",
+  "title": "Der *Hebel*, der Konten killt",
+  "chart": "down"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "Gold fällt 10 $ –",
+   "accent": "und dein Konto ist leer?",
+   "icon": "alert",
+   "say": "Gold fällt zehn Dollar – und dein Konto ist leer?"
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "HEBEL",
+   "text": "Mit wenig Geld eine große Position bewegen. Gewinne und Verluste wachsen mit.",
+   "say": "Hebel: wenig Kapital, große Position. Auch beim Verlust."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 01 · Beispiel",
+   "items": [
+    {
+     "left": "Konto",
+     "right": "1.000 $"
+    },
+    {
+     "left": "1 Lot Gold",
+     "right": "100 Unzen ≈ 400.000 $"
+    },
+    {
+     "left": "Hebel 1:500",
+     "right": "Margin nur 800 $"
+    },
+    {
+     "left": "Broker sagt",
+     "right": "„Geht!“",
+     "hot": true
+    }
+   ],
+   "say": "Schritt eins: Bei Hebel eins zu fünfhundert reichen achthundert Dollar für ein Lot."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "SCHRITT 02 · Beispiel",
+   "from": 0,
+   "to": -1000,
+   "decimals": 0,
+   "prefix": "",
+   "suffix": " $",
+   "color": "red",
+   "sub": "Gold −10 $ × 100 Unzen = Konto weg",
+   "say": "Schritt zwei: Zehn Dollar runter – minus tausend. Konto weg."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "SCHRITT 03",
+   "text": "Der Hebel ist nur eine Erlaubnis. Dein Risiko bestimmt die Positionsgröße – nicht die freie Margin.",
+   "say": "Schritt drei: Der Hebel ist nur Erlaubnis. Dein Risiko bestimmt die Größe."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "TYPISCHER FEHLER",
+   "text": "„Ich habe noch freie Margin – also passt noch ein Trade.“",
+   "say": "Typischer Fehler: Freie Margin heißt nicht: noch ein Trade."
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Hebel ist Werkzeug, kein Turbo.",
+   "button": "Kommentiere GOLD",
+   "say": "Meine Planung zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}
