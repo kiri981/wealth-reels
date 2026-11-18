@@ -83,6 +83,10 @@ export async function walletTick(env, say, kvGet, kvPut) {
     const solo = fresh.filter((x) => x.mint === mint && (x.w.alert || x.w.status === "copy"));
     const copy = fresh.find((x) => x.mint === mint && x.w.status === "copy");   // v3.0 Papier-Kopie ausgewählter Wallets (Kevin 17.11.)
     if (!cluster && !solo.length) continue;
+    // v3.9c (Kevin 18.11.): kein Spam – je Coin max. 1 Einzel-Meldung in 6 Std., keine Meldung unter 10k $ Marktwert/Liquidität 2k $
+    const mcap = N(i?.marketCap) || N(i?.fdv) || 0, liq0 = N(i?.liquidity?.usd) || 0;
+    if (mcap < 10000 || liq0 < 2000) continue;
+    if (!cluster) { const ak = "walert_" + mint; if (now - (+(await kvGet(env, ak)) || 0) < 6 * 3600) continue; await kvPut(env, ak, String(now)); }
     const sec = await security({ chain: "solana", token: mint });
     const amp = sec.level === "ok" ? "🟢" : sec.level === "warn" ? "🟡" : sec.level === "danger" ? "🔴" : "⚪";
     const head = cluster ? `👛👛 Smart-Wallet-Cluster: ${buyers.length} deiner Wallets kaufen ${sym}` : `👛 ${lab(solo[0].w)} kauft ${sym}`;
