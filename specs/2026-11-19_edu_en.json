@@ -1,0 +1,408 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "LEARN",
+  "title": "Spot the *Change of Character*",
+  "chart": "up"
+ },
+ "music": "drive",
+ "voice_speed": 1.1,
+ "lang": "en",
+ "footer": "Not financial advice · Trading involves risk of loss",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "You buy the bottom –",
+   "accent": "and it breaks again?",
+   "icon": "alert",
+   "say": "You buy the bottom, and it breaks again? Pros wait for one sign."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "CHANGE OF CHARACTER",
+   "text": "The first break against the trend – a hint, not proof.",
+   "say": "Change of Character: the first break against the trend."
+  },
+  {
+   "type": "candles",
+   "dur": 5.4,
+   "step": "STEP 01",
+   "title": "Find the *last lower high*",
+   "caption": "Downtrend: lower highs, lower lows.",
+   "say": "Step one: mark the last lower high.",
+   "candles": [
+    [
+     100.0,
+     100.16,
+     98.78,
+     99.14
+    ],
+    [
+     99.14,
+     99.46,
+     98.24,
+     98.48
+    ],
+    [
+     98.48,
+     98.79,
+     97.72,
+     97.84
+    ],
+    [
+     97.84,
+     98.58,
+     97.7,
+     98.45
+    ],
+    [
+     98.45,
+     99.5,
+     98.3,
+     99.07
+    ],
+    [
+     99.07,
+     99.42,
+     97.81,
+     98.29
+    ],
+    [
+     98.29,
+     98.55,
+     96.73,
+     97.23
+    ],
+    [
+     97.23,
+     97.67,
+     96.37,
+     96.59
+    ],
+    [
+     96.59,
+     96.74,
+     95.65,
+     95.87
+    ],
+    [
+     95.87,
+     96.85,
+     95.54,
+     96.68
+    ],
+    [
+     96.68,
+     97.65,
+     96.36,
+     97.4
+    ],
+    [
+     97.4,
+     97.52,
+     96.57,
+     96.75
+    ],
+    [
+     96.75,
+     97.02,
+     95.38,
+     95.61
+    ],
+    [
+     95.61,
+     95.89,
+     94.32,
+     94.54
+    ],
+    [
+     94.54,
+     96.37,
+     94.34,
+     95.99
+    ],
+    [
+     95.99,
+     97.61,
+     95.54,
+     97.3
+    ],
+    [
+     97.3,
+     98.92,
+     96.8,
+     98.71
+    ],
+    [
+     98.71,
+     99.96,
+     98.3,
+     99.69
+    ],
+    [
+     99.69,
+     100.99,
+     99.57,
+     100.7
+    ],
+    [
+     100.7,
+     101.87,
+     100.37,
+     101.46
+    ],
+    [
+     101.46,
+     102.6,
+     101.08,
+     102.38
+    ],
+    [
+     102.38,
+     103.42,
+     102.09,
+     103.09
+    ]
+   ],
+   "tags": [
+    {
+     "i": 10,
+     "price": 97.65,
+     "text": "LH",
+     "color": "white"
+    },
+    {
+     "i": 8,
+     "price": 95.65,
+     "text": "LL",
+     "color": "white"
+    },
+    {
+     "i": 13,
+     "price": 94.32,
+     "text": "LL",
+     "color": "white"
+    },
+    {
+     "i": 18,
+     "price": 100.99,
+     "text": "CHoCH – TREND CHANGE",
+     "color": "gold"
+    }
+   ],
+   "levels": [
+    {
+     "price": 97.65,
+     "text": "",
+     "color": "gold",
+     "from_i": 10
+    }
+   ],
+   "footer": "Example illustration"
+  },
+  {
+   "type": "candles",
+   "dur": 5.4,
+   "step": "STEP 02",
+   "title": "A *close* above that high = CHoCH",
+   "caption": "A wick alone doesn't count.",
+   "say": "Step two: a candle closes above it. That's the CHoCH.",
+   "candles": [
+    [
+     100.0,
+     100.32,
+     98.57,
+     99.04
+    ],
+    [
+     99.04,
+     99.34,
+     97.73,
+     98.07
+    ],
+    [
+     98.07,
+     98.37,
+     96.97,
+     97.32
+    ],
+    [
+     97.32,
+     98.25,
+     97.1,
+     98.11
+    ],
+    [
+     98.11,
+     98.98,
+     97.74,
+     98.56
+    ],
+    [
+     98.56,
+     99.05,
+     97.44,
+     97.93
+    ],
+    [
+     97.93,
+     98.27,
+     96.64,
+     96.8
+    ],
+    [
+     96.8,
+     97.11,
+     96.07,
+     96.19
+    ],
+    [
+     96.19,
+     96.39,
+     95.33,
+     95.44
+    ],
+    [
+     95.44,
+     96.35,
+     95.0,
+     96.07
+    ],
+    [
+     96.07,
+     97.09,
+     95.77,
+     96.73
+    ],
+    [
+     96.73,
+     97.01,
+     95.39,
+     95.6
+    ],
+    [
+     95.6,
+     96.1,
+     93.77,
+     94.2
+    ],
+    [
+     94.2,
+     94.43,
+     92.84,
+     93.04
+    ],
+    [
+     93.04,
+     94.27,
+     92.63,
+     94.14
+    ],
+    [
+     94.14,
+     95.76,
+     93.88,
+     95.32
+    ],
+    [
+     95.32,
+     97.33,
+     95.22,
+     96.89
+    ],
+    [
+     96.89,
+     98.4,
+     96.6,
+     97.94
+    ],
+    [
+     97.94,
+     99.78,
+     97.81,
+     99.52
+    ],
+    [
+     99.52,
+     100.67,
+     99.31,
+     100.26
+    ],
+    [
+     100.26,
+     100.86,
+     99.78,
+     100.62
+    ],
+    [
+     100.62,
+     101.6,
+     100.43,
+     101.45
+    ]
+   ],
+   "tags": [
+    {
+     "i": 10,
+     "price": 97.09,
+     "text": "LH",
+     "color": "white"
+    },
+    {
+     "i": 8,
+     "price": 95.33,
+     "text": "LL",
+     "color": "white"
+    },
+    {
+     "i": 13,
+     "price": 92.84,
+     "text": "LL",
+     "color": "white"
+    },
+    {
+     "i": 18,
+     "price": 99.78,
+     "text": "CHoCH – TREND CHANGE",
+     "color": "gold"
+    }
+   ],
+   "levels": [
+    {
+     "price": 97.09,
+     "text": "",
+     "color": "gold",
+     "from_i": 10
+    }
+   ],
+   "footer": "Example illustration"
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "STEP 03",
+   "text": "Don't buy right away. Wait for the pullback and a higher low.",
+   "say": "Step three: don't buy right away. Wait for a higher low."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "COMMON MISTAKE",
+   "text": "Mixing up CHoCH and BOS. CHoCH breaks against the trend, BOS with it.",
+   "say": "Common mistake: mixing up CHoCH and BOS."
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Break first. Then confirmation.",
+   "button": "Comment GOLD",
+   "say": "I show setups like this live in my free group. Comment GOLD."
+  }
+ ]
+}
