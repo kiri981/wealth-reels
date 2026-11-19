@@ -1,0 +1,108 @@
+{
+ "cover": {
+  "kicker": "MARKT",
+  "title": "Gold auf *14-Monats-Tief*",
+  "chart": "down"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "Gold fällt auf ein 14-Monats-Tief.",
+   "accent": "Ausgelöst von einem Protokoll.",
+   "icon": "down"
+  },
+  {
+   "type": "line",
+   "dur": 4.2,
+   "title": "Gold in 2 Tagen",
+   "values": [
+    3841.58,
+    3782.85,
+    3693.13,
+    3722.84
+   ],
+   "labels": [
+    "Di",
+    "Mi",
+    "Tief",
+    "Do"
+   ],
+   "color": "red",
+   "end_label": "3.723 $",
+   "footer": "Spot in $/oz · Quellen: USAGOLD, Reuters"
+  },
+  {
+   "type": "counter",
+   "dur": 3.6,
+   "label": "Fed-Zinserhöhung im Dez.?",
+   "from": 0,
+   "to": 90,
+   "decimals": 0,
+   "suffix": " %",
+   "color": "red",
+   "sub": "CME FedWatch · laut Reuters, 19.11."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "Die Treiber",
+   "items": [
+    {
+     "left": "Fed",
+     "right": "Protokoll: Inflation",
+     "hot": true
+    },
+    {
+     "left": "Dollar",
+     "right": "nahe 19-Monats-Hoch"
+    },
+    {
+     "left": "3.800 $",
+     "right": "Marke gebrochen"
+    },
+    {
+     "left": "Tief",
+     "right": "3.693 $ · seit 9/2025"
+    }
+   ]
+  },
+  {
+   "type": "words",
+   "dur": 4.0,
+   "kicker": "WARUM DAS ZÄHLT",
+   "text": "Steigende Zinsen machen Gold ohne Zinsertrag weniger attraktiv."
+  },
+  {
+   "type": "notify",
+   "dur": 3.8,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Gold auf 14-Monats-Tief",
+     "time": "jetzt"
+    },
+    {
+     "text": "Fed & Dollar im Blick",
+     "time": "1 Min.",
+     "color": "gold"
+    },
+    {
+     "text": "Live-Updates in der Gruppe",
+     "time": "2 Min."
+    }
+   ]
+  },
+  {
+   "type": "cta",
+   "dur": 3.0,
+   "title": "Erst die Zinsen, dann Gold.",
+   "button": "Kommentiere GOLD"
+  }
+ ]
+}
