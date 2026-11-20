@@ -8,7 +8,7 @@
 // Nur Papier, keine Anlageberatung.
 import { prices, holders, plausible } from "./runner.js";
 import { copycat, devBundle } from "./memeguard.js";
-export const SC = { start: 5000, size: 100, perDay: 30, maxOpen: 6, cost: 0.03, minAgeMin: 8, maxAgeMin: 45, liq: 10000, vol: 15000, mc: 20000,
+export const SC = { stopNew: true /* v3.10 (Kevin 21.11.): keine neuen Einstiege mehr – ersetzt durch Wallet-Copy */, start: 5000, size: 100, perDay: 30, maxOpen: 6, cost: 0.03, minAgeMin: 8, maxAgeMin: 45, liq: 10000, vol: 15000, mc: 20000,
   sl: -0.25, tp1: 0.5, trail: 0.3, slowMin: 45, slowGain: 0.2, maxH: 6, liqDead: 2000, top10: 0.35, top1: 0.12 };
 async function schema(env) {
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS hub_scpos (id TEXT PRIMARY KEY, t INTEGER, token TEXT, sym TEXT, px REAL, qty REAL, cost REAL, peak REAL, half INTEGER DEFAULT 0, cash REAL DEFAULT 0, last_px REAL, last_seen INTEGER, t_close INTEGER, px_close REAL, pnl REAL, why TEXT, f TEXT)").run();
@@ -44,7 +44,7 @@ export async function scalpTick(env, say, kvGet, kvPut) {
   // 2) neue Einstiege
   const bal = await env.DB.prepare("SELECT COALESCE(SUM(CASE WHEN t_close IS NOT NULL THEN pnl END), 0) re, COALESCE(SUM(CASE WHEN t_close IS NULL THEN cost - COALESCE(cash, 0) END), 0) inv, SUM(t > ?) today, SUM(t_close IS NULL) open FROM hub_scpos").bind(day).first();
   let free = SC.start + (bal?.re || 0) - (bal?.inv || 0), today = bal?.today || 0, open = bal?.open || 0;
-  if (today < SC.perDay && open < SC.maxOpen && free >= SC.size) {
+  if (!SC.stopNew && today < SC.perDay && open < SC.maxOpen && free >= SC.size) {
     const C = (await env.DB.prepare(`SELECT m.id, m.token, m.sym, m.name, m.created, m.risk FROM hub_meme m LEFT JOIN hub_scpos s ON s.id = m.id
       WHERE m.chain = 'solana' AND s.id IS NULL AND m.last_t > ? AND m.created BETWEEN ? AND ? AND COALESCE(m.risk, '') NOT LIKE '%"danger"%' AND COALESCE(m.risk, '') NOT LIKE '%scalp_bad%'
       ORDER BY m.score DESC LIMIT 15`).bind(now - 600, now - SC.maxAgeMin * 60, now - SC.minAgeMin * 60).all()).results;

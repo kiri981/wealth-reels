@@ -8,6 +8,7 @@
 import * as E from "./engine.js";
 import { memeTick, memePage } from "./meme.js";
 import { walletTick, walletAdmin, walletData } from "./wallets.js";
+import { copyTick, copyData } from "./wcopy.js";
 import { altTick, altPage, mktTick, altSchema } from "./alts.js";
 import { mpData } from "./mpaper.js";
 import { finderTick, finderData } from "./finder.js";
@@ -27,7 +28,7 @@ import { altLearn, PARTS } from "./altlearn.js";
 import { czMap, hist } from "./alts.js";
 import { mpRules, mpFast, fwCheck } from "./mpaper.js";
 
-const VERSION = "3.9c";
+const VERSION = "3.10";
 const SYMBOLS = (env) => String(env.SYMBOLS || "XAUUSD,XAGUSD,BTCUSD").split(",").map((x) => x.trim()).filter(Boolean);
 // Kerzen-Schlüssel in hub_candles.tf: Gold ohne Präfix (abwärtskompatibel), sonst "XAGUSD:5m"
 const TK = (sym, tf) => (sym === "XAUUSD" ? tf : `${sym}:${tf}`);
@@ -651,6 +652,7 @@ async function memeRun(env) {   // v1.9: Meme-Radar, danach Smart-Wallets
   const out = [];
   try { out.push(await memeTick(env, say, kvGet, kvPut)); } catch (e) { out.push("Meme-Radar-Fehler " + e.message); }
   try { out.push(await walletTick(env, say, kvGet, kvPut)); } catch (e) { out.push("Wallet-Fehler " + e.message); }
+  try { out.push(await copyTick(env, kvGet, kvPut)); } catch (e) { out.push("Wallet-Copy-Fehler " + e.message); }   // v3.10
   try { out.push(await mktTick(env, kvGet, kvPut)); } catch (e) { out.push("Marktbreite-Fehler " + e.message); }
   // ab und zu nachholen: Altcoin-Scan, falls der stündliche Lauf ausfiel (z. B. nach einem Deploy)
   try { if (!(await kvGet(env, "alt_hr")) || +(await kvGet(env, "alt_hr")) < Math.floor(Date.now() / 3600000) - 1) out.push(await altTick(env, say, kvGet, kvPut)); } catch (e) { out.push("Alt-Fehler " + e.message); }
@@ -729,6 +731,7 @@ export default {
     if (url.pathname === "/walletrun") return new Response(await walletTick(env, say, kvGet, kvPut));
     if (url.pathname === "/memes") return new Response(await memePage(env, url.searchParams.get("key"), await walletData(env).then(async (w) => ({ ...w, finder: await finderData(env).catch(() => null) })).catch(() => null), await mpData(env).catch(() => null)), { headers: { "content-type": "text/html; charset=utf-8" } });
     if (url.pathname === "/memerun") return new Response(await memeRun(env));
+    if (url.pathname === "/copydata") return Response.json(await copyData(env));   // v3.10 Wallet-Copy-Bilanz
     if (url.pathname === "/weekly") { await schema(env); return new Response(await weeklyReport(env, true)); }
     if (url.pathname === "/macro") { const log = []; await schema(env); await kvPut(env, "macro_check", ""); await macroTick(env, log); return new Response(log.join(" | ")); }
     if (url.pathname === "/export") { await exportDaily(env); return new Response("export ok"); }

@@ -16,7 +16,7 @@ import { chase, copycat, devBundle } from "./memeguard.js";
 import { tagNarr } from "./narrative.js";
 const DS = "https://api.dexscreener.com";
 const N = (x) => (x == null || x === "" ? null : +x);
-export const RN = { start: 5000, size: 50, perDay: 25, cost: 0.03, x2: 2, runAfter: 5, trail: 0.6, dead: 0.05, liqDead: 1000, maxAgeH: 6, minAgeMin: 20, minLiq: 10000, minVol: 15000, minMc: 20000, top10: 0.30, top1: 0.10, checksPerRun: 3, maxCluster: 3, maxFresh: 5, minVolMc: 1.0, liqMc: [0.03, 1.5], maxMcPerTx: 2000 };
+export const RN = { stopNew: true /* v3.10 (Kevin 21.11.): keine neuen Käufe mehr, offene laufen aus */, start: 5000, size: 50, perDay: 25, cost: 0.03, x2: 2, runAfter: 5, trail: 0.6, dead: 0.05, liqDead: 1000, maxAgeH: 6, minAgeMin: 20, minLiq: 10000, minVol: 15000, minMc: 20000, top10: 0.30, top1: 0.10, checksPerRun: 3, maxCluster: 3, maxFresh: 5, minVolMc: 1.0, liqMc: [0.03, 1.5], maxMcPerTx: 2000 };
 
 async function schema(env) {
   await env.DB.batch([
@@ -91,7 +91,7 @@ export async function runnerTick(env, say) {
       AND json_extract(m.data, '$.liq') >= ? AND json_extract(m.data, '$.mc') >= ? AND COALESCE(json_extract(m.data, '$.v24'), json_extract(m.data, '$.v6h'), 0) >= ?
       AND COALESCE(m.risk, '') NOT LIKE '%holders_bad%' ORDER BY m.score DESC LIMIT 20`)
     .bind(now - 900, now - RN.maxAgeH * 3600, now - RN.minAgeMin * 60, RN.minLiq, RN.minMc, RN.minVol).all()).results;
-  if (C.length && today < RN.perDay && free >= RN.size) {
+  if (!RN.stopNew && C.length && today < RN.perDay && free >= RN.size) {
     const Q = await prices(C.map((c) => c.token)); let checks = 0;
     for (const c of C) {
       if (today >= RN.perDay || free < RN.size || checks >= RN.checksPerRun) break;

@@ -43,6 +43,7 @@ export function parseTx(tx, addr) {
   const wsol = d["So11111111111111111111111111111111111111112"] || 0;
   const sol = (ix >= 0 ? (tx.meta.postBalances[ix] - tx.meta.preBalances[ix]) / 1e9 : 0) + wsol;   // + = SOL bekommen, − = SOL ausgegeben
   const out = [];
+  if (Math.abs(sol) < 0.001) return out;   // v3.10: kein SOL bewegt → Airdrop/Spam-Token (KOL-Wallets bekommen viele davon), kein echter Kauf/Verkauf
   for (const [mint, v] of Object.entries(d)) { if (SKIP.has(mint) || Math.abs(v) < 1e-9) continue; out.push({ mint, side: v > 0 ? 1 : -1, amt: Math.abs(v), sol: -sol }); }
   return out;
 }
@@ -52,15 +53,16 @@ export async function walletTick(env, say, kvGet, kvPut) {
   await walletSchema(env); await walletMig(env);
   const W = (await env.DB.prepare("SELECT * FROM hub_wallet").all()).results; if (!W.length) return "Wallets: keine eingetragen";
   const now = Math.floor(Date.now() / 1000);
-  const sres = await rpc(env, W.map((w, i) => ({ jsonrpc: "2.0", id: i, method: "getSignaturesForAddress", params: [w.addr, w.last_sig ? { limit: 25, until: w.last_sig } : { limit: 10 }] })));
-  const want = [];   // [wallet, sig, blockTime]
-  for (const r of Array.isArray(sres) ? sres : []) {
-    const w = W[r.id]; const L = (r.result || []).filter((x) => !x.err);
-    if (r.result?.length) await env.DB.prepare("UPDATE hub_wallet SET last_sig = ? WHERE addr = ?").bind(r.result[0].signature, w.addr).run();
-    for (const x of L) want.push([w, x.signature, x.blockTime]);
-  }
-  if (!want.length) return `Wallets: ${W.length}, nichts Neues`;
-  const take = want.slice(0, 40);   // v3.0: Helius-Guthaben schonen (mehr beobachtete Wallets)
+  const sres = await rpc(env, W.map((w, i) => ({ jsonrpc: "2.0", id: i, method: "getSignaturesForAddress", params: [w.addr, w.last_sig ? { limit: 50, until: w.last_sig } : { limit: 10 }] })));
+  // v3.10 (21.11.): Bisher wurde last_sig sofort auf die neueste Signatur gesetzt, aber nur 40 Transaktionen gelesen → der Rest (oft die VERKÄUFE) ging verloren.
+  // Jetzt: je Wallet älteste zuerst, reihum verteilt, und last_sig nur bis zur letzten wirklich gelesenen Signatur vorrücken.
+  const per = [];
+  for (const r of Array.isArray(sres) ? sres : []) { const all = (r.result || []).slice().reverse(); if (all.length) per.push({ w: W[r.id], all }); }
+  const take = [], lastTaken = new Map();
+  for (let k = 0; take.length < 60 && per.some((p) => p.all.length > k); k++)
+    for (const p of per) { if (take.length >= 60) break; const x = p.all[k]; if (!x) continue; lastTaken.set(p.w.addr, x.signature); if (!x.err) take.push([p.w, x.signature, x.blockTime]); }
+  for (const [addr, sig] of lastTaken) await env.DB.prepare("UPDATE hub_wallet SET last_sig = ? WHERE addr = ?").bind(sig, addr).run();
+  if (!take.length) return `Wallets: ${W.length}, nichts Neues`;
   const tres = await rpc(env, take.map(([, sig], i) => ({ jsonrpc: "2.0", id: i, method: "getTransaction", params: [sig, { maxSupportedTransactionVersion: 0, encoding: "jsonParsed" }] })));
   const rows = [];
   for (const r of Array.isArray(tres) ? tres : []) { const [w, sig, bt] = take[r.id]; for (const p of parseTx(r.result, w.addr)) rows.push({ ...p, sig, addr: w.addr, t: r.result?.blockTime || bt, w }); }
@@ -78,7 +80,7 @@ export async function walletTick(env, say, kvGet, kvPut) {
   for (const mint of [...new Set(fresh.map((x) => x.mint))]) {
     if (sent >= 6) break;
     const i = info[mint]; const sym = i?.baseToken?.symbol || mint.slice(0, 6);
-    const buyers = (await env.DB.prepare("SELECT DISTINCT w.addr, w.label FROM hub_wtx x JOIN hub_wallet w ON w.addr = x.addr WHERE x.mint = ? AND x.side = 1 AND x.t > ? AND COALESCE(w.status, 'manual') != 'probe'").bind(mint, now - 6 * 3600).all()).results;
+    const buyers = (await env.DB.prepare("SELECT DISTINCT w.addr, w.label FROM hub_wtx x JOIN hub_wallet w ON w.addr = x.addr WHERE x.mint = ? AND x.side = 1 AND x.t > ? AND COALESCE(w.status, 'manual') NOT IN ('probe', 'copytest')").bind(mint, now - 6 * 3600).all()).results;
     const cluster = buyers.length >= 2 && !(await kvGet(env, "wclu_" + mint));
     const solo = fresh.filter((x) => x.mint === mint && (x.w.alert || x.w.status === "copy"));
     const copy = fresh.find((x) => x.mint === mint && x.w.status === "copy");   // v3.0 Papier-Kopie ausgewählter Wallets (Kevin 17.11.)
@@ -95,7 +97,7 @@ export async function walletTick(env, say, kvGet, kvPut) {
       `Marktwert ${usd(N(i?.marketCap) || N(i?.fdv))} · Liquidität ${usd(N(i?.liquidity?.usd))} · 1h ${i?.priceChange?.h1 ?? "?"} % · 24h ${i?.priceChange?.h24 ?? "?"} %\n` +
       `Sicherheit ${amp} ${(sec.flags || []).slice(0, 3).join("; ") || "keine Auffälligkeiten"}\nhttps://dexscreener.com/solana/${i?.pairAddress || mint}\nNur Beobachtung, keine Anlageberatung.`);
     if (cluster) { await kvPut(env, "wclu_" + mint, String(now)); if (sec.level !== "danger" && (N(i?.liquidity?.usd) || 0) >= 20000) await mpOpen(env, say, { chain: "solana", token: mint, pool: i?.pairAddress, sym, px: N(i?.priceUsd), src: `Smart-Wallet-Cluster (${buyers.length} Wallets)` }).catch(() => {}); }
-    if (copy && sec.level !== "danger" && (N(i?.liquidity?.usd) || 0) >= 10000) await mpOpen(env, say, { chain: "solana", token: mint, pool: i?.pairAddress, sym, px: N(i?.priceUsd), src: `Kopie ${lab(copy.w)}` }).catch(() => {});
+    if (false /* v3.10: ersetzt durch Wallet-Copy 1:1 (wcopy.js) */ && copy && sec.level !== "danger" && (N(i?.liquidity?.usd) || 0) >= 10000) await mpOpen(env, say, { chain: "solana", token: mint, pool: i?.pairAddress, sym, px: N(i?.priceUsd), src: `Kopie ${lab(copy.w)}` }).catch(() => {});
     sent++;
   }
   await kvPut(env, hk, sent);
