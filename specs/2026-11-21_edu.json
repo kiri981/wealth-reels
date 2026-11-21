@@ -1,0 +1,102 @@
+{
+ "voice": true,
+ "voice_speed": 1.1,
+ "cover": {
+  "kicker": "FUNDAMENTAL",
+  "title": "Der *Spread* bei News",
+  "chart": "sweep"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Dein Stop war weit weg –",
+   "accent": "und trotzdem ausgestoppt?",
+   "icon": "alert",
+   "say": "Dein Stop war weit weg – und trotzdem ausgestoppt?"
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "SPREAD",
+   "text": "Der Abstand zwischen Kauf- und Verkaufskurs. Diese Kosten zahlst du bei jedem Trade.",
+   "say": "Spread: der Abstand zwischen Kauf- und Verkaufskurs."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 01 · Beispiel",
+   "items": [
+    {
+     "left": "Ruhig",
+     "right": "z. B. 0,20 $"
+    },
+    {
+     "left": "Zu News",
+     "right": "z. B. 2,00 $ und mehr",
+     "hot": true
+    },
+    {
+     "left": "Grund",
+     "right": "kaum Gegenangebote"
+    }
+   ],
+   "say": "Schritt eins: Bei News wird der Spread oft ein Vielfaches größer."
+  },
+  {
+   "type": "candles",
+   "dur": 5.4,
+   "pattern": "stopped",
+   "step": "SCHRITT 02",
+   "title": "Ein Sprung *reicht für deinen Stop*",
+   "caption": "Kurz breiter Spread – und du bist raus.",
+   "say": "Schritt zwei: Ein kurzer Sprung reicht – Stop ausgelöst."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "SCHRITT 03",
+   "text": "Spread vor jedem Einstieg prüfen. Rund um News: lieber warten, bis er sich normalisiert.",
+   "say": "Schritt drei: Spread prüfen. Bei News lieber warten."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "TYPISCHER FEHLER",
+   "text": "Nur auf den Chart schauen. Er zeigt meist den Bid – dein Short-Stop hängt am Ask.",
+   "say": "Typischer Fehler: Dein Short-Stop hängt am Ask, nicht am Chart."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Neue Gold-Idee: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "Achtung: News um 14:30",
+     "color": "gold"
+    },
+    {
+     "text": "Update: SL auf Einstieg",
+     "color": "gold"
+    }
+   ],
+   "say": "Keine Zeit, den Markt selbst zu analysieren?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Erst der Spread. Dann der Trade.",
+   "button": "Kommentiere GOLD",
+   "say": "News-Trades zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}

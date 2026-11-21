@@ -1,0 +1,114 @@
+{
+ "voice": true,
+ "voice_speed": 1.1,
+ "cover": {
+  "kicker": "FUNDAMENTAL",
+  "title": "The *spread* during news",
+  "chart": "sweep"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Your stop was far away –",
+   "accent": "and you still got stopped out?",
+   "icon": "alert",
+   "say": "Your stop was far away – and you still got stopped out?"
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "SPREAD",
+   "text": "The gap between the buy and sell price. You pay this cost on every trade.",
+   "say": "Spread: the gap between the buy and sell price."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "STEP 01 · Example",
+   "items": [
+    {
+     "left": "Calm",
+     "right": "e.g. $0.20"
+    },
+    {
+     "left": "News",
+     "right": "e.g. $2.00 and more",
+     "hot": true
+    },
+    {
+     "left": "Why",
+     "right": "few counter-offers"
+    }
+   ],
+   "say": "Step one: During news, the spread often gets many times wider."
+  },
+  {
+   "type": "candles",
+   "dur": 5.4,
+   "pattern": "stopped",
+   "step": "STEP 02",
+   "title": "One jump *is enough to hit your stop*",
+   "caption": "A brief spread spike – and you're out.",
+   "say": "Step two: One short jump is enough – stop triggered.",
+   "stamp": {
+    "i": 16,
+    "text": "STOPPED OUT"
+   },
+   "footer": "Illustrative example"
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "STEP 03",
+   "text": "Check the spread before every entry. Around news: wait until it normalizes.",
+   "say": "Step three: Check the spread. During news, better wait."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "COMMON MISTAKE",
+   "text": "Only watching the chart. It usually shows the bid – your short stop sits on the ask.",
+   "say": "Common mistake: Your short stop sits on the ask, not the chart."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "No time to analyze the market *yourself*?",
+   "items": [
+    {
+     "text": "New gold idea: XAUUSD BUY",
+     "color": "green",
+     "time": "now"
+    },
+    {
+     "text": "Heads-up: news at 14:30",
+     "color": "gold",
+     "time": "now"
+    },
+    {
+     "text": "Update: SL to entry",
+     "color": "gold",
+     "time": "now"
+    }
+   ],
+   "say": "No time to analyze the market yourself?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Spread first. Then the trade.",
+   "button": "Comment GOLD",
+   "say": "I show news trades live in my free group. Comment GOLD.",
+   "sub": "Gold trade ideas live on Telegram",
+   "disclaimer": "Not financial advice. Trading involves risk of loss."
+  }
+ ],
+ "lang": "en",
+ "footer": "Not financial advice · Trading involves risk of loss"
+}
