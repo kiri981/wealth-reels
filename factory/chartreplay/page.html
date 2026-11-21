@@ -1,0 +1,71 @@
+<!doctype html><html><head><meta charset="utf-8">
+<script src="node_modules/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+html,body{margin:0;width:1080px;height:1920px;background:#0b0d12;font-family:Inter,"Helvetica Neue",Arial,sans-serif;color:#fff;overflow:hidden}
+#head{position:absolute;top:0;left:0;right:0;height:330px;padding:70px 70px 0;box-sizing:border-box}
+.brand{font-size:30px;letter-spacing:8px;color:#d4af37;font-weight:700}
+.title{font-size:72px;font-weight:800;margin-top:22px;line-height:1.05}
+.title b{color:#d4af37}
+.sub{font-size:34px;color:#9aa3b2;margin-top:16px}
+#wrap{position:absolute;top:350px;left:40px;width:1000px;height:1180px;border-radius:24px;overflow:hidden;border:2px solid #1f2430}
+#chart{position:absolute;inset:0}
+#ov{position:absolute;inset:0;pointer-events:none;z-index:50}
+#foot{position:absolute;top:1560px;left:0;right:0;padding:0 70px;box-sizing:border-box}
+#res{font-size:84px;font-weight:800;opacity:0;transition:none}
+#res.win{color:#26a69a}#res.loss{color:#ef5350}
+#info{font-size:32px;color:#9aa3b2;margin-top:10px}
+#disc{position:absolute;bottom:60px;left:70px;right:70px;font-size:24px;color:#6b7280}
+.tag{position:absolute;font-size:24px;font-weight:700;padding:4px 10px;border-radius:6px;white-space:nowrap}
+</style></head><body>
+<div id="head"><div class="brand">WEALTH CLUB · TRADE-REPLAY</div><div class="title" id="title"></div><div class="sub" id="sub"></div></div>
+<div id="wrap"><div id="chart"></div><canvas id="ov" width="1000" height="1180"></canvas></div>
+<div id="foot"><div id="res"></div><div id="info"></div></div>
+<div id="disc"><span id="src"></span> Ausgewählter Trade, nicht repräsentativ. Keine Anlageberatung.</div>
+<script>
+let chart, series, T;
+window.init = (trade) => {
+  T = trade; T.fmt = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('title').innerHTML = trade.title;
+  document.getElementById('sub').textContent = trade.sub; document.getElementById('src').textContent = trade.src + ' ';
+  chart = LightweightCharts.createChart(document.getElementById('chart'), {
+    width: 1000, height: 1180,
+    layout: { background: { color: '#131722' }, textColor: '#b2b5be', fontSize: 22 },
+    grid: { vertLines: { color: '#1e222d' }, horzLines: { color: '#1e222d' } },
+    rightPriceScale: { borderColor: '#2a2e39', scaleMargins: { top: 0.12, bottom: 0.12 } },
+    timeScale: { borderColor: '#2a2e39', timeVisible: true, secondsVisible: false, rightOffset: 4, barSpacing: trade.barSpacing || 22 },
+    crosshair: { mode: 2 },
+    localization: { timeFormatter: (t) => new Date((t + 7200) * 1000).toISOString().slice(11, 16) },
+  });
+  chart.timeScale().applyOptions({ tickMarkFormatter: (t) => new Date((t + 7200) * 1000).toISOString().slice(11, 16) });
+  series = chart.addCandlestickSeries({ upColor: '#26a69a', downColor: '#ef5350', borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350', priceFormat: { type: 'price', precision: 2, minMove: 0.01 } });
+};
+window.step = (n, phase) => {
+  const C = T.candles.slice(0, n);
+  series.setData(C);
+  const inTrade = C.length && C[C.length - 1].time >= T.entryBar;
+  const done = C.length && C[C.length - 1].time >= T.exitBar;
+  series.setMarkers(inTrade ? [{ time: T.entryBar, position: T.dir < 0 ? 'aboveBar' : 'belowBar', color: T.dir < 0 ? '#ef5350' : '#26a69a', shape: T.dir < 0 ? 'arrowDown' : 'arrowUp', text: (T.dir < 0 ? 'SELL' : 'BUY'), size: 2 }] : []);
+  chart.timeScale().scrollToRealTime();
+  requestAnimationFrame(() => draw(inTrade, done, C));
+  const r = document.getElementById('res');
+  if (done) { r.style.opacity = 1; r.className = T.R >= 0 ? 'win' : 'loss'; r.textContent = T.resultText; document.getElementById('info').textContent = T.info; }
+  else { r.style.opacity = 0; document.getElementById('info').textContent = inTrade ? 'Trade läuft …' : 'Vorher: so sah der Markt aus'; }
+};
+function draw(inTrade, done, C) {
+  const cv = document.getElementById('ov'), g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height);
+  if (!inTrade) return;
+  const ts = chart.timeScale(), y = (p) => series.priceToCoordinate(p);
+  const x0 = ts.timeToCoordinate(T.entryBar), xEnd = done ? ts.timeToCoordinate(T.exitBar) : ts.timeToCoordinate(C[C.length - 1].time);
+  if (x0 == null || xEnd == null) return;
+  const x1 = xEnd + 8, w = Math.max(x1 - x0, 20);
+  const yE = y(T.entry), yS = y(T.sl), yX = y(done ? T.exit : C[C.length - 1].close);
+  g.fillStyle = 'rgba(239,83,80,0.22)'; g.fillRect(x0, Math.min(yE, yS), w, Math.abs(yS - yE));
+  const good = (done ? T.exit : C[C.length - 1].close) * T.dir >= T.entry * T.dir;
+  g.fillStyle = good ? 'rgba(38,166,154,0.22)' : 'rgba(239,83,80,0.12)'; g.fillRect(x0, Math.min(yE, yX), w, Math.abs(yX - yE));
+  const line = (yy, col, dash) => { g.strokeStyle = col; g.lineWidth = 3; g.setLineDash(dash ? [10, 8] : []); g.beginPath(); g.moveTo(x0, yy); g.lineTo(x0 + w, yy); g.stroke(); };
+  line(yE, '#d1d4dc', true); line(yS, '#ef5350', false); if (done) line(yX, '#26a69a', false);
+  g.setLineDash([]); g.font = 'bold 24px Arial';
+  const lab = (txt, yy, col) => { const tw = g.measureText(txt).width + 18; g.fillStyle = col; g.fillRect(x0 - tw - 8, yy - 17, tw, 34); g.fillStyle = '#fff'; g.fillText(txt, x0 - tw + 1, yy + 8); };
+  lab('Einstieg ' + T.fmt(T.entry), yE, '#434651'); lab('SL ' + T.fmt(T.sl), yS, '#ef5350'); if (done) { lab('Ausstieg ' + T.fmt(T.exit), yX, '#26a69a'); g.fillStyle = '#d4af37'; g.beginPath(); g.arc(ts.timeToCoordinate(T.exitBar), yX, 10, 0, 7); g.fill(); }
+}
+</script></body></html>
