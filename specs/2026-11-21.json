@@ -1,0 +1,99 @@
+{
+ "cover": {
+  "kicker": "MARKT",
+  "title": "Gold-Woche: *−9%* in 3 Fakten",
+  "chart": "down"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "Fast ein Zehntel weg – in einer Woche.",
+   "accent": "Und kaum jemand redet über den Grund.",
+   "icon": "alert"
+  },
+  {
+   "type": "counter",
+   "dur": 3.6,
+   "label": "Fakt 1: Gold diese Woche",
+   "from": 0,
+   "to": -9.2,
+   "decimals": 1,
+   "suffix": " %",
+   "color": "red",
+   "sub": "Schwächste Woche seit März · Reuters"
+  },
+  {
+   "type": "counter",
+   "dur": 3.6,
+   "label": "Fakt 2: Fed-Zinserhöhung im Dez.?",
+   "from": 0,
+   "to": 96.8,
+   "decimals": 1,
+   "suffix": " %",
+   "color": "red",
+   "sub": "CME FedWatch · laut Reuters, 20.11."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "Fakt 3: Tief seit Sept. 2025",
+   "items": [
+    {
+     "left": "Fr. früh",
+     "right": "3.525 $",
+     "hot": true
+    },
+    {
+     "left": "Rekord",
+     "right": "5.589 $"
+    },
+    {
+     "left": "Abstand",
+     "right": "rund −36 %"
+    },
+    {
+     "left": "Dollar",
+     "right": "nahe 19-Monats-Hoch"
+    }
+   ]
+  },
+  {
+   "type": "words",
+   "dur": 3.4,
+   "kicker": "WARUM DAS ZÄHLT",
+   "text": "Höhere Zinsen + starker Dollar = Gegenwind für Gold."
+  },
+  {
+   "type": "notify",
+   "dur": 3.4,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Gold: schwächste Woche seit März",
+     "time": "jetzt"
+    },
+    {
+     "text": "Fed & Dollar im Blick",
+     "time": "1 Min.",
+     "color": "gold"
+    },
+    {
+     "text": "Live-Updates in der Gruppe",
+     "time": "2 Min."
+    }
+   ]
+  },
+  {
+   "type": "cta",
+   "dur": 3.0,
+   "title": "Erst der Plan, dann der Trade.",
+   "button": "Kommentiere GOLD"
+  }
+ ]
+}
