@@ -12,3 +12,4 @@ ad/rot/*.mp4
 ad/rot2/*.mp4
 ad/rot2/*.log
 tut/work_*/
+node_modules/
