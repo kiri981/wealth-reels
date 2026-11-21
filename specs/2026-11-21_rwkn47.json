@@ -1,0 +1,29 @@
+{
+ "voice": false,
+ "cover": {"kicker": "WOCHEN-REPLAY", "title": "KW 47: *+7 R*", "chart": "up"},
+ "music": "drive",
+ "scenes": [
+  {"type": "hook", "dur": 3.0, "text": "Alle Signale dieser Woche –", "accent": "auch die Verluste.", "icon": "check"},
+  {"type": "cards", "dur": 4.0, "title": "Montag 16.11.", "items": [
+   {"left": "US500 SELL", "right": "+36 Pkt · +2 R", "hot": true},
+   {"left": "NAS100 SELL", "right": "+114 Pkt · +1 R", "hot": true}]},
+  {"type": "cards", "dur": 4.0, "title": "Dienstag 17.11.", "items": [
+   {"left": "NAS100 SELL", "right": "-74 Pkt · -1 R"},
+   {"left": "US500 SELL", "right": "+34 Pkt · +2 R", "hot": true}]},
+  {"type": "cards", "dur": 4.5, "title": "Mittwoch 18.11.", "items": [
+   {"left": "NAS100 SELL", "right": "-174 Pkt · -1 R"},
+   {"left": "US500 SELL", "right": "-33 Pkt · -1 R"},
+   {"left": "BTCUSD SELL", "right": "-1.064 $ · -1 R"}]},
+  {"type": "cards", "dur": 4.0, "title": "Donnerstag 19.11.", "items": [
+   {"left": "NAS100 BUY", "right": "-100 Pkt · -1 R"},
+   {"left": "US500 SELL", "right": "+103 Pkt · +2 R", "hot": true}]},
+  {"type": "cards", "dur": 5.0, "title": "Freitag 20.11.", "items": [
+   {"left": "BTCUSD SELL", "right": "+2.442 $ · +2 R", "hot": true},
+   {"left": "NAS100 BUY", "right": "+99 Pkt · +1 R", "hot": true},
+   {"left": "US500 BUY", "right": "noch offen"},
+   {"left": "BTCUSD SELL", "right": "+3.225 $ · +2 R", "hot": true}]},
+  {"type": "counter", "dur": 3.5, "label": "Woche gesamt", "from": 0, "to": 7, "decimals": 1, "prefix": "+", "suffix": " R", "color": "green", "sub": "7 Gewinner · 5 Verlierer · 0 BE"},
+  {"type": "words", "dur": 4.8, "kicker": "Ehrlich gesagt", "text": "Nicht jede Woche ist grün. Risiko pro Trade fix – darum zählt die Summe, nicht der einzelne Trade."},
+  {"type": "cta", "dur": 3.0, "title": "Die Summe zählt.", "button": "Kommentiere VIP"}
+ ]
+}
