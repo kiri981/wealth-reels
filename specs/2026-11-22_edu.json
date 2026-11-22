@@ -1,0 +1,106 @@
+{
+ "voice": true,
+ "voice_speed": 1.15,
+ "cover": {
+  "kicker": "PSYCHOLOGIE",
+  "title": "Warum du *Gewinne* zu früh schließt",
+  "chart": "up"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Kleine Gewinne, große Verluste?",
+   "accent": "Dein Gehirn trickst dich aus.",
+   "icon": "alert",
+   "say": "Kleine Gewinne, große Verluste? Dein Gehirn trickst dich aus."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "DISPOSITIONSEFFEKT",
+   "text": "Gewinne sichern wir zu früh. Verluste halten wir zu lange – in der Hoffnung, dass sie zurückkommen.",
+   "say": "Dispositionseffekt: Gewinne zu früh sichern, Verluste zu lange halten."
+  },
+  {
+   "type": "words",
+   "dur": 4.0,
+   "kicker": "SCHRITT 01",
+   "text": "Ein Verlust schmerzt etwa doppelt so stark, wie ein gleich großer Gewinn freut.",
+   "say": "Eins: Verluste schmerzen doppelt so stark, wie Gewinne freuen."
+  },
+  {
+   "type": "counter",
+   "dur": 4.2,
+   "label": "SCHRITT 02 · Beispiel",
+   "from": 0,
+   "to": -300,
+   "decimals": 0,
+   "prefix": "",
+   "suffix": " $",
+   "color": "red",
+   "sub": "6 Gewinne à 50 $, 4 Verluste à 150 $.",
+   "say": "Zwei: Sechs Gewinner – und trotzdem dreihundert Dollar minus."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 03 · Die Lösung",
+   "items": [
+    {
+     "left": "01",
+     "right": "Ziel vor dem Einstieg festlegen"
+    },
+    {
+     "left": "02",
+     "right": "Order setzen – Finger weg",
+     "hot": true
+    },
+    {
+     "left": "03",
+     "right": "Nur nach Plan schließen"
+    }
+   ],
+   "say": "Drei: Ziel vorher festlegen, dann Finger weg."
+  },
+  {
+   "type": "words",
+   "dur": 4.0,
+   "kicker": "TYPISCHER FEHLER",
+   "text": "„Lieber den sicheren Gewinn.“ Klingt klug – zerstört aber dein Chance-Risiko-Verhältnis.",
+   "say": "Typischer Fehler: der sichere kleine Gewinn."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Neue Gold-Idee: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "TP1 erreicht – Rest läuft",
+     "color": "gold"
+    },
+    {
+     "text": "Update: Plan bleibt aktiv",
+     "color": "gold"
+    }
+   ],
+   "say": "Keine Zeit, den Markt selbst zu analysieren?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Plan halten. Gewinne laufen lassen.",
+   "button": "Kommentiere GOLD",
+   "say": "Trades nach Plan zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}
