@@ -1,4 +1,4 @@
-# Hub-Forschung 2026-11-22
+# Hub-Forschung 2026-11-23
 
 - Gold: 5m 2026-02-15 – 2026-11-19 (181 Tage), Tageskerzen ab 2006-01-03
 - Silber: 5m 2026-09-28 – 2026-11-19 (39 Tage), Tageskerzen ab 2006-01-03
@@ -41,9 +41,9 @@
 - **Gold · Lernmodell Short Intraday 8 Std. (Struktur, Kerzen, Momentum, Session) ≥ 0.38** [paper] Backtest Ø +0.00R (n=0, Holdout None), live n=0
 
 ## Suche nach neuen Strategien
-- sess: 1500 neue Varianten getestet (insgesamt 14600), bestanden: 0
-- rbo: 450 neue Varianten getestet (insgesamt 3276), bestanden: 0
-- swing: 300 neue Varianten getestet (insgesamt 1881), bestanden: 0
+- sess: 1500 neue Varianten getestet (insgesamt 16100), bestanden: 0
+- rbo: 450 neue Varianten getestet (insgesamt 3726), bestanden: 0
+- swing: 300 neue Varianten getestet (insgesamt 2181), bestanden: 0
 - deriv: 0 neue Varianten getestet (insgesamt 1728), bestanden: 0
 - fxs: 0 neue Varianten getestet (insgesamt 60), bestanden: 0
 - Heute keine neue Strategie, die alle Prüfungen besteht.
@@ -69,9 +69,9 @@
 - Gold · Kevins VIP-Trade-Ideen (Einstieg/SL/Ziele wie gepostet, Management wie angesagt) [paper]
 - Gold · Lernmodell Short Intraday 8 Std. (Struktur, Kerzen, Momentum, Session) ≥ 0.38 [paper]
 
-_Laufzeit 9s_
+_Laufzeit 8s_
 
-## Lernmodelle 2026-11-22
+## Lernmodelle 2026-11-23
 - Gold Long Scalp 2 Std.: Validierung Ø -0.00R · TEST 87 Trades Ø 0.0R, t 0.0 → nein
 - Gold Short Scalp 2 Std.: Validierung Ø +0.02R · TEST 257 Trades Ø 0.06R, t 1.0 → nein
 - Gold Long Intraday 8 Std.: Validierung Ø +0.26R · TEST 14 Trades Ø 0.58R, t 1.4 → nein
