@@ -1,0 +1,118 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "RISK",
+  "title": "Why *−50%* costs so much",
+  "chart": "down"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "Lost 50%?",
+   "accent": "Now you need +100%.",
+   "icon": "alert",
+   "say": "Lost fifty percent? Now you need a hundred."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "DRAWDOWN",
+   "text": "How far your account has fallen from its last peak. The deeper it goes, the harder the way back.",
+   "say": "Drawdown: the drop from your account's peak."
+  },
+  {
+   "type": "cards",
+   "dur": 4.4,
+   "title": "STEP 01 · The math",
+   "items": [
+    {
+     "left": "−10 %",
+     "right": "+11 % needed"
+    },
+    {
+     "left": "−25 %",
+     "right": "+33 % needed"
+    },
+    {
+     "left": "−50 %",
+     "right": "+100 % needed",
+     "hot": true
+    },
+    {
+     "left": "−80 %",
+     "right": "+400 % needed",
+     "hot": true
+    }
+   ],
+   "say": "Step one: minus fifty needs plus one hundred."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "STEP 02 · Example",
+   "from": 10000,
+   "to": 5000,
+   "decimals": 0,
+   "prefix": "",
+   "suffix": " $",
+   "color": "red",
+   "sub": "From $5,000 back to $10,000 = +100 %",
+   "say": "Step two: ten thousand turns into five thousand."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "STEP 03",
+   "text": "Small risk per trade keeps your drawdown shallow. Ten losses at 1% risk each cost about a tenth – not your account.",
+   "say": "Step three: small risk keeps your drawdown shallow."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "TYPICAL MISTAKE",
+   "text": "Raising your risk after losses to win it back fast. That's how −20% quickly becomes −50%.",
+   "say": "Typical mistake: risking more after losses."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "No time to analyze the market *yourself*?",
+   "say": "No time to analyze the market yourself?",
+   "items": [
+    {
+     "text": "New gold idea: XAUUSD BUY",
+     "color": "green",
+     "time": "now"
+    },
+    {
+     "text": "Risk: 1% – stop placed",
+     "color": "gold",
+     "time": "now"
+    },
+    {
+     "text": "Update: plan still active",
+     "color": "gold",
+     "time": "now"
+    }
+   ]
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Keep losses small. Always.",
+   "button": "Comment GOLD",
+   "say": "I show my risk management live in my free group. Comment GOLD.",
+   "sub": "Gold trade ideas live on Telegram",
+   "disclaimer": "Not financial advice. Trading involves risk of loss."
+  }
+ ],
+ "lang": "en",
+ "voice_speed": 1.15,
+ "footer": "Not financial advice · Trading involves risk of loss"
+}

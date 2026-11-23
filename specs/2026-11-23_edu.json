@@ -1,0 +1,110 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "RISIKO",
+  "title": "Warum *−50 %* so teuer ist",
+  "chart": "down"
+ },
+ "music": "chill",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "50 % verloren?",
+   "accent": "Dann brauchst du +100 %.",
+   "icon": "alert",
+   "say": "Fünfzig Prozent verloren? Dann brauchst du hundert."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "DRAWDOWN",
+   "text": "Der Rückgang deines Kontos vom letzten Höchststand. Je tiefer, desto schwerer der Weg zurück.",
+   "say": "Drawdown: der Rückgang vom Kontohoch."
+  },
+  {
+   "type": "cards",
+   "dur": 4.4,
+   "title": "SCHRITT 01 · Die Mathe",
+   "items": [
+    {
+     "left": "−10 %",
+     "right": "+11 % nötig"
+    },
+    {
+     "left": "−25 %",
+     "right": "+33 % nötig"
+    },
+    {
+     "left": "−50 %",
+     "right": "+100 % nötig",
+     "hot": true
+    },
+    {
+     "left": "−80 %",
+     "right": "+400 % nötig",
+     "hot": true
+    }
+   ],
+   "say": "Schritt eins: Minus fünfzig braucht plus hundert."
+  },
+  {
+   "type": "counter",
+   "dur": 3.8,
+   "label": "SCHRITT 02 · Beispiel",
+   "from": 10000,
+   "to": 5000,
+   "decimals": 0,
+   "prefix": "",
+   "suffix": " $",
+   "color": "red",
+   "sub": "Von 5.000 $ zurück auf 10.000 $ = +100 %",
+   "say": "Schritt zwei: Aus zehntausend werden fünftausend."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "SCHRITT 03",
+   "text": "Kleines Risiko pro Trade hält den Drawdown flach. Zehn Verluste mit je 1 % Risiko kosten rund ein Zehntel – nicht dein Konto.",
+   "say": "Schritt drei: Kleines Risiko hält den Drawdown flach."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "TYPISCHER FEHLER",
+   "text": "Nach Verlusten das Risiko erhöhen, um schnell zurückzukommen. So wird aus −20 % schnell −50 %.",
+   "say": "Typischer Fehler: nach Verlusten mehr riskieren."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "say": "Keine Zeit, den Markt selbst zu analysieren?",
+   "items": [
+    {
+     "text": "Neue Gold-Idee: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "Risiko: 1 % – Stop gesetzt",
+     "color": "gold"
+    },
+    {
+     "text": "Update: Plan bleibt aktiv",
+     "color": "gold"
+    }
+   ]
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Verluste klein halten. Immer.",
+   "button": "Kommentiere GOLD",
+   "say": "Mein Risikomanagement zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}
