@@ -1,0 +1,101 @@
+{
+ "cover": {
+  "kicker": "MARKT",
+  "title": "Gold dreht *+2,3%* – warum?",
+  "chart": "up"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "Dollar steigt. Fed bleibt hart.",
+   "accent": "Und Gold springt trotzdem.",
+   "icon": "bolt"
+  },
+  {
+   "type": "counter",
+   "dur": 3.2,
+   "label": "Gold gestern (Mo)",
+   "from": 0,
+   "to": 2.3,
+   "decimals": 1,
+   "prefix": "+",
+   "suffix": " %",
+   "color": "green",
+   "sub": "Schluss 3.609 $ · laut Rio Times"
+  },
+  {
+   "type": "counter",
+   "dur": 3.2,
+   "label": "Freitag noch: 14-Monats-Tief",
+   "from": 3700,
+   "to": 3502,
+   "decimals": 0,
+   "prefix": "~",
+   "suffix": " $",
+   "color": "red",
+   "sub": "nach rund -9 % Woche · laut USAGOLD"
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "DER TREIBER",
+   "text": "Fed-Zinsschritt um einen halben Punkt im Dezember: vor einer Woche über 11 % – jetzt ausgepreist."
+  },
+  {
+   "type": "cards",
+   "dur": 4.4,
+   "title": "Was gestern noch passierte",
+   "items": [
+    {
+     "left": "Silber",
+     "right": "+3,6 % auf 43,14 $",
+     "hot": true
+    },
+    {
+     "left": "S&P 500",
+     "right": "+4,7 % (Nvidia-Rally)"
+    },
+    {
+     "left": "Dollar",
+     "right": "Index +0,5 % auf 104,3"
+    },
+    {
+     "left": "Fed +0,25 %",
+     "right": "weiter ~94 % erwartet"
+    }
+   ]
+  },
+  {
+   "type": "notify",
+   "dur": 3.4,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Gold +2,3 % nach 14-Monats-Tief",
+     "time": "jetzt"
+    },
+    {
+     "text": "PCE-Inflation Mi 14:30",
+     "time": "1 Min.",
+     "color": "gold"
+    },
+    {
+     "text": "Live-Updates in der Gruppe",
+     "time": "2 Min."
+    }
+   ]
+  },
+  {
+   "type": "cta",
+   "dur": 3.0,
+   "title": "Ein grüner Tag ist noch kein Trend.",
+   "button": "Kommentiere GOLD"
+  }
+ ]
+}
