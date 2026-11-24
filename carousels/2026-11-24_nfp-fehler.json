@@ -1,0 +1,60 @@
+{
+ "caption": "3 Fehler, die dich am NFP-Freitag Geld kosten ⚠️\n\nFreitag, 4. Dezember, 14:30 Uhr (deutsche Zeit): Der US-Arbeitsmarktbericht kommt – Gold kann in Minuten stark schwanken. So vermeidest du die typischen Fehler.\n\n📌 Speicher dir das\n\n💬 Kommentiere GOLD und ich schick dir den Link zur kostenlosen Gold-Community.\n\nKeine Anlageberatung.\n\n#gold #xauusd #nfp #trading #tradingdeutsch",
+ "slides": [
+  {
+   "type": "cover",
+   "pill": "FR, 4. DEZEMBER · 14:30 UHR",
+   "title": "3 Fehler am *NFP-Freitag*",
+   "sub": "Und wie du dein Konto davor schützt.",
+   "chart": "spike",
+   "tag": "14:30 NFP"
+  },
+  {
+   "type": "text",
+   "title": "Was passiert um *14:30*?",
+   "body": "Am Freitag, 4. Dezember, erscheint der US-Arbeitsmarktbericht (NFP) für November – um 14:30 Uhr deutscher Zeit. Gold kann danach in Minuten stark in beide Richtungen schwanken."
+  },
+  {
+   "type": "step",
+   "n": 1,
+   "title": "Kurz *vorher* einsteigen",
+   "body": "Wer kurz vor 14:30 Uhr noch einen Trade eröffnet, wettet auf eine Zahl, die niemand kennt. Das ist Glücksspiel, kein Plan.",
+   "chart": "spike",
+   "tag": "14:30",
+   "label": "FEHLER"
+  },
+  {
+   "type": "step",
+   "n": 2,
+   "title": "Die *erste* Kerze jagen",
+   "body": "Der erste Ausschlag dreht oft schnell wieder. Warte, bis mindestens die erste 15-Minuten-Kerze geschlossen hat.",
+   "chart": "sweep",
+   "tag": "Fehlausbruch",
+   "label": "FEHLER"
+  },
+  {
+   "type": "step",
+   "n": 3,
+   "title": "Den *Spread* vergessen",
+   "body": "Rund um die Zahl wird der Spread oft deutlich breiter. Enge Stops können dann ausgelöst werden, obwohl der Chart dein Level kaum erreicht.",
+   "quote": "Stop und Größe VOR 14:30 Uhr planen.",
+   "label": "FEHLER"
+  },
+  {
+   "type": "list",
+   "title": "*Merke* dir",
+   "items": [
+    "Vor 14:30 Uhr keine neuen Trades",
+    "Erste 15-Minuten-Kerze abwarten",
+    "Spread einplanen, Stop nicht zu eng",
+    "Halbe Größe – oder gar kein Trade"
+   ]
+  },
+  {
+   "type": "cta",
+   "title": "Willst du meine *Gold-Setups* live?",
+   "body": "Jeden Tag Briefing, Lern-Reels und Trade-Ideen mit Entry, Stop und Ziel.",
+   "button": "Kommentiere GOLD"
+  }
+ ]
+}
