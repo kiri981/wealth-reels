@@ -1,4 +1,4 @@
-# Hub-Forschung 2026-11-23
+# Hub-Forschung 2026-11-24
 
 - Gold: 5m 2026-02-15 – 2026-11-19 (181 Tage), Tageskerzen ab 2006-01-03
 - Silber: 5m 2026-09-28 – 2026-11-19 (39 Tage), Tageskerzen ab 2006-01-03
@@ -32,7 +32,7 @@
 - **S&P 500 · Turnaround Tuesday: Montag ≥ 0,5 % im Minus → Kauf; raus bei Schluss > Vortageshoch (max. 4 Tage)** [paper] Backtest (MT5, 4 J.) Ø +0.14R n=25, live n=0
 - **Dow Jones · Turnaround Tuesday: Montag ≥ 0,5 % im Minus → Kauf; raus bei Schluss > Vortageshoch (max. 4 Tage)** [paper] Backtest (MT5, 4 J.) Ø +0.08R n=28, live n=0
 - **Bitcoin · TBO Trend-Breakout 1 Std.: 30-Kerzen-Ausbruch mit EMA 200, SL 2·ATR, Ziel 2R, max. 48 Std.** [paper] Backtest (MT5, 4 J.) Ø +0.09R n=810, live n=1 Ø -1.02R
-- **Ethereum · TBO Trend-Breakout 1 Std.: 30-Kerzen-Ausbruch mit EMA 200, SL 2·ATR, Ziel 2R, max. 48 Std.** [paper] Backtest (MT5, 4 J.) Ø +0.03R n=807, live n=3 Ø -0.05R
+- **Ethereum · TBO Trend-Breakout 1 Std.: 30-Kerzen-Ausbruch mit EMA 200, SL 2·ATR, Ziel 2R, max. 48 Std.** [paper] Backtest (MT5, 4 J.) Ø +0.03R n=807, live n=4 Ø -0.30R
 - **Gold · TBO Trend-Breakout 1 Std.: 30-Kerzen-Ausbruch mit EMA 200, SL 2·ATR, Ziel 2R, max. 48 Std.** [paper] Backtest (MT5, 4 J.) Ø +0.07R n=673, live n=1 Ø +1.99R
 - **Nasdaq 100 · TBO Trend-Breakout 1 Std.: 30-Kerzen-Ausbruch mit EMA 200, SL 2·ATR, Ziel 2R, max. 48 Std.** [paper] Backtest (MT5, 4 J.) Ø +0.07R n=704, live n=0
 - **Gold · VIP-Zonen A: Einstieg erst bei CHoCH-Bestätigung aus dem VIP-Kanal, SL/Ziele wie angesagt (je 1/3), nach Ziel 1 Einstand** [paper] Backtest Ø +0.00R (n=0, Holdout None), live n=0
@@ -41,9 +41,9 @@
 - **Gold · Lernmodell Short Intraday 8 Std. (Struktur, Kerzen, Momentum, Session) ≥ 0.38** [paper] Backtest Ø +0.00R (n=0, Holdout None), live n=0
 
 ## Suche nach neuen Strategien
-- sess: 1500 neue Varianten getestet (insgesamt 16100), bestanden: 0
-- rbo: 450 neue Varianten getestet (insgesamt 3726), bestanden: 0
-- swing: 300 neue Varianten getestet (insgesamt 2181), bestanden: 0
+- sess: 1500 neue Varianten getestet (insgesamt 17600), bestanden: 0
+- rbo: 450 neue Varianten getestet (insgesamt 4176), bestanden: 0
+- swing: 300 neue Varianten getestet (insgesamt 2481), bestanden: 0
 - deriv: 0 neue Varianten getestet (insgesamt 1728), bestanden: 0
 - fxs: 0 neue Varianten getestet (insgesamt 60), bestanden: 0
 - Heute keine neue Strategie, die alle Prüfungen besteht.
@@ -69,9 +69,9 @@
 - Gold · Kevins VIP-Trade-Ideen (Einstieg/SL/Ziele wie gepostet, Management wie angesagt) [paper]
 - Gold · Lernmodell Short Intraday 8 Std. (Struktur, Kerzen, Momentum, Session) ≥ 0.38 [paper]
 
-_Laufzeit 8s_
+_Laufzeit 10s_
 
-## Lernmodelle 2026-11-23
+## Lernmodelle 2026-11-24
 - Gold Long Scalp 2 Std.: Validierung Ø -0.00R · TEST 87 Trades Ø 0.0R, t 0.0 → nein
 - Gold Short Scalp 2 Std.: Validierung Ø +0.02R · TEST 257 Trades Ø 0.06R, t 1.0 → nein
 - Gold Long Intraday 8 Std.: Validierung Ø +0.26R · TEST 14 Trades Ø 0.58R, t 1.4 → nein
@@ -93,3 +93,8 @@ _Laufzeit 8s_
 - XRP: noch zu wenig 5-Min.-Daten (< 60 Tage)
 - BNB: noch zu wenig 5-Min.-Daten (< 60 Tage)
 - Dogecoin: noch zu wenig 5-Min.-Daten (< 60 Tage)
+
+## Plausibilität / Datenlage
+- Keine neue Strategie aufgenommen → nichts auszusortieren.
+- ⚠️ Datenlücke: In D1 enden die 5m- und Tageskerzen für Gold, Silber, Bitcoin und alle Devisenpaare am 19.11.2026 18:30 UTC (MetaApi-Abruf steht seit ~5 Tagen). Nur ETH/SOL/XRP/BNB/DOGE (Coinalyze) laufen weiter. Neubewertungen für die betroffenen Symbole beruhen daher auf Daten bis 19.11.
+- COT, ETF, Termine: nichts Neues; Coinalyze-Tageshistorie (hub_deriv_d) endet ebenfalls am 18.11.
