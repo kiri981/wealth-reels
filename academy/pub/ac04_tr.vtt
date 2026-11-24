@@ -1,0 +1,160 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:10.454
+Neredeyse herkes Order Block'ları duymuştur. Ama çoğu kişi rastgele bir mumu işaretler –
+sonra da fiyatın neden içinden geçip gittiğine şaşırır. Fark detaylarda.
+
+00:00:10.454 --> 00:00:19.000
+Bu videoda bir Order Block'u nasıl bulacağını, kalitesini nasıl değerlendireceğini,
+mantıklı girişin nerede olduğunu – ve stopun nereye konacağını öğreneceksin.
+
+00:00:19.000 --> 00:00:30.760
+Önemli bir not: Bu bir eğitim içeriğidir, yatırım tavsiyesi değildir. Trading
+zarar riski içerir. Yeni stratejileri önce demo hesapta dene.
+
+00:00:33.560 --> 00:00:42.055
+Order Block, büyük piyasa oyuncularının muhtemelen çok sayıda emir
+yerleştirdiği bir fiyat bölgesidir. Grafikte kolayca görülür.
+
+00:00:42.055 --> 00:00:44.750
+Altın birkaç mum boyunca düşüyor.
+
+00:00:44.750 --> 00:00:51.207
+Sonra piyasa güçlü bir impulsla yukarı dönüyor. Böyle bir hareket nadiren tesadüftür.
+
+00:00:51.207 --> 00:00:59.858
+Bu impulstan önceki son kırmızı mum, yükseliş yönlü Order Block'tur. Alımlar
+buradan başladı – ve orada genellikle hâlâ bekleyen emirler vardır.
+
+00:00:59.858 --> 00:01:07.386
+Daha sonra fiyat tam bu bölgeye geri döner. Buna Order Block'un testi ya da mitigasyonu denir.
+
+00:01:07.386 --> 00:01:16.620
+Ve burada piyasa yine yukarı tepki veriyor. Düşüş yönlü Order Block
+bunun tam tersidir: güçlü bir satıştan önceki son yeşil mum.
+
+00:01:19.420 --> 00:01:28.385
+Her kırmızı mum bir Order Block değildir. Bir bölgenin geçerli sayılması için
+sonrasında önemli bir şey olması gerekir. Adım adım bakalım.
+
+00:01:28.385 --> 00:01:34.737
+Piyasa düşüş trendinde. Son alçalan tepeyi aklında tut – daha sonra kırılması gereken çizgi bu.
+
+00:01:34.737 --> 00:01:39.705
+Sonra alıcılar kontrolü almadan önceki son kırmızı mum geliyor. Bu bizim adayımız.
+
+00:01:39.705 --> 00:01:49.140
+Şimdi birinci şart: İmpuls son alçalan tepenin üzerine çıkıyor. Mumu
+gerçek bir Order Block yapan yalnızca bu yapı kırılımıdır.
+
+00:01:49.140 --> 00:01:57.504
+İkinci şart: İmpuls o kadar hızlı ki arkasında bir Fair Value Gap
+bırakıyor. Bu, alıcıların ne kadar güçlü olduğunu gösterir.
+
+00:01:57.504 --> 00:02:02.394
+Böylece bölge işaretlendi: son kırmızı mumun dibinden tepesine kadar.
+
+00:02:02.394 --> 00:02:12.463
+Geri çekilmede fiyat bölgeyi test ediyor ve yeniden yukarı dönüyor. Yapı
+kırılımı ve boşluk olmasaydı bu sıradan bir mum olurdu.
+
+00:02:15.263 --> 00:02:22.686
+Grafikte bir sürü Order Block var. Soru şu: Hangileri işlem yapmaya değer? Bunun için beş kriter kullanıyoruz.
+
+00:02:22.686 --> 00:02:27.001
+Burada altın önce bir dip oluşturuyor. Altında stoplar bekliyor.
+
+00:02:27.001 --> 00:02:34.294
+Son kırmızı mum bu dibin altına bir fitille iniyor ve likiditeyi
+topluyor. Sweep içeren bir Order Block çok daha güçlüdür.
+
+00:02:34.294 --> 00:02:39.079
+Ardından impuls son tepenin üzerine çıkıyor. Net bir break of structure.
+
+00:02:39.079 --> 00:02:42.741
+Ve bölgenin hemen üzerinde bir Fair Value Gap bırakıyor.
+
+00:02:42.741 --> 00:02:52.019
+Ayrıca Order Block, tüm hareketin yüzde elli seviyesinin altında, yani
+discount bölgesinde. Alımlar için bu daha ucuz alandır.
+
+00:02:52.019 --> 00:03:02.298
+Ve son olarak: Bölgeye henüz dokunulmamış. Birkaç kez test edilmiş
+bir Order Block'ta genellikle çok az açık emir kalır.
+
+00:03:05.098 --> 00:03:12.443
+İyi bir Order Block buldun. Şimdi sıra girişte. Bunun için üç yaygın
+yöntem var – her birinin artıları ve eksileri var.
+
+00:03:12.443 --> 00:03:16.105
+İşte güçlü bir impulstan önce oluşan bölgemiz.
+
+00:03:16.105 --> 00:03:25.304
+Fiyat geri çekiliyor. Birinci yöntem: Order Block'un üst kenarına limit
+emir. Büyük ihtimalle işleme girersin ama stopun en uzakta olur.
+
+00:03:25.304 --> 00:03:34.269
+İkinci yöntem: Bölgenin ortasını, yani yüzde elli seviyesini beklersin. Stop daralır ama bazen emir gerçekleşmez.
+
+00:03:34.269 --> 00:03:39.472
+Bu örnekte fitil tam ortaya kadar iniyor ve giriş tetikleniyor.
+
+00:03:39.472 --> 00:03:51.728
+Üçüncü yöntem: Fiyatın bölgede bir tepki göstermesini beklersin – örneğin daha küçük zaman diliminde bir
+Change of Character. Biraz fiyattan kaybedersin ama birçok başarısız denemeyi elersin.
+
+00:03:51.728 --> 00:04:00.074
+Hangi yöntemin uygun olduğu senin tarzına bağlı. Önemli olan, kararı önceden vermen – o anın etkisiyle değil.
+
+00:04:02.874 --> 00:04:09.200
+Giriş işin sadece yarısı. Stopunun ve hedefinin nerede olduğu da en az o kadar önemli.
+
+00:04:09.200 --> 00:04:12.966
+Yine güçlü bir impulstan sonra bir Order Block'umuz var.
+
+00:04:12.966 --> 00:04:16.811
+Fiyat geri geliyor ve giriş bölgenin içinde yapılıyor.
+
+00:04:16.811 --> 00:04:26.142
+Stop, Order Block'un dibinin altına, biraz pay bırakılarak konur. Altın sık
+sık uzun fitiller yapar – tam kenardaki bir stop hızla patlar.
+
+00:04:26.142 --> 00:04:35.655
+İyi bir hedef bir sonraki likiditedir, burada eski tepe. Girmeden önce hedefe
+olan mesafenin stopa göre gerçekten değip değmediğini kontrol et.
+
+00:04:35.655 --> 00:04:49.982
+Bu örnekte fiyat tepenin üzerine çıkıyor. Ama kural aynı: Bir mum Order Block'un belirgin
+şekilde altında kapanırsa bölge geçersizdir. O zaman stop devreye girer – tartışmasız.
+
+00:04:52.782 --> 00:04:54.328
+Yani şunu unutma:
+
+00:04:54.328 --> 00:04:58.329
+Fiyat bölgeden tepki verdiği sürece Order Block geçerlidir.
+
+00:04:58.329 --> 00:05:03.644
+Bir mum belirgin şekilde altında kapanırsa geçersizdir – ve işlemden çıkarsın.
+
+00:05:06.444 --> 00:05:08.069
+Özetleyelim.
+
+00:05:08.069 --> 00:05:12.802
+Yükseliş yönlü Order Block, güçlü bir yukarı impulstan önceki son kırmızı mumdur.
+
+00:05:12.802 --> 00:05:17.717
+Yalnızca impuls yapıyı kırıp bir Fair Value Gap bırakırsa geçerlidir.
+
+00:05:17.717 --> 00:05:23.626
+En güçlü bölgeler önce likidite toplamış, discount'ta yer alan ve henüz dokunulmamış bölgelerdir.
+
+00:05:23.626 --> 00:05:28.777
+Girişini önceden belirle: üst kenar, orta ya da onay.
+
+00:05:28.777 --> 00:05:35.528
+Stop bölgenin altına konur. Ve işlem başına hesabının yalnızca yüzde bir ila ikisini riske at.
+
+00:05:35.528 --> 00:05:51.781
+Order Block'ları her gün altın grafiğinde nasıl işaretlediğimizi görmek istiyorsan,
+Telegram'daki ücretsiz altın grubumuza katıl. Link açıklamada. Orada elli beş dersli
+bootcamp'imiz ve günlük işlem fikirleri de seni bekliyor. Bir sonraki videoda görüşmek üzere!
