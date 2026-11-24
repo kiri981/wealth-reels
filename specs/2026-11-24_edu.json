@@ -1,0 +1,98 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "LERN-REEL",
+  "title": "Liquidity Sweep *erkennen*",
+  "chart": "sweep"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "Gold bricht das Tief?",
+   "accent": "Oft nur ein Sweep.",
+   "icon": "alert",
+   "say": "Gold bricht das Tief? Oft ist es nur ein Sweep."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "LIQUIDITY SWEEP",
+   "text": "Der Preis sticht kurz unter ein Tief, holt die Stops ab – und dreht.",
+   "say": "Liquidity Sweep: Stops abholen, dann drehen."
+  },
+  {
+   "type": "candles",
+   "dur": 5.2,
+   "pattern": "sweep",
+   "show": [
+    "level",
+    "zone",
+    "sweep"
+   ],
+   "step": "SCHRITT 01",
+   "title": "Ein *langer Docht* unter dem Tief",
+   "caption": "Der Körper schließt wieder darüber.",
+   "say": "Merkmal eins: ein langer Docht unter dem Tief."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "SCHRITT 02",
+   "text": "Das Volumen springt an – Stops werden ausgelöst, große Orders gefüllt.",
+   "say": "Merkmal zwei: Das Volumen springt an."
+  },
+  {
+   "type": "candles",
+   "dur": 5.4,
+   "pattern": "sweep",
+   "show": [
+    "level",
+    "entry"
+   ],
+   "step": "SCHRITT 03",
+   "title": "*Schnelle Rückkehr* über das Tief",
+   "caption": "Erst dann wird aus dem Docht ein Sweep.",
+   "say": "Merkmal drei: schnelle Rückkehr über das Tief."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "TYPISCHER FEHLER",
+   "text": "Jeden Docht als Sweep handeln. Ohne schnelle Rückkehr ist es oft ein echter Ausbruch.",
+   "say": "Typischer Fehler: jeden Docht handeln."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "say": "Keine Zeit, selbst zu analysieren?",
+   "items": [
+    {
+     "text": "Neue Gold-Idee: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "Sweep unter dem Tief – Stop gesetzt",
+     "color": "gold"
+    },
+    {
+     "text": "Update: SL auf Einstieg",
+     "color": "gold"
+    }
+   ]
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Docht. Volumen. Rückkehr.",
+   "button": "Kommentiere GOLD",
+   "say": "Solche Sweeps zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}

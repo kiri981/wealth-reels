@@ -1,0 +1,150 @@
+{
+ "voice": true,
+ "cover": {
+  "kicker": "LEARN",
+  "title": "Spot a Liquidity *Sweep*",
+  "chart": "sweep"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "Gold breaks the low?",
+   "accent": "Often just a sweep.",
+   "icon": "alert",
+   "say": "Gold breaks the low? Often it's just a sweep."
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "LIQUIDITY SWEEP",
+   "text": "Price dips briefly below a low, grabs the stops – and turns.",
+   "say": "Liquidity sweep: grab the stops, then turn."
+  },
+  {
+   "type": "candles",
+   "dur": 5.2,
+   "pattern": "sweep",
+   "show": [
+    "level",
+    "zone",
+    "sweep"
+   ],
+   "step": "STEP 01",
+   "title": "A *long wick* below the low",
+   "caption": "The body closes back above it.",
+   "say": "Sign one: a long wick below the low.",
+   "levels": [
+    {
+     "price": 91.6990976848987,
+     "text": "OBVIOUS LOW",
+     "color": "white"
+    }
+   ],
+   "zone": {
+    "from": 90.09909768489871,
+    "to": 91.6990976848987,
+    "text": "LIQUIDITY"
+   },
+   "tags": [
+    {
+     "i": 25,
+     "price": 89.2990976848987,
+     "text": "SWEEP",
+     "color": "gold"
+    }
+   ],
+   "footer": "Illustrative example"
+  },
+  {
+   "type": "words",
+   "dur": 3.6,
+   "kicker": "STEP 02",
+   "text": "Volume spikes – stops get triggered, big orders get filled.",
+   "say": "Sign two: volume spikes."
+  },
+  {
+   "type": "candles",
+   "dur": 5.4,
+   "pattern": "sweep",
+   "show": [
+    "level",
+    "entry"
+   ],
+   "step": "STEP 03",
+   "title": "*Fast return* above the low",
+   "caption": "Only then does the wick become a sweep.",
+   "say": "Sign three: a fast return above the low.",
+   "levels": [
+    {
+     "price": 91.6990976848987,
+     "text": "OBVIOUS LOW",
+     "color": "white"
+    }
+   ],
+   "zone": null,
+   "tags": [
+    {
+     "i": 26,
+     "price": 93.50075573958655,
+     "text": "ENTRY",
+     "color": "white"
+    },
+    {
+     "i": 26,
+     "price": 88.7990976848987,
+     "text": "SL BELOW THE WICK",
+     "color": "red"
+    }
+   ],
+   "footer": "Illustrative example"
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "TYPICAL MISTAKE",
+   "text": "Trading every wick as a sweep. Without a fast return, it's often a real breakout.",
+   "say": "Typical mistake: trading every wick."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "No time to analyze the market *yourself*?",
+   "say": "No time to analyze it yourself?",
+   "items": [
+    {
+     "text": "New gold idea: XAUUSD BUY",
+     "color": "green",
+     "time": "now"
+    },
+    {
+     "text": "Sweep below the low – stop placed",
+     "color": "gold",
+     "time": "now"
+    },
+    {
+     "text": "Update: SL to entry",
+     "color": "gold",
+     "time": "now"
+    }
+   ]
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Wick. Volume. Return.",
+   "button": "Comment GOLD",
+   "say": "I show setups like this live in my free group. Comment GOLD.",
+   "sub": "Gold trade ideas live on Telegram",
+   "disclaimer": "Not financial advice. Trading involves risk of loss."
+  }
+ ],
+ "lang": "en",
+ "voice_speed": 1.15,
+ "footer": "Not financial advice · Trading involves risk of loss"
+}
