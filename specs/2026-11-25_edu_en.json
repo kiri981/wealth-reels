@@ -1,0 +1,125 @@
+{
+ "voice": true,
+ "voice_speed": 1.1,
+ "cover": {
+  "kicker": "FUNDAMENTALS",
+  "title": "What *NFP* does to gold",
+  "chart": "sweep"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Friday, 8:30 a.m. ET –",
+   "accent": "gold jumps in seconds.",
+   "icon": "clock",
+   "say": "Friday, eight thirty New York time. Gold jumps."
+  },
+  {
+   "type": "words",
+   "dur": 4.0,
+   "kicker": "NFP",
+   "text": "The US jobs report. Usually on the first Friday of the month, 8:30 a.m. New York time.",
+   "say": "NFP: the US jobs report."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "STEP 01 · The logic",
+   "items": [
+    {
+     "left": "Strong",
+     "right": "often weighs on gold",
+     "hot": true
+    },
+    {
+     "left": "Weak",
+     "right": "often a tailwind for gold"
+    },
+    {
+     "left": "Why?",
+     "right": "Rates & the dollar"
+    }
+   ],
+   "say": "Step one: Strong numbers often push gold down."
+  },
+  {
+   "type": "words",
+   "dur": 4.0,
+   "kicker": "STEP 02",
+   "text": "The surprise is what counts: actual vs. forecast – plus wages and revisions.",
+   "say": "Step two: The surprise is what counts."
+  },
+  {
+   "type": "candles",
+   "dur": 5.4,
+   "pattern": "fakeout",
+   "step": "STEP 03",
+   "title": "The first spike *often reverses*",
+   "caption": "Wait for the candle close first.",
+   "say": "Step three: The first spike often reverses.",
+   "levels": [
+    {
+     "price": 104.0,
+     "text": "RESISTANCE",
+     "color": "red"
+    }
+   ],
+   "tags": [
+    {
+     "i": 16,
+     "price": 106.2,
+     "text": "WICK ONLY – FAKEOUT",
+     "color": "red"
+    }
+   ],
+   "footer": "Illustrative example"
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "COMMON MISTAKE",
+   "text": "Jumping in right before the release. That's not a plan – it's a coin flip.",
+   "say": "Mistake: jumping in right before the number. A coin flip."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "No time to analyze the market *yourself*?",
+   "items": [
+    {
+     "text": "Heads-up: NFP today 8:30 a.m. ET",
+     "color": "gold",
+     "time": "now"
+    },
+    {
+     "text": "New gold idea: XAUUSD SELL",
+     "color": "green",
+     "time": "now"
+    },
+    {
+     "text": "Update: SL to entry",
+     "color": "gold",
+     "time": "now"
+    }
+   ],
+   "say": "No time to analyze the market yourself?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "First the number. Then the plan.",
+   "button": "Comment GOLD",
+   "say": "I show days like this live in my free group. Comment GOLD.",
+   "sub": "Gold trade ideas live on Telegram",
+   "disclaimer": "Not financial advice. Trading involves risk of loss."
+  }
+ ],
+ "lang": "en",
+ "footer": "Not financial advice · Trading involves risk of loss"
+}

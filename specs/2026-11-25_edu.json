@@ -1,0 +1,102 @@
+{
+ "voice": true,
+ "voice_speed": 1.1,
+ "cover": {
+  "kicker": "FUNDAMENTAL",
+  "title": "Was *NFP* mit Gold macht",
+  "chart": "sweep"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Freitag, 14:30 –",
+   "accent": "Gold springt in Sekunden.",
+   "icon": "clock",
+   "say": "Freitag, vierzehn Uhr dreißig. Gold springt."
+  },
+  {
+   "type": "words",
+   "dur": 4.0,
+   "kicker": "NFP",
+   "text": "Der US-Arbeitsmarktbericht. Meist am ersten Freitag im Monat, 14:30 Uhr deutscher Zeit.",
+   "say": "NFP: der US-Arbeitsmarktbericht."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 01 · Die Logik",
+   "items": [
+    {
+     "left": "Stark",
+     "right": "oft Druck auf Gold",
+     "hot": true
+    },
+    {
+     "left": "Schwach",
+     "right": "oft Rückenwind für Gold"
+    },
+    {
+     "left": "Warum?",
+     "right": "Zinsen & Dollar"
+    }
+   ],
+   "say": "Schritt eins: Starke Zahlen drücken Gold oft."
+  },
+  {
+   "type": "words",
+   "dur": 4.0,
+   "kicker": "SCHRITT 02",
+   "text": "Die Überraschung zählt: Ergebnis gegen Prognose – plus Löhne und Revisionen.",
+   "say": "Schritt zwei: Die Überraschung zählt."
+  },
+  {
+   "type": "candles",
+   "dur": 5.4,
+   "pattern": "fakeout",
+   "step": "SCHRITT 03",
+   "title": "Der erste Ausschlag *dreht oft*",
+   "caption": "Erst den Kerzenschluss abwarten.",
+   "say": "Schritt drei: Der erste Ausschlag dreht oft."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "TYPISCHER FEHLER",
+   "text": "Kurz vor der Zahl noch einsteigen. Das ist kein Plan – das ist ein Münzwurf.",
+   "say": "Fehler: kurz vor der Zahl einsteigen. Ein Münzwurf."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Achtung: NFP heute 14:30",
+     "color": "gold"
+    },
+    {
+     "text": "Neue Gold-Idee: XAUUSD SELL",
+     "color": "green"
+    },
+    {
+     "text": "Update: SL auf Einstieg",
+     "color": "gold"
+    }
+   ],
+   "say": "Keine Zeit, den Markt selbst zu analysieren?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Erst die Zahl. Dann der Plan.",
+   "button": "Kommentiere GOLD",
+   "say": "Solche Tage zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}
