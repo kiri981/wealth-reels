@@ -1,0 +1,40 @@
+{
+ "voice": true,
+ "voice_speed": 1.15,
+ "cover": {
+  "kicker": "PSYCHOLOGIE",
+  "title": "Recht haben *kostet Geld*",
+  "chart": "down"
+ },
+ "music": "chill",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 2.8, "text": "Du wusstest, dass Gold steigt?", "accent": "Der Markt sah das anders.", "icon": "alert",
+   "say": "Du wusstest, dass Gold steigt? Der Markt sah das anders."},
+  {"type": "words", "dur": 3.8, "kicker": "EGO-TRADING", "text": "Du willst recht behalten – statt Geld zu verdienen. Der Markt kennt deine Meinung nicht.",
+   "say": "Ego-Trading: Du willst recht behalten, statt Geld zu verdienen."},
+  {"type": "words", "dur": 3.8, "kicker": "SCHRITT 01", "text": "Erkenne die Warnsätze: „Der muss jetzt drehen.“ „Ich warte, bis ich wieder im Plus bin.“",
+   "say": "Eins: Erkenne die Warnsätze. Der muss jetzt drehen."},
+  {"type": "counter", "dur": 4.2, "label": "SCHRITT 02 · Beispiel", "from": 0, "to": -600, "decimals": 0, "prefix": "", "suffix": " $", "color": "red",
+   "sub": "Plan: 100 $ Risiko. Ego: dreimal nachgekauft.",
+   "say": "Zwei: Geplant waren hundert Dollar Risiko. Das Ego macht sechshundert."},
+  {"type": "cards", "dur": 4.2, "title": "SCHRITT 03 · Die Lösung",
+   "items": [
+    {"left": "01", "right": "Vorher: Wann liege ich falsch?"},
+    {"left": "02", "right": "Ungültig? Sofort raus", "hot": true},
+    {"left": "03", "right": "Ins Journal, nicht ins Ego"}
+   ],
+   "say": "Drei: Vorher festlegen, wann du falsch liegst. Dann ohne Diskussion raus."},
+  {"type": "words", "dur": 3.8, "kicker": "MERKE", "text": "Profis liegen oft falsch. Sie bleiben nur nicht lange falsch.",
+   "say": "Merke: Profis liegen oft falsch. Sie bleiben nur nicht lange falsch."},
+  {"type": "notify", "dur": 3.6, "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {"text": "Neue Gold-Idee: XAUUSD BUY", "color": "green"},
+    {"text": "Idee ungültig – Trade beendet", "color": "gold"},
+    {"text": "Update: neuer Plan aktiv", "color": "gold"}
+   ],
+   "say": "Keine Zeit, den Markt selbst zu analysieren?"},
+  {"type": "cta", "dur": 3.2, "title": "Der Markt hat immer recht.", "button": "Kommentiere GOLD",
+   "say": "Meinen Umgang mit Fehl-Trades zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."}
+ ]
+}

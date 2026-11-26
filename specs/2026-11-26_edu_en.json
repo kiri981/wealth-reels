@@ -1,0 +1,41 @@
+{
+ "lang": "en",
+ "voice": true,
+ "voice_speed": 1.15,
+ "cover": {
+  "kicker": "PSYCHOLOGY",
+  "title": "Being right *costs money*",
+  "chart": "down"
+ },
+ "music": "chill",
+ "scenes": [
+  {"type": "logo", "dur": 1.4},
+  {"type": "hook", "dur": 2.8, "text": "You knew gold would rise?", "accent": "The market disagreed.", "icon": "alert",
+   "say": "You knew gold would rise? The market disagreed."},
+  {"type": "words", "dur": 3.8, "kicker": "EGO TRADING", "text": "You want to be right – instead of making money. The market doesn't know your opinion.",
+   "say": "Ego trading: you want to be right instead of making money."},
+  {"type": "words", "dur": 3.8, "kicker": "STEP 01", "text": "Spot the warning phrases: “It has to turn now.” “I'll wait until I'm back in profit.”",
+   "say": "One: spot the warning phrases. It has to turn now."},
+  {"type": "counter", "dur": 4.2, "label": "STEP 02 · Example", "from": 0, "to": -600, "decimals": 0, "prefix": "", "suffix": " $", "color": "red",
+   "sub": "Plan: $100 risk. Ego: added three times.",
+   "say": "Two: the plan was one hundred dollars of risk. Ego makes it six hundred."},
+  {"type": "cards", "dur": 4.2, "title": "STEP 03 · The fix",
+   "items": [
+    {"left": "01", "right": "Upfront: when am I wrong?"},
+    {"left": "02", "right": "Invalid? Out immediately", "hot": true},
+    {"left": "03", "right": "Into the journal, not the ego"}
+   ],
+   "say": "Three: decide upfront when you're wrong. Then get out, no debate."},
+  {"type": "words", "dur": 3.8, "kicker": "REMEMBER", "text": "Pros are often wrong. They just don't stay wrong for long.",
+   "say": "Remember: pros are often wrong. They just don't stay wrong for long."},
+  {"type": "notify", "dur": 3.6, "title": "No time to analyze the market *yourself*?",
+   "items": [
+    {"text": "New gold idea: XAUUSD BUY", "color": "green"},
+    {"text": "Idea invalid – trade closed", "color": "gold"},
+    {"text": "Update: new plan active", "color": "gold"}
+   ],
+   "say": "No time to analyze the market yourself?"},
+  {"type": "cta", "dur": 3.2, "title": "The market is always right.", "button": "Comment GOLD",
+   "say": "I show how I handle losing trades live in my free group. Comment GOLD."}
+ ]
+}
