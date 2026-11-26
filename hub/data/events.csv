@@ -1,5 +1,6 @@
 id,t,cur,title,impact,forecast,previous,actual
 1795181100_USD_FOMC Member Waller Speaks,1795181100,USD,FOMC Member Waller Speaks,Medium,,,
+1795613400_USD_Unemployment Claims,1795613400,USD,Unemployment Claims,Medium,201K,203K,
 1794835800_CAD_CPI m/m,1794835800,CAD,CPI m/m,High,0.3%,0.1%,
 1794835800_CAD_Median CPI y/y,1794835800,CAD,Median CPI y/y,High,2.0%,1.9%,
 1794835800_CAD_Trimmed CPI y/y,1794835800,CAD,Trimmed CPI y/y,High,1.9%,1.8%,
@@ -37,13 +38,12 @@ id,t,cur,title,impact,forecast,previous,actual
 1795426200_GBP_Flash Services PMI,1795426200,GBP,Flash Services PMI,Medium,53.0,53.1,
 1795445100_USD_Flash Manufacturing PMI,1795445100,USD,Flash Manufacturing PMI,Medium,54.5,56.0,
 1795445100_USD_Flash Services PMI,1795445100,USD,Flash Services PMI,Medium,55.6,57.9,
-1795532400_USD_CB Consumer Confidence,1795532400,USD,CB Consumer Confidence,Medium,92.1,91.7,
+1795532400_USD_CB Consumer Confidence,1795532400,USD,CB Consumer Confidence,Medium,92.4,91.7,
 1795541100_CAD_BOC Gov Macklem Speaks,1795541100,CAD,BOC Gov Macklem Speaks,Medium,,,
 1795566600_AUD_CPI m/m,1795566600,AUD,CPI m/m,High,0.4%,0.8%,
-1795566600_AUD_CPI y/y,1795566600,AUD,CPI y/y,High,4.8%,4.3%,
+1795566600_AUD_CPI y/y,1795566600,AUD,CPI y/y,High,4.7%,4.3%,
 1795566600_AUD_Trimmed Mean CPI m/m,1795566600,AUD,Trimmed Mean CPI m/m,High,0.3%,0.3%,
-1795613400_USD_Core PCE Price Index m/m,1795613400,USD,Core PCE Price Index m/m,High,0.3%,0.3%,
-1795613400_USD_Prelim GDP q/q,1795613400,USD,Prelim GDP q/q,High,3.5%,3.4%,
+1795613400_USD_Core PCE Price Index m/m,1795613400,USD,Core PCE Price Index m/m,High,0.3%,0.3%,0.3%
+1795613400_USD_Prelim GDP q/q,1795613400,USD,Prelim GDP q/q,High,3.5%,3.4%,4.3%
 1795613400_USD_Prelim GDP Price Index q/q,1795613400,USD,Prelim GDP Price Index q/q,Medium,2.3%,2.3%,
-1795613400_USD_Unemployment Claims,1795613400,USD,Unemployment Claims,Medium,201K,203K,
-1795735800_JPY_Tokyo Core CPI y/y,1795735800,JPY,Tokyo Core CPI y/y,Medium,2.9%,2.6%,
+1795735800_JPY_Tokyo Core CPI y/y,1795735800,JPY,Tokyo Core CPI y/y,Medium,3.0%,2.6%,

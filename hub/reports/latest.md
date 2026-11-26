@@ -1,4 +1,4 @@
-# Hub-Forschung 2026-11-25
+# Hub-Forschung 2026-11-26
 
 - Gold: 5m 2026-02-15 – 2026-11-19 (181 Tage), Tageskerzen ab 2006-01-03
 - Silber: 5m 2026-09-28 – 2026-11-19 (39 Tage), Tageskerzen ab 2006-01-03
@@ -41,9 +41,9 @@
 - **Gold · Lernmodell Short Intraday 8 Std. (Struktur, Kerzen, Momentum, Session) ≥ 0.38** [paper] Backtest Ø +0.00R (n=0, Holdout None), live n=0
 
 ## Suche nach neuen Strategien
-- sess: 1500 neue Varianten getestet (insgesamt 19100), bestanden: 0
-- rbo: 450 neue Varianten getestet (insgesamt 4626), bestanden: 0
-- swing: 300 neue Varianten getestet (insgesamt 2781), bestanden: 0
+- sess: 1500 neue Varianten getestet (insgesamt 20600), bestanden: 0
+- rbo: 450 neue Varianten getestet (insgesamt 5076), bestanden: 0
+- swing: 300 neue Varianten getestet (insgesamt 3081), bestanden: 0
 - deriv: 0 neue Varianten getestet (insgesamt 1728), bestanden: 0
 - fxs: 0 neue Varianten getestet (insgesamt 60), bestanden: 0
 - Heute keine neue Strategie, die alle Prüfungen besteht.
@@ -71,7 +71,7 @@
 
 _Laufzeit 9s_
 
-## Lernmodelle 2026-11-25
+## Lernmodelle 2026-11-26
 - Gold Long Scalp 2 Std.: Validierung Ø -0.00R · TEST 87 Trades Ø 0.0R, t 0.0 → nein
 - Gold Short Scalp 2 Std.: Validierung Ø +0.02R · TEST 257 Trades Ø 0.06R, t 1.0 → nein
 - Gold Long Intraday 8 Std.: Validierung Ø +0.26R · TEST 14 Trades Ø 0.58R, t 1.4 → nein
@@ -94,6 +94,6 @@ _Laufzeit 9s_
 - BNB: noch zu wenig 5-Min.-Daten (< 60 Tage)
 - Dogecoin: noch zu wenig 5-Min.-Daten (< 60 Tage)
 
-## Plausibilität / Hinweise (Forschungs-Agent)
-- Keine neue Strategie aufgenommen, nichts von Hand aussortiert. Lernmodell „Gold Short Intraday 8 Std.“ besteht den ungesehenen Test weiterhin (352 Trades, Ø +0,23R, t 2,9).
-- ⚠️ Datenlücke besteht weiter: In D1 enden die 5m- und Tageskerzen für Gold, Silber, Bitcoin und alle Devisenpaare am 19.11.2026 18:30 UTC (MetaApi-Abruf steht seit ~6 Tagen). Auch die Coinalyze-Tageshistorie (hub_deriv_d) endet am 18.11. Nur ETH/SOL/XRP/BNB/DOGE (5m, Coinalyze) und die stündlichen Derivatedaten laufen weiter. Bewertungen für die betroffenen Symbole beruhen auf Daten bis 19.11.; Gold-/Silber-/FX-Papierstrategien können derzeit keine neuen Trades erzeugen.
+## Plausibilität (Agent)
+- Keine neu aufgenommene Strategie heute – nichts auszusortieren. Lernmodell Gold Short Intraday besteht erneut (352 Test-Trades), bleibt auf Papier.
+- ⚠️ Datenlücke besteht weiter (Tag 7): In D1 enden die 5m- und Tageskerzen für Gold, Silber, Bitcoin und alle Devisenpaare am 19.11.2026 18:30 UTC (MetaApi liefert 504; der Worker meldet das bereits stündlich). Die Coinalyze-Tageshistorie (hub_deriv_d) endet am 18.11., Krypto-Tageskerzen am 17.11. Neu übernommen wurden nur ETH/SOL/XRP/BNB/DOGE-5m (+288 Kerzen je Symbol), stündliche Derivatedaten, FRED bis 25.11., Termine, Nachrichten und Papier-Trades. COT/ETF: nichts Neues.
