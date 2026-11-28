@@ -1,0 +1,101 @@
+{
+ "cover": {
+  "kicker": "MARKT",
+  "title": "Gold-Woche: *+3,25%* in 3 Fakten",
+  "chart": "up"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 3.0,
+   "text": "Mittwoch: tiefster Stand seit über einem Jahr.",
+   "accent": "Freitag: Woche im Plus. Was ist passiert?",
+   "icon": "bolt"
+  },
+  {
+   "type": "counter",
+   "dur": 3.4,
+   "label": "Fakt 1: Gold diese Woche",
+   "from": 0,
+   "to": 3.25,
+   "decimals": 2,
+   "prefix": "+",
+   "suffix": " %",
+   "color": "green",
+   "sub": "Schluss ~3.653 $ · laut FinanceFeeds"
+  },
+  {
+   "type": "cards",
+   "dur": 4.4,
+   "title": "Fakt 2: Der Mittwoch-Schock",
+   "items": [
+    {
+     "left": "Kern-PCE",
+     "right": "3,3 % (erw. 3,2 %)",
+     "hot": true
+    },
+    {
+     "left": "Gold-Tief",
+     "right": "unter 3.450 $"
+    },
+    {
+     "left": "Niveau",
+     "right": "tiefster seit Aug. 2025"
+    },
+    {
+     "left": "Freitag",
+     "right": "Tagesplus rund 2,4 %"
+    }
+   ]
+  },
+  {
+   "type": "counter",
+   "dur": 3.4,
+   "label": "Fakt 3: Silber diese Woche",
+   "from": 0,
+   "to": 6.3,
+   "decimals": 1,
+   "prefix": "+",
+   "suffix": " %",
+   "color": "green",
+   "sub": "rund 43,75 $ · laut FinanceFeeds"
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "ABER",
+   "text": "Zinserhöhung am 9. Dezember bleibt zu rund 99 % eingepreist."
+  },
+  {
+   "type": "notify",
+   "dur": 3.4,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Gold: Woche +3,25 %",
+     "time": "jetzt"
+    },
+    {
+     "text": "Fed am 9. Dez. im Blick",
+     "time": "1 Min.",
+     "color": "gold"
+    },
+    {
+     "text": "Live-Updates in der Gruppe",
+     "time": "2 Min."
+    }
+   ]
+  },
+  {
+   "type": "cta",
+   "dur": 3.0,
+   "title": "Plus ist noch keine Wende.",
+   "button": "Kommentiere GOLD"
+  }
+ ]
+}
