@@ -1,4 +1,4 @@
-# Hub-Forschung 2026-11-26
+# Hub-Forschung 2026-11-28
 
 - Gold: 5m 2026-02-15 – 2026-11-19 (181 Tage), Tageskerzen ab 2006-01-03
 - Silber: 5m 2026-09-28 – 2026-11-19 (39 Tage), Tageskerzen ab 2006-01-03
@@ -41,9 +41,9 @@
 - **Gold · Lernmodell Short Intraday 8 Std. (Struktur, Kerzen, Momentum, Session) ≥ 0.38** [paper] Backtest Ø +0.00R (n=0, Holdout None), live n=0
 
 ## Suche nach neuen Strategien
-- sess: 1500 neue Varianten getestet (insgesamt 20600), bestanden: 0
-- rbo: 450 neue Varianten getestet (insgesamt 5076), bestanden: 0
-- swing: 300 neue Varianten getestet (insgesamt 3081), bestanden: 0
+- sess: 1500 neue Varianten getestet (insgesamt 22100), bestanden: 0
+- rbo: 450 neue Varianten getestet (insgesamt 5526), bestanden: 0
+- swing: 300 neue Varianten getestet (insgesamt 3381), bestanden: 0
 - deriv: 0 neue Varianten getestet (insgesamt 1728), bestanden: 0
 - fxs: 0 neue Varianten getestet (insgesamt 60), bestanden: 0
 - Heute keine neue Strategie, die alle Prüfungen besteht.
@@ -69,9 +69,9 @@
 - Gold · Kevins VIP-Trade-Ideen (Einstieg/SL/Ziele wie gepostet, Management wie angesagt) [paper]
 - Gold · Lernmodell Short Intraday 8 Std. (Struktur, Kerzen, Momentum, Session) ≥ 0.38 [paper]
 
-_Laufzeit 9s_
+_Laufzeit 12s_
 
-## Lernmodelle 2026-11-26
+## Lernmodelle 2026-11-28
 - Gold Long Scalp 2 Std.: Validierung Ø -0.00R · TEST 87 Trades Ø 0.0R, t 0.0 → nein
 - Gold Short Scalp 2 Std.: Validierung Ø +0.02R · TEST 257 Trades Ø 0.06R, t 1.0 → nein
 - Gold Long Intraday 8 Std.: Validierung Ø +0.26R · TEST 14 Trades Ø 0.58R, t 1.4 → nein
@@ -96,4 +96,4 @@ _Laufzeit 9s_
 
 ## Plausibilität (Agent)
 - Keine neu aufgenommene Strategie heute – nichts auszusortieren. Lernmodell Gold Short Intraday besteht erneut (352 Test-Trades), bleibt auf Papier.
-- ⚠️ Datenlücke besteht weiter (Tag 7): In D1 enden die 5m- und Tageskerzen für Gold, Silber, Bitcoin und alle Devisenpaare am 19.11.2026 18:30 UTC (MetaApi liefert 504; der Worker meldet das bereits stündlich). Die Coinalyze-Tageshistorie (hub_deriv_d) endet am 18.11., Krypto-Tageskerzen am 17.11. Neu übernommen wurden nur ETH/SOL/XRP/BNB/DOGE-5m (+288 Kerzen je Symbol), stündliche Derivatedaten, FRED bis 25.11., Termine, Nachrichten und Papier-Trades. COT/ETF: nichts Neues.
+- ⚠️ Heute keine neuen Daten übernommen: Die Cloudflare-Verbindung des Forschungs-Agenten (D1-Zugriff) muss neu angemeldet werden. Bewertung und Suche liefen auf dem Stand bis 19.11.2026 (bekannte Datenlücke der Kerzen seit dem 19.11. besteht unabhängig davon).
