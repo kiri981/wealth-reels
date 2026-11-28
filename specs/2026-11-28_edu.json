@@ -1,0 +1,110 @@
+{
+ "voice": true,
+ "voice_speed": 1.15,
+ "cover": {
+  "kicker": "RISIKO",
+  "title": "Lot-Größe *richtig berechnen*",
+  "chart": "range"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Immer dieselbe Lot-Größe?",
+   "accent": "Dann ist dein Risiko Zufall.",
+   "icon": "alert",
+   "say": "Immer dieselbe Lot-Größe? Dann ist dein Risiko Zufall."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "LOT-GRÖSSE",
+   "text": "1 Lot Gold sind 100 Unzen. Jeder Dollar Bewegung = 100$ pro Lot.",
+   "say": "Ein Lot Gold: hundert Unzen. Ein Dollar Bewegung, hundert Dollar."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "SCHRITT 01 · Die Umrechnung",
+   "items": [
+    {
+     "left": "1,00 Lot",
+     "right": "100 $ je 1 $ Bewegung"
+    },
+    {
+     "left": "0,10 Lot",
+     "right": "10 $ je 1 $ Bewegung",
+     "hot": true
+    },
+    {
+     "left": "0,01 Lot",
+     "right": "1 $ je 1 $ Bewegung"
+    },
+    {
+     "left": "Wichtig",
+     "right": "Kontraktgröße beim Broker prüfen"
+    }
+   ],
+   "say": "Schritt eins: Null Komma eins Lot, zehn Dollar pro Dollar."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "SCHRITT 02",
+   "text": "Erst Risiko und Stop-Abstand festlegen. Beispiel: 50$ Risiko, Stop 5$ entfernt.",
+   "say": "Schritt zwei: Erst Risiko und Stop-Abstand festlegen."
+  },
+  {
+   "type": "counter",
+   "dur": 4.4,
+   "label": "SCHRITT 03 · Beispiel",
+   "from": 0,
+   "to": 0.1,
+   "decimals": 2,
+   "prefix": "",
+   "suffix": " Lot",
+   "color": "gold",
+   "sub": "50 $ ÷ (5 $ × 100) = 0,10 Lot",
+   "say": "Schritt drei: Fünfzig durch fünfhundert. Null Komma eins Lot."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "TYPISCHER FEHLER",
+   "text": "Feste Lots, egal wie weit der Stop ist. Doppelter Abstand = doppeltes Risiko.",
+   "say": "Fehler: feste Lots. Doppelter Stop, doppeltes Risiko."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "Keine Zeit, den Markt *selbst* zu analysieren?",
+   "items": [
+    {
+     "text": "Neue Gold-Idee: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "Risiko: max. 1 % pro Trade",
+     "color": "gold"
+    },
+    {
+     "text": "Update: SL auf Einstieg",
+     "color": "gold"
+    }
+   ],
+   "say": "Keine Zeit, den Markt selbst zu analysieren?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Erst das Risiko. Dann die Lots.",
+   "button": "Kommentiere GOLD",
+   "say": "Meine Lot-Rechnung zeige ich live in meiner kostenlosen Gruppe. Kommentiere GOLD."
+  }
+ ]
+}

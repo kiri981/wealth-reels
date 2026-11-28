@@ -1,0 +1,111 @@
+{
+ "voice": true,
+ "voice_speed": 1.15,
+ "cover": {
+  "kicker": "RISK",
+  "title": "Position size *done right*",
+  "chart": "range"
+ },
+ "music": "drive",
+ "scenes": [
+  {
+   "type": "logo",
+   "dur": 1.4
+  },
+  {
+   "type": "hook",
+   "dur": 2.8,
+   "text": "Same lot size every trade?",
+   "accent": "Then your risk is random.",
+   "icon": "alert",
+   "say": "Same lot size every trade? Then your risk is random."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "LOT SIZE",
+   "text": "1 lot of gold is 100 ounces. Every dollar of movement = $100 per lot.",
+   "say": "One lot of gold: a hundred ounces. One dollar move, a hundred dollars."
+  },
+  {
+   "type": "cards",
+   "dur": 4.2,
+   "title": "STEP 01 · The conversion",
+   "items": [
+    {
+     "left": "1.00 lot",
+     "right": "$100 per $1 move"
+    },
+    {
+     "left": "0.10 lot",
+     "right": "$10 per $1 move",
+     "hot": true
+    },
+    {
+     "left": "0.01 lot",
+     "right": "$1 per $1 move"
+    },
+    {
+     "left": "Important",
+     "right": "Check contract size with your broker"
+    }
+   ],
+   "say": "Step one: zero point one lot, ten dollars per dollar."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "STEP 02",
+   "text": "Set risk and stop distance first. Example: $50 risk, stop $5 away.",
+   "say": "Step two: Set your risk and stop distance first."
+  },
+  {
+   "type": "counter",
+   "dur": 4.4,
+   "label": "STEP 03 · Example",
+   "from": 10,
+   "to": 10,
+   "decimals": 0,
+   "prefix": "0.",
+   "suffix": " lot",
+   "color": "gold",
+   "sub": "$50 ÷ ($5 × 100) = 0.10 lot",
+   "say": "Step three: Fifty divided by five hundred. Zero point one lot."
+  },
+  {
+   "type": "words",
+   "dur": 3.8,
+   "kicker": "TYPICAL MISTAKE",
+   "text": "Fixed lots, no matter how far the stop is. Double the distance = double the risk.",
+   "say": "Mistake: fixed lots. Double the stop, double the risk."
+  },
+  {
+   "type": "notify",
+   "dur": 3.6,
+   "title": "No time to analyze the market *yourself*?",
+   "items": [
+    {
+     "text": "New gold idea: XAUUSD BUY",
+     "color": "green"
+    },
+    {
+     "text": "Risk: max 1% per trade",
+     "color": "gold"
+    },
+    {
+     "text": "Update: SL moved to entry",
+     "color": "gold"
+    }
+   ],
+   "say": "No time to analyze the market yourself?"
+  },
+  {
+   "type": "cta",
+   "dur": 3.2,
+   "title": "Risk first. Then lots.",
+   "button": "Comment GOLD",
+   "say": "I show my lot math live in my free group. Comment GOLD."
+  }
+ ],
+ "lang": "en"
+}
